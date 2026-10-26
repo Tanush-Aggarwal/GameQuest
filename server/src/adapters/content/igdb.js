@@ -26,7 +26,7 @@ const GAME_FIELDS = [
   'involved_companies.developer',
   'involved_companies.publisher',
   'involved_companies.company.name',
-  'external_games.category',
+  'external_games.external_game_source', // `category` is deprecated and no longer returned
   'external_games.uid',
 ].join(',');
 const HOUR = 3600;
@@ -39,8 +39,9 @@ const quote = (s) => `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"
 
 const toHours = (seconds) => (typeof seconds === 'number' && seconds > 0 ? Math.round((seconds / HOUR) * 10) / 10 : null);
 
-// IGDB external_games.category 1 = Steam.
-const STEAM_CATEGORY = 1;
+// IGDB external_game_source 1 = Steam (the older `category` field used the same id).
+const STEAM_SOURCE = 1;
+const isSteam = (e) => (e.external_game_source ?? e.category) === STEAM_SOURCE;
 
 // Platform ids used by the catalog import.
 export const PLATFORM = { pc: 6, ps4: 48, ps5: 167, xboxOne: 49, xboxSeries: 169, switch: 130 };
@@ -63,7 +64,7 @@ export const parentIgdbIdOf = (raw) => raw.version_parent ?? raw.parent_game ?? 
 export const igdbImageUrl = (imageId, size) => `${IMAGE_URL}/${size}/${imageId}.jpg`;
 
 export function normaliseGame(raw) {
-  const steam = raw.external_games?.find((e) => e.category === STEAM_CATEGORY)?.uid;
+  const steam = raw.external_games?.find(isSteam)?.uid;
   const artworks = (raw.artworks ?? []).filter((a) => a.image_id).map((a) => igdbImageUrl(a.image_id, 't_1080p'));
   const screenshots = (raw.screenshots ?? []).filter((s) => s.image_id).map((s) => igdbImageUrl(s.image_id, 't_1080p'));
   const companies = raw.involved_companies ?? [];

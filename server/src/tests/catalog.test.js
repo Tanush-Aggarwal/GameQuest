@@ -90,6 +90,17 @@ describe('normaliseGame art and credits', () => {
   });
 });
 
+describe('normaliseGame Steam id', () => {
+  it('reads external_game_source (the current field) and still accepts the legacy category', () => {
+    const current = raw(1, 'A', { external_games: [{ external_game_source: 5, uid: 'gog1' }, { external_game_source: 1, uid: '730' }] });
+    const legacy = raw(2, 'B', { external_games: [{ category: 1, uid: '440' }] });
+    const none = raw(3, 'C', { external_games: [{ external_game_source: 5, uid: 'x' }] });
+    expect(normaliseGame(current).externalIds.steam).toBe('730');
+    expect(normaliseGame(legacy).externalIds.steam).toBe('440');
+    expect(normaliseGame(none).externalIds.steam).toBeUndefined();
+  });
+});
+
 describe('IGDB adapter limits', () => {
   function adapter(responses, opts = {}) {
     const sleeps = [];

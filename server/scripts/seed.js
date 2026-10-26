@@ -32,6 +32,8 @@ import { Rsvp } from '../src/models/Rsvp.js';
 import { Block } from '../src/models/Block.js';
 import { createFriendService } from '../src/services/friendService.js';
 import { createSessionService } from '../src/services/sessionService.js';
+import { Recommendation } from '../src/models/Recommendation.js';
+import { createRecommendationService } from '../src/services/recommendationService.js';
 
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
@@ -294,6 +296,26 @@ async function seed() {
     await new Promise((resolve) => setTimeout(resolve, 800)); // let the async subscribers finish writing
   }
   console.log('Session ready');
+
+  // ── a recommendation from alex to demo ──
+  const recGame = games['celeste'];
+  if (recGame && !(await Recommendation.findOne({ fromId: alex._id, toId: user._id, gameId: recGame._id }))) {
+    const friendService = createFriendService({ Friendship, Block, User });
+    const recService = createRecommendationService({
+      Recommendation,
+      Game,
+      User,
+      Review,
+      LibraryEntry,
+      social: friendService,
+    });
+    await recService.send(alex._id, {
+      toId: String(user._id),
+      gameId: String(recGame._id),
+      message: 'You have to play this platformer! The story and soundtrack are incredible.',
+    });
+    console.log('Recommendation ready');
+  }
 
   console.log(`\nSeed complete. Log in with ${DEMO_EMAIL} / ${DEMO_PASSWORD}\n`);
 }

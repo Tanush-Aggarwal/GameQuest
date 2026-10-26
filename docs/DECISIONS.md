@@ -105,3 +105,12 @@ Format: date — decision — why.
 - Added scripts/verify-deploy.js with 5 automated verification checks against any live URL (client index, SPA fallback, proxied /api/v1/health, POST JSON forwarding, Vite asset chunk).
 - Sanitized clientOrigin in server/src/config/index.js to strip trailing slashes, eliminating CORS preflight mismatches when setting Render environment variables.
 - Verified build and tests: all 211 server tests + 105 client tests passing; client bundle is ~100 KB gzipped.
+
+
+## 2026-10-27 — Antigravity — item 12: game recommendations
+- Recommendation model: stored as (fromId, toId, gameId) unique compound index. A recommendation stores optional personal message and sender review reference (reviewId).
+- State transitions: pending → accepted | declined | dismissed. Re-recommending a previously declined/dismissed game resets to pending without creating duplicate rows.
+- Outcome tracking: subscriber listens for library.statusChanged and review.created. When recipient completes the game or writes a review, the recommendation outcome (completion status, completedAt, rating) updates automatically.
+- Pick score: aggregated metrics on sent recommendations (totalSent, acceptedCount, completedCount, averageRating) reflecting recommender tastemaker quality.
+- Accepting a recommendation automatically calls libraryService.add (defaulting to backlog or chosen status), catching conflicts cleanly if the recipient already owns the game.
+- UI: Recommendations tab in Friends hub with Pick score banner, Inbox and Sent views; quick Recommend modal accessible on both Game detail and Library Entry pages; Home dashboard widget highlighting pending friend recommendations.

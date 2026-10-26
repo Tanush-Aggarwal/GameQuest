@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { ProgressPanel } from '@/components/progress/ProgressPanel.jsx';
 import { ReviewPanel } from '@/components/review/ReviewPanel.jsx';
 import { AddToCollection } from '@/components/collections/AddToCollection.jsx';
+import { RecommendationModal } from '@/components/recommendations/RecommendationModal.jsx';
 import { getLibraryEntry, changeStatus, setVisibility, removeFromLibrary } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
 
@@ -31,6 +32,7 @@ const STATUS_LABELS = {
 export default function LibraryEntry() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [recommendOpen, setRecommendOpen] = useState(false);
 
   const load = useCallback((signal) => getLibraryEntry(id, { signal }), [id]);
   const { status, data: fetched, retry } = useAsync(load);
@@ -181,7 +183,13 @@ export default function LibraryEntry() {
         </div>
       )}
 
-      <AddToCollection entryId={id} />
+      <div className="flex flex-wrap items-center gap-2">
+        <AddToCollection entryId={id} />
+        <Button variant="secondary" onClick={() => setRecommendOpen(true)} className="text-xs h-9">
+          Recommend
+        </Button>
+      </div>
+      {game && <RecommendationModal game={{ id: entry.gameId, title: game.title }} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />}
 
       {/* Progress panel */}
       <ProgressPanel entryId={id} status={entry.status} initialProgress={entry.manualProgress ?? 0} />

@@ -1,4 +1,4 @@
-﻿import { useCallback } from 'react';
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Gamepad2, Clock, Trophy, Layers, ChevronRight, TrendingUp } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
@@ -8,6 +8,7 @@ import { getDashboard, getPlayNext } from '@/services/progressApi.js';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
+import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -24,6 +25,9 @@ export default function Home() {
 
       {/* Resume card */}
       <ResumeCard dashboard={dashboard} />
+
+      {/* Recommended for you */}
+      <RecommendationWidget />
 
       {/* Stat tiles */}
       <StatTiles dashboard={dashboard} />

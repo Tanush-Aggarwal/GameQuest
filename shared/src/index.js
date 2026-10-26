@@ -7,3 +7,4 @@ export * from './review.js';
 export * from './collection.js';
 export * from './social.js';
 export * from './session.js';
+export * from './recommendation.js';

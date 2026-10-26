@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, Check, Search, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,9 +21,12 @@ import {
   unfriend,
 } from '@/services/socialApi.js';
 
+import { RecommendationsTab } from '@/components/recommendations/RecommendationsTab.jsx';
+
 const TABS = [
   ['friends', 'Friends'],
   ['requests', 'Requests'],
+  ['recommendations', 'Recommendations'],
   ['find', 'Find people'],
 ];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -263,6 +266,7 @@ export default function Friends() {
       </nav>
       {tab === 'friends' && <FriendsTab />}
       {tab === 'requests' && <RequestsTab />}
+      {tab === 'recommendations' && <RecommendationsTab />}
       {tab === 'find' && <FindTab />}
     </section>
   );

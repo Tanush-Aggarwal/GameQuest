@@ -4,16 +4,17 @@ Every AI tool reads this at the start of a session and updates it at the end.
 Keep it short: newest first, one line per item.
 
 ## Current tier
-Tier 4 — Social: collections, friends + activity feed, game sessions, and deploy tooling complete
+Tier 4 — Social: collections, friends + activity feed, game sessions, and game recommendations complete; live cloud deploy postponed to end
 
 ## In progress
 - (nothing)
 
 ## Next up (do these in order, one at a time)
-11b. Cloud deploy action (user account setup): Push main, create Atlas user & Render Web Service + Vercel project per docs/DEPLOY.md, then verify via npm run verify-deploy <url>
-12. Game recommendations: Recommendation model, recommendationService (friend-to-friend game picks, outcome tracking, pick score), /recommendations endpoints, Recommendations tab in Friends hub
+13. UI & Visual Identity Overhaul: Game Page enrichment (Overview, Reviews, Friends Playing, ambient cover tinting), Library filter rail (platform, genre, length, shelf view), Explore curated discovery shelves
+14. Cloud deploy (postponed to end): Atlas + Render + Vercel
 
 ## Done
+- Item 12 (game recommendations): Recommendation model with unique (fromId, toId, gameId) index, recommendationService (friend/block verification, review snippet linkage, inbox/sent listing, outcome tracking on status/review events, pick score calculation), /recommendations endpoints (create rate-limited, respond, delete, score), RecommendationsTab in Friends hub with Pick Score banner, RecommendationModal on Game and LibraryEntry pages, RecommendationWidget on Home dashboard, seeded recommendation from alex to demo; 11 server tests + 3 client tests (330 total tests pass)
 - Item 11 (deploy readiness & verification): Vercel proxy rewrite + Render blueprint confirmed, automated post-deploy verification script (scripts/verify-deploy.js), CLIENT_ORIGIN trailing-slash normalization in config, package.json verify-deploy script, README deployment section updated; 211 server + 105 client tests pass
 - Item 10 (game sessions): GameSession + Rsvp models, sessionService (friends/invite visibility, blocks, host-only update/cancel, RSVP with capacity, upcoming list with composite cursor, .ics), /sessions routes (create rate-limited), Sessions page grouped by local day, schedule form (game search or ?game=, invitees, Discord pattern check, UTC conversion), session detail (optimistic RSVP with rollback, attendees, Add to calendar, Join Discord, host edit/cancel), Home upcoming widget, seeded Hades night; 35 server + 19 client tests, hardened after review: atomic seat counter, friend-gated access, privacy-aware attendee lists
 - Item 9 (friends + activity feed): Friendship/Block/Activity models, friendService (sorted-pair mutual friendships, crossed-request auto-accept, blocks override everything, username search), activityService (subscriber-written activity, read-time visibility incl. hiddenFromFriends, cursor feed), profileService + User.privacy, /friends /blocks /users /feed routes with request rate limit, Friends page (friends / requests / find, optimistic with rollback), /u/:username profile, Home friends feed, own Profile (privacy + blocked list), seeded user alex (friends with demo) with feed content; 34 server + 26 client tests
@@ -46,6 +47,7 @@ pm run seed to get a fresh upcoming one after it ends.
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Antigravity — game recommendations (model, service, endpoints, Friends tab, modals, Home widget, seed); 222 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — deploy verification script, CORS origin trailing-slash normalization, updated README & deploy docs; 211 server tests, 105 client tests pass clean
 - 2026-10-27 — Claude Code — collections (3e292b5), friends + activity feed (797dd90), game sessions + README; server 211 tests, client 105; demo + alex seeded
 - 2026-10-27 — Claude Code — applied bundle ce99c9c, approved install scripts, `npm run seed` + `npm run dev` verified against Atlas and real IGDB (Celeste/Hades search OK, no upstream errors); fixed seed giving Hades the wrong slug (IGDB: `hades--1`), which made IGDB's own `hades` fail to cache with E11000.

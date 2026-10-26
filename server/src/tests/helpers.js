@@ -167,6 +167,17 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       doc.updatedAt = new Date();
       return { matchedCount: 1, modifiedCount: 1 };
     },
+    async updateMany(q, update) {
+      let count = 0;
+      for (const doc of docs) {
+        if (matchesQuery(doc, q)) {
+          applyUpdate(doc, update);
+          doc.updatedAt = new Date();
+          count += 1;
+        }
+      }
+      return { matchedCount: count, modifiedCount: count };
+    },
     // Minimal aggregate: handles $match + $group with $avg/$sum
     aggregate(pipeline) {
       let rows = [...docs];

@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { health } from '../controllers/healthController.js';
 import { createAuthRouter } from './auth.js';
 import { createGamesRouter } from './games.js';
@@ -9,6 +9,7 @@ import { createReviewsRouter } from './reviews.js';
 import { createCollectionsRouter } from './collections.js';
 import { createSocialRouters } from './social.js';
 import { createSessionsRouter } from './sessions.js';
+import { createRecommendationsRouter } from './recommendations.js';
 import { createRequireAuth } from '../middleware/auth.js';
 
 export function createRoutes({
@@ -23,6 +24,7 @@ export function createRoutes({
   activityService,
   profileService,
   sessionService,
+  recommendationService,
   LibraryEntry,
   config,
 }) {
@@ -43,6 +45,9 @@ export function createRoutes({
   router.use('/users', social.users);
   router.use('/feed', social.feed);
   router.use('/sessions', createSessionsRouter({ authService, sessionService }));
+  if (recommendationService) {
+    router.use('/recommendations', createRecommendationsRouter({ authService, recommendationService }));
+  }
 
   return router;
 }

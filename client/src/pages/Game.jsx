@@ -1,11 +1,12 @@
-﻿import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarPlus, Clock } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button.jsx';
+import { ArrowLeft, CalendarPlus, Clock, Sparkles } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCover } from '@/components/games/GameCard.jsx';
 import { GameLibraryPanel } from '@/components/library/GameLibraryPanel.jsx';
+import { RecommendationModal } from '@/components/recommendations/RecommendationModal.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getGame } from '@/services/gamesApi.js';
 
@@ -47,6 +48,7 @@ function GameSkeleton() {
 
 export default function Game() {
   const { slug } = useParams();
+  const [recommendOpen, setRecommendOpen] = useState(false);
   const load = useCallback((signal) => getGame(slug, { signal }), [slug]);
   const { status, data: game, error, retry } = useAsync(load);
   return (
@@ -79,9 +81,15 @@ export default function Game() {
             {game.platforms.length > 0 && <p className="text-sm text-text-muted">{game.platforms.join(' · ')}</p>}
             <p className="max-w-prose text-sm">{game.summary || 'No description available yet.'}</p>
             <GameLibraryPanel game={game} />
-            <Link to={`/sessions/new?game=${game.slug}`} className={buttonVariants({ variant: 'secondary' }) + ' w-fit'}>
-              <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Schedule a session
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/sessions/new?game=${game.slug}`} className={buttonVariants({ variant: 'secondary' }) + ' w-fit'}>
+                <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Schedule a session
+              </Link>
+              <Button variant="secondary" onClick={() => setRecommendOpen(true)} className="w-fit">
+                <Sparkles className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" /> Recommend
+              </Button>
+            </div>
+            <RecommendationModal game={game} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />
             <div className="max-w-xs">
               <TimeToBeat timeToBeat={game.timeToBeat} />
             </div>

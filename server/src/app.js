@@ -34,6 +34,8 @@ import { createProfileService } from './services/profileService.js';
 import { GameSession } from './models/GameSession.js';
 import { Rsvp } from './models/Rsvp.js';
 import { createSessionService } from './services/sessionService.js';
+import { Recommendation } from './models/Recommendation.js';
+import { createRecommendationService } from './services/recommendationService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -50,6 +52,7 @@ export function createApp({
   activityService: _activitySvc,
   profileService: _profileSvc,
   sessionService: _sessionSvc,
+  recommendationService: _recSvc,
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -66,7 +69,20 @@ export function createApp({
     _profileSvc ?? createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService });
   const sessionService =
     _sessionSvc ?? createSessionService({ GameSession, Rsvp, Game, User, social: friendService, eventBus });
-  registerSubscribers({ eventBus, collectionService, activityService });
+  const recommendationService =
+    _recSvc ??
+    createRecommendationService({
+      Recommendation,
+      Game,
+      User,
+      Review,
+      LibraryEntry,
+      libraryService,
+      social: friendService,
+      eventBus,
+      logger,
+    });
+  registerSubscribers({ eventBus, collectionService, activityService, recommendationService });
 
   const app = express();
 
@@ -91,6 +107,7 @@ export function createApp({
       activityService,
       profileService,
       sessionService,
+      recommendationService,
       LibraryEntry,
       config,
     }));

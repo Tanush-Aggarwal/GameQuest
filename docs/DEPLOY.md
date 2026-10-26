@@ -24,6 +24,9 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
 2. Use a long, random password for the database user (rotate it if it was ever pasted anywhere).
 3. Your connection string must include the database name:
    `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/gamequest?retryWrites=true&w=majority`
+4. **Build the indexes.** The API runs with `autoIndex` off in production, so nothing creates indexes
+   (including the TTL index on `MediaCache`) on its own. Run `npm run db:indexes` once against the Atlas
+   database, and again after any schema/index change. `npm run seed` runs it automatically at the end.
 
 ## 2. Render (API)
 

@@ -1,5 +1,6 @@
 ﻿import request from 'supertest';
 import { jest } from '@jest/globals';
+import { updateProfileSchema } from '@gamequest/shared';
 import { createApp } from '../app.js';
 import { createAuthService } from '../services/authService.js';
 import { createFriendService } from '../services/friendService.js';
@@ -544,5 +545,17 @@ describe('social routes', () => {
     const tooMany = [g1._id, g2._id, '000000000000000000000003', '000000000000000000000004', '000000000000000000000005'];
     const badRes = await demo.agent.patch('/api/v1/users/me').send({ favouriteGames: tooMany });
     expect(badRes.status).toBe(400);
+  });
+});
+
+describe('updateProfileSchema avatar', () => {
+  it('accepts https URLs, empty and null; rejects other schemes', () => {
+    const parse = (avatar) => updateProfileSchema.safeParse({ avatar }).success;
+    expect(parse('https://images.example.com/a.png')).toBe(true);
+    expect(parse('')).toBe(true);
+    expect(parse(null)).toBe(true);
+    expect(parse('http://images.example.com/a.png')).toBe(false);
+    expect(parse('javascript:alert(1)')).toBe(false);
+    expect(parse('not a url')).toBe(false);
   });
 });

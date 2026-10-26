@@ -35,6 +35,7 @@ import { createFriendService } from '../src/services/friendService.js';
 import { createSessionService } from '../src/services/sessionService.js';
 import { Recommendation } from '../src/models/Recommendation.js';
 import { createRecommendationService } from '../src/services/recommendationService.js';
+import { syncAllIndexes } from './sync-indexes.js';
 
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
@@ -593,6 +594,9 @@ async function seed() {
     });
     console.log('Recommendation ready');
   }
+
+  console.log('\nSyncing indexes...');
+  await syncAllIndexes();
 
   console.log(`\nSeed complete! ${GAMES.length} high-res games ready.`);
   console.log(`Log in with ${DEMO_EMAIL} / ${DEMO_PASSWORD}\n`);

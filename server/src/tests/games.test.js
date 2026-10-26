@@ -283,4 +283,24 @@ describe('GET /api/v1/games', () => {
     expect(res.body.items).toHaveLength(1);
     expect(res.body.items[0]).toMatchObject({ username: 'Alex', status: 'playing', manualProgress: 35 });
   });
+  it('leaves out friends whose profile is private', async () => {
+    const User = createFakeCollection();
+    const open = await User.create({ username: 'open', privacy: 'friends' });
+    const closed = await User.create({ username: 'closed', privacy: 'private' });
+    const friendService = {
+      listFriends: jest.fn().mockResolvedValue([
+        { id: open._id, username: 'open' },
+        { id: closed._id, username: 'closed' },
+      ]),
+    };
+    const LibraryEntry = createFakeCollection();
+    const Game = createFakeCollection();
+    const game = await Game.create({ title: 'Hades', slug: 'hades' });
+    await LibraryEntry.create({ userId: open._id, gameId: game._id, status: 'playing' });
+    await LibraryEntry.create({ userId: closed._id, gameId: game._id, status: 'playing' });
+
+    const gameService = createGameService({ Game, igdb: { isConfigured: () => false }, friendService, LibraryEntry, User });
+    const { items } = await gameService.getFriendsPlaying('viewer', 'hades');
+    expect(items.map((i) => i.username)).toEqual(['open']);
+  });
 });

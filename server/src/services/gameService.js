@@ -33,7 +33,8 @@ export function createGameService({
   logger,
   friendService,
   LibraryEntry,
-  now = () => new Date(),
+  User,
+  now =() => new Date(),
   ttlMs = 30 * DAY_MS, // blueprint: IGDB metadata TTL is 30 days
   searchCooldownMs = 10 * 60 * 1000,
 }) {
@@ -139,14 +140,23 @@ export function createGameService({
       const friends = await friendService.listFriends(userId);
       if (!friends || !friends.length) return { items: [] };
 
-      const friendIds = friends.map((f) => f.id);
+      // Privacy filter: a friend whose profile is private never shows up in another user's game view.
+      let visible = friends;
+      if (User) {
+        const owners = await User.find({ _id: { $in: friends.map((f) => f.id) } }).select('privacy').lean();
+        const hidden = new Set(owners.filter((u) => u.privacy === 'private').map((u) => String(u._id)));
+        visible = friends.filter((f) => !hidden.has(String(f.id)));
+      }
+      if (!visible.length) return { items: [] };
+
+      const friendIds = visible.map((f) => f.id);
       const entries = await LibraryEntry.find({
         userId: { $in: friendIds },
         gameId: game._id,
         hiddenFromFriends: { $ne: true },
       }).lean();
 
-      const friendMap = new Map(friends.map((f) => [String(f.id), f]));
+      const friendMap = new Map(visible.map((f) => [String(f.id), f]));
       const items = entries.map((e) => {
         const friend = friendMap.get(String(e.userId));
         return {

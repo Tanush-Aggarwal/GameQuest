@@ -9,7 +9,8 @@
     "start": "node src/index.js",
     "lint": "eslint src",
     "test": "node --experimental-vm-modules ../node_modules/jest/bin/jest.js --passWithNoTests",
-    "seed": "node --env-file-if-exists=.env scripts/seed.js"
+    "seed": "node --env-file-if-exists=.env scripts/seed.js",
+    "db:indexes": "node --env-file-if-exists=.env scripts/sync-indexes.js"
   },
   "jest": {
     "testEnvironment": "node",

@@ -62,7 +62,7 @@ export function createApp({
   const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, eventBus });
   const gameService =
     _gameSvc ??
-    createGameService({ Game, igdb: createIgdbAdapter({ config }), logger, friendService, LibraryEntry });
+    createGameService({ Game, igdb: createIgdbAdapter({ config }), logger, friendService, LibraryEntry, User });
   const collectionService =
     _collectionSvc ??
     createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });

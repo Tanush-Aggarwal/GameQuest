@@ -21,7 +21,15 @@ export const privacySchema = z.object({ privacy: z.enum(PROFILE_PRIVACY) });
 
 export const updateProfileSchema = z.object({
   bio: z.string().trim().max(300, 'Bio must be 300 characters or less').optional(),
-  avatar: z.string().trim().url('Must be a valid URL').max(500).or(z.literal('')).nullable().optional(),
+  avatar: z
+    .string()
+    .trim()
+    .url('Must be a valid URL')
+    .max(500)
+    .refine((v) => v.startsWith('https://'), 'Avatar must be an https:// URL')
+    .or(z.literal(''))
+    .nullable()
+    .optional(),
   favouriteGames: z.array(objectId).max(4, 'You can pick up to 4 favourite games').optional(),
 });
 

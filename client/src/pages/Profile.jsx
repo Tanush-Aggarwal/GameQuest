@@ -16,6 +16,7 @@ import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { SteamLinkCard } from '@/components/steam/SteamLinkCard.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
@@ -398,6 +399,12 @@ export default function Profile() {
             </dd>
           </div>
         </dl>
+      </section>
+
+      {/* Connected platforms */}
+      <section aria-labelledby="steam-title" className="flex flex-col gap-3">
+        <h2 id="steam-title" className="text-lg font-semibold font-heading">Steam</h2>
+        <SteamLinkCard />
       </section>
 
       {/* Privacy Settings */}

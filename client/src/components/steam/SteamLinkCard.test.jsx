@@ -1,0 +1,74 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
+
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock('sonner', () => ({ toast }));
+vi.mock('@/services/steamApi.js', () => ({ getSteamStatus: vi.fn(), linkSteam: vi.fn(), unlinkSteam: vi.fn() }));
+
+const api = await import('@/services/steamApi.js');
+const { SteamLinkCard } = await import('./SteamLinkCard.jsx');
+
+const linked = {
+  linked: true,
+  steamId: '76561198000000001',
+  personaName: 'Gaben',
+  avatar: 'https://avatars.steamstatic.com/a.jpg',
+  profileUrl: 'https://steamcommunity.com/profiles/76561198000000001/',
+  visibility: 'public',
+  lastSync: null,
+};
+
+beforeEach(() => vi.clearAllMocks());
+
+describe('SteamLinkCard', () => {
+  it('shows a skeleton, then the link form with the Game details privacy note', async () => {
+    api.getSteamStatus.mockResolvedValue({ linked: false });
+    render(<SteamLinkCard />);
+    expect(screen.getByRole('status', { name: /loading steam/i })).toBeInTheDocument();
+    expect(await screen.findByLabelText(/steamid64 or profile url/i)).toBeInTheDocument();
+    expect(screen.getByText(/game details/i)).toBeInTheDocument();
+    const settings = screen.getByRole('link', { name: /steam privacy settings/i });
+    expect(settings).toHaveAttribute('href', 'https://steamcommunity.com/my/edit/settings');
+    expect(settings).toHaveAttribute('rel', expect.stringContaining('noopener'));
+  });
+
+  it('links an account and shows the persona', async () => {
+    api.getSteamStatus.mockResolvedValue({ linked: false });
+    api.linkSteam.mockResolvedValue(linked);
+    render(<SteamLinkCard />);
+    await userEvent.type(await screen.findByLabelText(/steamid64 or profile url/i), 'gaben');
+    await userEvent.click(screen.getByRole('button', { name: /link steam/i }));
+    expect(api.linkSteam).toHaveBeenCalledWith('gaben');
+    expect(await screen.findByText('Gaben')).toBeInTheDocument();
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('shows the server message next to the field when linking fails', async () => {
+    api.getSteamStatus.mockResolvedValue({ linked: false });
+    api.linkSteam.mockRejectedValue({ response: { data: { error: { code: 'NOT_FOUND', message: 'No Steam profile found for "x".' } } } });
+    render(<SteamLinkCard />);
+    await userEvent.type(await screen.findByLabelText(/steamid64 or profile url/i), 'xx');
+    await userEvent.click(screen.getByRole('button', { name: /link steam/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('No Steam profile found');
+  });
+
+  it('asks before unlinking and says the library is kept', async () => {
+    api.getSteamStatus.mockResolvedValue(linked);
+    api.unlinkSteam.mockResolvedValue();
+    render(<SteamLinkCard />);
+    await userEvent.click(await screen.findByRole('button', { name: /^unlink$/i }));
+    expect(api.unlinkSteam).not.toHaveBeenCalled();
+    expect(screen.getByText(/stay in your library/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /yes, unlink/i }));
+    await waitFor(() => expect(api.unlinkSteam).toHaveBeenCalledTimes(1));
+    expect(await screen.findByLabelText(/steamid64 or profile url/i)).toBeInTheDocument();
+  });
+
+  it('scopes a load failure to the section, with Retry', async () => {
+    api.getSteamStatus.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce({ linked: false });
+    render(<SteamLinkCard />);
+    await userEvent.click(await screen.findByRole('button', { name: /retry/i }));
+    expect(await screen.findByLabelText(/steamid64 or profile url/i)).toBeInTheDocument();
+  });
+});

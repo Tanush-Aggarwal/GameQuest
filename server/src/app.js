@@ -36,6 +36,8 @@ import { Rsvp } from './models/Rsvp.js';
 import { createSessionService } from './services/sessionService.js';
 import { Recommendation } from './models/Recommendation.js';
 import { createRecommendationService } from './services/recommendationService.js';
+import { createSteamAdapter } from './adapters/platforms/steam.js';
+import { createSteamService } from './services/steamService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -53,6 +55,8 @@ export function createApp({
   profileService: _profileSvc,
   sessionService: _sessionSvc,
   recommendationService: _recSvc,
+  steamAdapter = createSteamAdapter({ config }),
+  steamService: _steamSvc,
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -85,6 +89,7 @@ export function createApp({
       eventBus,
       logger,
     });
+  const steamService = _steamSvc ?? createSteamService({ User, steam: steamAdapter });
   registerSubscribers({ eventBus, collectionService, activityService, recommendationService });
 
   const app = express();
@@ -111,6 +116,7 @@ export function createApp({
       profileService,
       sessionService,
       recommendationService,
+      steamService,
       LibraryEntry,
       config,
     }));

@@ -26,8 +26,26 @@ const userSchema = new mongoose.Schema(
       email: { type: Boolean, default: false },
       digest: { type: Boolean, default: false },
     },
+    // Linked Steam account. A SteamID64 is public information, so there is no secret to encrypt here.
+    steam: {
+      steamId: { type: String, default: undefined },
+      personaName: { type: String, default: undefined },
+      avatar: { type: String, default: undefined },
+      profileUrl: { type: String, default: undefined },
+      visibility: { type: String, enum: ['public', 'friends', 'private'], default: undefined },
+      linkedAt: { type: Date, default: undefined },
+      lastSync: {
+        at: { type: Date, default: undefined },
+        added: { type: Number, default: undefined },
+        updated: { type: Number, default: undefined },
+        unmatchedCount: { type: Number, default: undefined },
+      },
+    },
   },
   { timestamps: true },
 );
+
+// One Steam account links to one GameQuest user (otherwise anyone could claim someone else's library).
+userSchema.index({ 'steam.steamId': 1 }, { unique: true, partialFilterExpression: { 'steam.steamId': { $type: 'string' } } });
 
 export const User = mongoose.models.User ?? mongoose.model('User', userSchema);

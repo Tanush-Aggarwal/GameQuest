@@ -101,6 +101,12 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
 
   const applyUpdate = (doc, update) => {
     for (const [k, v] of Object.entries(update.$set ?? {})) setPath(doc, k, v);
+    for (const k of Object.keys(update.$unset ?? {})) {
+      const keys = k.split('.');
+      const last = keys.pop();
+      const parent = keys.reduce((o, key) => o?.[key], doc);
+      if (parent) delete parent[last];
+    }
     for (const [k, v] of Object.entries(update.$inc ?? {})) setPath(doc, k, (getPath(doc, k) ?? 0) + v);
     for (const [k, v] of Object.entries(update.$max ?? {})) {
       const cur = getPath(doc, k);

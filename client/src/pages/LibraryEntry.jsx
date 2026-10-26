@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { AddToCollection } from '@/components/collections/AddToCollection.jsx';
 import { RecommendationModal } from '@/components/recommendations/RecommendationModal.jsx';
 import { getLibraryEntry, changeStatus, setVisibility, removeFromLibrary } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
+import { getHighResCover } from '@/components/games/GameCard.jsx';
 
 const STATUS_COLORS = {
   wishlist: 'var(--status-wishlist)',
@@ -95,7 +96,7 @@ export default function LibraryEntry() {
       {/* Hero */}
       <div className="flex gap-4">
         {game.cover ? (
-          <img src={game.cover} alt={game.title} className="w-24 h-32 object-cover rounded-xl flex-shrink-0 shadow-lg" loading="lazy" />
+          <img src={getHighResCover(game.cover)} alt={game.title} className="w-24 h-32 object-cover rounded-xl flex-shrink-0 shadow-lg" loading="lazy" />
         ) : (
           <div className="w-24 h-32 rounded-xl flex-shrink-0 bg-[var(--surface-raised)] flex items-center justify-center">
             <Gamepad2 size={28} className="text-[var(--text-muted)]" />

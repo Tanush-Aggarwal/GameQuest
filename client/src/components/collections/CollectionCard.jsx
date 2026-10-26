@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Gamepad2 } from 'lucide-react';
 import { TypeBadge, VisibilityBadge } from './badges.jsx';
+import { getHighResCover } from '../games/GameCard.jsx';
 
 // 2×2 mosaic of the first covers; a placeholder icon when there are none.
 export function CoverMosaic({ covers }) {
@@ -14,7 +15,7 @@ export function CoverMosaic({ covers }) {
   return (
     <div className="grid aspect-square w-full grid-cols-2 grid-rows-2 gap-px bg-border">
       {[0, 1, 2, 3].map((i) =>
-        covers[i] ? <img key={i} src={covers[i]} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div key={i} className="bg-surface-raised" />,
+        covers[i] ? <img key={i} src={getHighResCover(covers[i])} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div key={i} className="bg-surface-raised" />,
       )}
     </div>
   );

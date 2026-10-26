@@ -1,3 +1,4 @@
+import { getHighResCover } from '@/components/games/GameCard.jsx';
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Gamepad2, Clock, Trophy, Layers, ChevronRight, TrendingUp } from 'lucide-react';
@@ -61,7 +62,7 @@ function ResumeCard({ dashboard }) {
       className="flex gap-4 p-4 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors group"
     >
       {card.cover && (
-        <img src={card.cover} alt={card.title} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" loading="lazy" />
+        <img src={getHighResCover(card.cover)} alt={card.title} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" loading="lazy" />
       )}
       <div className="flex-1 min-w-0">
         <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">Continue playing</p>
@@ -165,7 +166,7 @@ function PlayNextCard({ item }) {
       className="flex gap-3 p-3 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors group"
     >
       {item.cover ? (
-        <img src={item.cover} alt={item.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" loading="lazy" />
+        <img src={getHighResCover(item.cover)} alt={item.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" loading="lazy" />
       ) : (
         <div className="w-12 h-16 rounded-lg bg-[var(--surface-raised)] flex-shrink-0" />
       )}

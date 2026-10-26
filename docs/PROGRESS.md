@@ -14,6 +14,7 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 14. Cloud deploy (postponed to end): Atlas + Render + Vercel
 
 ## Done
+- Catalog expansion & high-res posters: Expanded seed catalog to 32 iconic titles with 1080p vertical posters (`t_1080p`), release dates, genres, platforms, and timeToBeat numbers; added client-side cover upscaler (`getHighResCover`) in `GameCard.jsx`, `LibraryEntry.jsx`, `RecommendationsTab.jsx`, `RecommendationWidget.jsx`, `Home.jsx`, and `CollectionCard.jsx` to eliminate pixelation; enriched demo & alex libraries, reviews, play logs, and collections; 231 server tests + 108 client tests pass
 - Database improvements: connection pooling & Atlas resilience in connectDb (maxPoolSize 20, minPoolSize 2, socketTimeoutMS 45s, autoIndex off in prod, error event listener), Game compound & weighted text indexes, MediaCache model with TTL, User profile fields (avatar, bio, favouriteGames <= 4, discord, notificationPrefs), aggregation ObjectId casting in reviewService, projection optimizations in insightsService, and dedicated db.test.js suite; 231 server tests + 108 client tests pass (339 total tests pass)
 - Item 12 (game recommendations): Recommendation model with unique (fromId, toId, gameId) index, recommendationService (friend/block verification, review snippet linkage, inbox/sent listing, outcome tracking on status/review events, pick score calculation), /recommendations endpoints (create rate-limited, respond, delete, score), RecommendationsTab in Friends hub with Pick Score banner, RecommendationModal on Game and LibraryEntry pages, RecommendationWidget on Home dashboard, seeded recommendation from alex to demo; 11 server tests + 3 client tests (330 total tests pass)
 - Item 11 (deploy readiness & verification): Vercel proxy rewrite + Render blueprint confirmed, automated post-deploy verification script (scripts/verify-deploy.js), CLIENT_ORIGIN trailing-slash normalization in config, package.json verify-deploy script, README deployment section updated; 211 server + 105 client tests pass
@@ -48,6 +49,7 @@ pm run seed to get a fresh upcoming one after it ends.
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Antigravity — catalog expansion (32 games in 1080p, enriched demo/alex libraries & reviews) and client high-res cover upscaler (getHighResCover); 231 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — database optimization & model enhancements (db options, Game indexes, MediaCache, User fields, reviewService aggregation cast, insights projections, db.test.js); 231 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — game recommendations (model, service, endpoints, Friends tab, modals, Home widget, seed); 222 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — deploy verification script, CORS origin trailing-slash normalization, updated README & deploy docs; 211 server tests, 105 client tests pass clean

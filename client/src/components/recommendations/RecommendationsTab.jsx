@@ -1,3 +1,4 @@
+import { getHighResCover } from '@/components/games/GameCard.jsx';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Clock, Heart, Inbox, Send, Sparkles, Star, ThumbsDown, Trophy, Trash2 } from 'lucide-react';
@@ -216,7 +217,7 @@ function RecommendationCard({ item, isInbox, onRespond, onDelete }) {
       <Link to={game ? `/games/${game.slug}` : '#'} className="shrink-0">
         {game?.cover ? (
           <img
-            src={game.cover}
+            src={getHighResCover(game.cover)}
             alt={game.title}
             className="h-28 w-20 rounded-[var(--radius-control)] object-cover shadow"
             loading="lazy"

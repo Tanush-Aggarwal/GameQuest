@@ -122,3 +122,10 @@ Format: date — decision — why.
 - Missing Blueprint models & fields: Added `MediaCache` model with `(gameId, source)` unique index and `expiresAt` TTL index. Added `avatar`, `bio`, `favouriteGames` (validated max 4), `discord`, and `notificationPrefs` to `User` model and exposed them in profile reads.
 - Aggregation casting & queries: Fixed `refreshGameRating` in `reviewService.js` to cast `gameId` to `new mongoose.Types.ObjectId(gameId)` when valid, avoiding silent aggregation mismatches in native MongoDB. Added projection `.select(...)` to `insightsService.js` game queries.
 - Added comprehensive database test suite (`server/src/tests/db.test.js`) verifying all model schemas, compound indexes, validators, and connection options.
+
+
+## 2026-10-27 — Antigravity — catalog expansion & high-resolution posters
+- Catalog expanded from 8 to 32 iconic titles covering varied genres, durations, and platforms (Baldur's Gate 3, Cyberpunk 2077, Zelda: TotK, Red Dead Redemption 2, God of War Ragnarök, Portal 2, Disco Elysium, Outer Wilds, Balatro, Dave the Diver, Sea of Stars, Sekiro, Ghost of Tsushima, Persona 5 Royal, Alan Wake 2, Armored Core VI, Resident Evil 4, Metroid Dread, Hi-Fi RUSH, Monster Hunter: World, Chrono Trigger, Silksong, Bloodborne, Death Stranding).
+- Upgraded game poster artwork to IGDB 1080p full-res format (`t_1080p`), delivering crisp vertical poster artwork across cards, shelves, and detail pages.
+- Client cover upscaler (`getHighResCover` in `GameCard.jsx`): Normalizes any standard `t_cover_big/` IGDB URLs to `t_cover_big_2x/` (528x704 retina), ensuring games rendered across explore, library entries, home dashboard widgets, and recommendations tabs never appear blurry or pixelated on high-DPI displays.
+- Enriched demo user library, play logs, reviews, and collections to feature the expanded catalog.

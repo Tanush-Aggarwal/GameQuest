@@ -1,9 +1,21 @@
 import { Gamepad2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+/**
+ * Normalises cover URLs so that IGDB images render in high resolution (2x retina / 1080p).
+ */
+export function getHighResCover(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (url.includes('images.igdb.com/igdb/image/upload/t_cover_big/')) {
+    return url.replace('/t_cover_big/', '/t_cover_big_2x/');
+  }
+  return url;
+}
+
 export function GameCover({ game, className = '' }) {
-  return game.cover ? (
-    <img src={game.cover} alt="" loading="lazy" className={`aspect-[3/4] w-full object-cover ${className}`} />
+  const coverUrl = getHighResCover(game?.cover);
+  return coverUrl ? (
+    <img src={coverUrl} alt="" loading="lazy" className={`aspect-[3/4] w-full object-cover ${className}`} />
   ) : (
     <div className={`flex aspect-[3/4] w-full items-center justify-center bg-surface-raised ${className}`}>
       <Gamepad2 className="h-8 w-8 text-text-muted" aria-hidden="true" />

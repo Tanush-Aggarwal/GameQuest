@@ -206,11 +206,6 @@ export function createSteamSyncService({
         report.added = added;
         report.updated = updated;
 
-        if (fillArt) {
-          const needArt = groups.map((g) => g.game).filter((g) => !g.cover || !g.backdrop);
-          await Promise.allSettled(needArt.map((g) => fillArt(g)));
-        }
-
         await User.updateOne(
           { _id: userId },
           { $set: { 'steam.lastSync': { at, added, updated, unmatchedCount: report.unmatched.length } } },
@@ -224,6 +219,13 @@ export function createSteamSyncService({
           unmatchedCount: report.unmatched.length,
           at,
         });
+
+        // Cosmetic and last: the library is already saved and reported, so a slow CDN can only delay the
+        // response, never lose or fail the sync. The art service backs off after its first failure.
+        if (fillArt) {
+          const needArt = groups.map((g) => g.game).filter((g) => !g.cover || !g.backdrop);
+          for (const batch of chunk(needArt, 10)) await Promise.allSettled(batch.map((g) => fillArt(g)));
+        }
         return report;
       } finally {
         running.delete(key);

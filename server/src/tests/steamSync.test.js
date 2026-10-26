@@ -51,7 +51,7 @@ function steamFetch({ owned = [], ownedBody, ach = {}, achStatus = {} } = {}) {
   });
 }
 
-function setup({ fetchOptions, igdbHits = [], igdbFails = false, igdbConfigured = true } = {}) {
+function setup({ fetchOptions, igdbHits = [], igdbFails = false, igdbConfigured = true, fillArt } = {}) {
   const models = createFakeModels();
   const config = testConfig({ STEAM_API_KEY: KEY });
   const authService = createAuthService({ ...models, config, bcryptRounds: 4, reuseGraceMs: 0 });
@@ -75,7 +75,7 @@ function setup({ fetchOptions, igdbHits = [], igdbFails = false, igdbConfigured 
   const events = [];
   eventBus.on('sync.completed', (e) => events.push(e));
   const importGame = createCatalogImportService({ Game, MediaCache: {}, igdb }).upsertGame;
-  const service = createSteamSyncService({ User: models.User, Game, LibraryEntry, StatusHistory, steam, igdb, importGame, eventBus, logger });
+  const service = createSteamSyncService({ User: models.User, Game, LibraryEntry, StatusHistory, steam, igdb, importGame, fillArt, eventBus, logger });
   const mkUser = async (name, { linked = true } = {}) => {
     const { user } = await authService.register({ username: name, email: `${name}@example.com`, password: 'correct-horse-9' });
     if (linked) models.User.docs.find((u) => u._id === user.id).steam = { steamId: STEAM_ID };
@@ -378,6 +378,25 @@ describe('steamSyncService: failures, lock and events', () => {
     const user = s.User.docs.find((u) => u._id === neo.id);
     expect(user.steam.lastSync).toMatchObject({ added: 1, updated: 0, unmatchedCount: 1, at: expect.any(Date) });
     expect(JSON.stringify(result)).not.toContain(KEY);
+  });
+
+  it('asks for Steam art only for games missing a cover or backdrop, after saving, and survives its failure', async () => {
+    const order = [];
+    const fillArt = jest.fn(async (game) => {
+      order.push(game.title);
+      throw new Error('CDN down');
+    });
+    const s = setup({ fetchOptions: { owned: [own(1, 'Has Art', 5), own(2, 'No Backdrop', 5), own(3, 'No Cover', 5)] }, fillArt });
+    await s.mkGame('Has Art', 1, { cover: 'c.jpg', backdrop: 'b.jpg' });
+    await s.mkGame('No Backdrop', 2, { cover: 'c.jpg', backdrop: null });
+    await s.mkGame('No Cover', 3, { cover: null, backdrop: 'b.jpg' });
+    const neo = await s.mkUser('neo');
+
+    const result = await s.service.syncUser(neo.id);
+
+    expect(result.added).toBe(3); // the failing art lookup did not fail or shrink the sync
+    expect(order.sort()).toEqual(['No Backdrop', 'No Cover']);
+    expect(s.User.docs.find((u) => u._id === neo.id).steam.lastSync).toMatchObject({ added: 3 });
   });
 
   it('records one "synced N games" activity item, and none for a sync that adds nothing', async () => {

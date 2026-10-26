@@ -41,6 +41,7 @@ import { createSteamService } from './services/steamService.js';
 import { createSteamSyncService } from './services/steamSyncService.js';
 import { createCatalogImportService } from './services/catalogImportService.js';
 import { MediaCache } from './models/MediaCache.js';
+import { createArtService } from './services/artService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -69,9 +70,10 @@ export function createApp({
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
   const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, eventBus });
   const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, eventBus });
+  const artService = createArtService({ Game, MediaCache, steam: steamAdapter, logger });
   const gameService =
     _gameSvc ??
-    createGameService({ Game, igdb: igdbAdapter, logger, friendService, LibraryEntry, User });
+    createGameService({ Game, igdb: igdbAdapter, logger, friendService, LibraryEntry, User, artService });
   const collectionService =
     _collectionSvc ??
     createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });
@@ -105,6 +107,7 @@ export function createApp({
       steam: steamAdapter,
       igdb: igdbAdapter,
       importGame: createCatalogImportService({ Game, MediaCache, igdb: igdbAdapter }).upsertGame,
+      fillArt: artService.fillSteamArt,
       eventBus,
       logger,
     });

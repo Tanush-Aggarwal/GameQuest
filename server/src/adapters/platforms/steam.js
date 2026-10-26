@@ -2,6 +2,8 @@ import { NotFoundError, UpstreamError, ValidationError } from '../../utils/error
 
 const API = 'https://api.steampowered.com';
 const TIMEOUT_MS = 20_000;
+const PROBE_TIMEOUT_MS = 5_000; // art is cosmetic: give up fast so a slow CDN never stalls a page or a sync
+const CDN ='https://cdn.cloudflare.steamstatic.com/steam/apps';
 
 // Steam web API adapter. Only this module talks to Steam. The API key travels in the query string,
 // so errors are built from status codes and never from the request URL, and nothing here logs it.
@@ -106,6 +108,30 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
     },
 
     getAchievements,
+
+    // Steam CDN art for an appid, no API key involved. Cover: library_600x900_2x.jpg; backdrop:
+    // library_hero.jpg; header.jpg is the last resort for whichever is missing. Returns
+    // { cover, backdrop } with null for what the CDN does not have. A network failure throws, so a
+    // caller never caches "no art" because of a bad moment.
+    async probeArt(appid) {
+      const id = String(appid);
+      if (!/^\d+$/.test(id)) return { cover: null, backdrop: null };
+      const exists = async (file) => {
+        const url = `${CDN}/${id}/${file}`;
+        let res;
+        try {
+          res = await fetchImpl(url, { method: 'HEAD', signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) });
+        } catch {
+          throw new UpstreamError('Could not reach the Steam CDN.');
+        }
+        if (res.status >= 500 || res.status === 429) throw new UpstreamError(`The Steam CDN is unavailable (HTTP ${res.status}).`);
+        return res.ok ? url : null;
+      };
+      const [cover, backdrop] = await Promise.all([exists('library_600x900_2x.jpg'), exists('library_hero.jpg')]);
+      if (cover && backdrop) return { cover, backdrop };
+      const header = await exists('header.jpg');
+      return { cover: cover ?? header, backdrop: backdrop ?? header };
+    },
 
     // Achievements for many games, `size` at a time. A game that fails is left out of `results`
     // (and counted in `failed`) so one bad response never fails the sync.

@@ -6,6 +6,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function toUpsertUpdate(game, at) {
   const { slug, externalIds, timeToBeat, ...rest } = game;
   const $set = { ...rest, cachedAt: at };
+  // IGDB having no cover/backdrop must not wipe art filled in from another source (Steam CDN).
+  for (const field of ['cover', 'backdrop']) if (!$set[field]) delete $set[field];
   for (const [key, value] of Object.entries(externalIds ?? {})) $set[`externalIds.${key}`] = value;
   if (timeToBeat) for (const [key, value] of Object.entries(timeToBeat)) $set[`timeToBeat.${key}`] = value;
   // The slug is part of public URLs, so it is fixed when the game is first cached.
@@ -74,6 +76,7 @@ export function createGameService({
   friendService,
   LibraryEntry,
   User,
+  artService,
   now =() => new Date(),
   ttlMs = 30 * DAY_MS, // blueprint: IGDB metadata TTL is 30 days
   searchCooldownMs = 10 * 60 * 1000,
@@ -174,6 +177,7 @@ export function createGameService({
           logger?.warn({ err: fresh.reason }, 'igdb refresh failed; serving stale game');
         }
       }
+      if (artService) game = await artService.fillSteamArt(game); // never throws; a missing cover/backdrop gets Steam art
       const [display] = await withParentArt(Game, [game]);
       return toGameDto(display);
     },

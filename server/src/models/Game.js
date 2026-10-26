@@ -25,6 +25,8 @@ const gameSchema = new mongoose.Schema(
     artworks: { type: [String], default: [] },
     screenshots: { type: [String], default: [] },
     videos: { type: [String], default: [] }, // YouTube video ids from IGDB
+    // The same videos with IGDB's names ("Trailer", "Gameplay video"); only a hint for trailer picking.
+    videoMeta: { type: [new mongoose.Schema({ id: String, name: String }, { _id: false })], default: [] },
     backdrop: { type: String, default: null },
     developer: { type: [String], default: [] },
     publisher: { type: [String], default: [] },

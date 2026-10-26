@@ -12,7 +12,7 @@ A full-stack MERN web app: one unified game library across platforms, smart "wha
 | **Server** | Node.js, Express 5, Mongoose 9, Zod (validation), Pino (logging), Helmet, bcrypt, JSON Web Tokens |
 | **Database** | MongoDB Atlas |
 | **Shared** | `@gamequest/shared` — Zod schemas re-used on both client and server |
-| **Testing** | Jest + Supertest (server, 377 tests), Vitest + Testing Library (client, 144 tests) |
+| **Testing** | Jest + Supertest (server, 536 tests), Vitest + Testing Library (client, 153 tests) |
 
 ---
 
@@ -141,7 +141,9 @@ Only main games, remakes, remasters, expanded games, ports and standalone expans
 - **Link Steam** on *Profile → Steam* with a SteamID64, a `steamcommunity.com/profiles/<id>` URL or a vanity name. Steam **Game details must be Public** (Steam → Edit Profile → Privacy Settings), otherwise the sync stops with a message that says so. One Steam account links to one GameQuest user. Unlinking keeps the games already in your library.
 - **Sync now** reads your owned games (free games included) and each game's achievements, matches them to the catalog by Steam app id, and imports unknown games from IGDB with the same catalog rule (tools, soundtracks and DLC are listed as "not matched", never added). It keeps one library entry per game, adds a `Steam` ownership with playtime and an achievement snapshot, and never overwrites your manual progress or the status of a game that is already in your library. New games start as *Playing* (played in the last 2 weeks), *Completed* (100% achievements) or *Backlog*. One sync per user every 5 minutes; failed attempts do not use that up.
 - **Steam art fallback:** a game with a Steam id and no cover or backdrop gets Steam CDN art (`library_600x900_2x`, `library_hero`, `header` last). Each game is probed once and the answer is cached in `MediaCache`.
-- **Trailers** on the game page use the IGDB video first (no quota). Without one, a YouTube search ("<title> official trailer", embeddable only) runs at most once per game per 7 days and is cached; the player only loads the `youtube-nocookie.com` iframe when you click play, and the section is hidden when there is no video.
+- **Trailers** on the game page are validated before they are shown. Candidates are the game's IGDB videos; only when none passes does a YouTube search run (`"<title> official gameplay trailer"`, then `"<title> official trailer"`; embeddable, Gaming category, English, US). Every candidate is checked with one `videos.list` call (up to 50 ids, 1 quota unit) and rejected if it is not public/embeddable, blocked in India or the US, shorter than 30 s or longer than 8 min, tagged with another language or written in a non-Latin script, not named after this game (or named after a sequel or neighbouring game), or noise such as developer diaries, interviews, reviews, reactions, soundtracks, walkthroughs, mods or livestreams. The rest are scored (gameplay trailer > launch > release > reveal > trailer; "official"; the developer's or a known official channel; views) and the best 3 are shown, with small tabs for the others. The player only loads the `youtube-nocookie.com` iframe (English interface, captions off) when you click play. **Wrong trailer?** hides a video for you at once and for everyone once two different people reported it. The section is hidden when nothing passes. **`YOUTUBE_API_KEY` is required for trailers**: without it nothing is shown, because a video cannot be validated.
+- **Trailer quota:** a game costs at most one search round (up to two searches, 100 units each) per 7 days, "nothing found" is remembered too, page views and the refresh script share a daily ceiling of 90 searches (9,000 of the 10,000 units a day), and a 403/429 pauses all lookups for 24 hours (the pause and the count are shared by all processes and survive restarts). Each evaluation logs the units it used.
+- `npm run trailers:refresh -- --limit=300 [--budget=80]` pre-picks trailers for the most popular games (cheap `videos.list` checks on IGDB candidates first, at most `--budget` search calls) and prints how many came from IGDB or YouTube and the quota used.
 - After pulling these changes run `npm run db:indexes` (new unique index on a user's Steam id).
 
 ### 4. Run in development
@@ -165,7 +167,8 @@ All routes are under `/api/v1` and (except `/health` and `/auth/*`) require the 
 | POST | `/auth/register` · `/auth/login` · `/auth/refresh` · `/auth/logout` | Account and session |
 | GET | `/auth/me` | Current user |
 | GET | `/games` · `/games/:slug` | Search the catalog (`q`, `genre`, `platform`, `minRating`, `minHours`, `maxHours`; most popular first) · game detail |
-| GET | `/games/:slug/trailer` | `{ trailer: { videoId, source: igdb \| youtube } \| null }`: IGDB video first, else one cached YouTube search per 7 days |
+| GET | `/games/:slug/trailer` | `{ trailers: [{ videoId, label, source: igdb \| youtube }] }`: up to 3 validated, scored trailers, best first (`[]` when none passes) |
+| POST | `/games/:slug/trailer/report` | "Wrong trailer?" `{ videoId }` -> `{ trailers, changed, dropped }`. Hides it for you; dropped for everyone after 2 different reporters. 20 per hour per user |
 | GET | `/steam` | Linked Steam account: persona, avatar, last sync (`{ linked: false }` when none) |
 | POST · DELETE | `/steam/link` | Link by SteamID64 / profile URL / vanity name `{ input }` (rate-limited) · unlink |
 | POST | `/sync/steam` | Sync the linked Steam library → `{ added, updated, unmatched: [{ appid, name, playtimeMin }], warnings }`. 1 per 5 min per user; a private profile answers 502 with how to fix it |

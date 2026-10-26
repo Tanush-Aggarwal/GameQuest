@@ -60,7 +60,7 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
    | `PUBLIC_API_URL` | `https://placeholder.vercel.app` for now (fixed in step 4) |
    | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | from dev.twitch.tv (game search) |
    | `STEAM_API_KEY` | optional (Steam sync) |
-   | `YOUTUBE_API_KEY` | optional (extra gameplay videos) |
+   | `YOUTUBE_API_KEY` | needed for trailers (without it no trailer is shown: videos are validated through the YouTube API). 10,000 free units a day; see README "Trailer quota". After deploying run `npm run trailers:refresh` once |
    | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | optional (Discord link) |
 
 4. **Create Web Service.** When the deploy is live, open `https://<your-service>.onrender.com/api/v1/health`.

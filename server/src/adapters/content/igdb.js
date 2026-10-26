@@ -19,6 +19,7 @@ const GAME_FIELDS = [
   'artworks.image_id',
   'screenshots.image_id',
   'videos.video_id',
+  'videos.name', // "Trailer", "Gameplay video"...: a hint when picking which video to show
   'genres.name',
   'themes.name',
   'game_modes.name',
@@ -78,6 +79,7 @@ export function normaliseGame(raw) {
     artworks,
     screenshots,
     videos: (raw.videos ?? []).map((v) => v.video_id).filter(Boolean),
+    videoMeta: (raw.videos ?? []).filter((v) => v.video_id).map((v) => ({ id: v.video_id, name: v.name ?? '' })),
     backdrop: artworks[0] ?? screenshots[0] ?? null,
     developer: names('developer'),
     publisher: names('publisher'),
@@ -226,6 +228,21 @@ export function createIgdbAdapter({
       if (!list.length) return [];
       const where = `id = (${list.join(',')})${extraWhere ? ` & ${extraWhere}` : ''}`;
       return query('games', `fields ${GAME_FIELDS}; where ${where}; limit ${Math.min(list.length, PAGE_SIZE)};`);
+    },
+
+    // Lightweight bulk read of just the videos: Map(igdbId -> [{ id, name }]). Used to backfill games that
+    // were stored before video names were kept.
+    async fetchVideos(ids) {
+      const list = asIds(ids);
+      const out = new Map();
+      for (let start = 0; start < list.length; start += PAGE_SIZE) {
+        const batch = list.slice(start, start + PAGE_SIZE);
+        const rows = await query('games', `fields id,videos.video_id,videos.name; where id = (${batch.join(',')}); limit ${batch.length};`);
+        for (const r of rows) {
+          out.set(r.id, (r.videos ?? []).filter((v) => v.video_id).map((v) => ({ id: v.video_id, name: v.name ?? '' })));
+        }
+      }
+      return out;
     },
 
     // Steam appids -> raw IGDB games, through external_games (source 1 = Steam). Returns [{ appid, raw }];

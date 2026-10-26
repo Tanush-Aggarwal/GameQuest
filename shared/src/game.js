@@ -22,6 +22,11 @@ export const gameSlugParamsSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Invalid game slug'),
 });
 
+// "Wrong trailer?": the YouTube id of a trailer the game page showed.
+export const trailerReportSchema = z.object({
+  videoId: z.string().regex(/^[\w-]{11}$/, 'Invalid video id'),
+});
+
 // IGDB game_type ids. Only these are catalog games; DLC, bundles, mods, episodes, seasons, updates,
 // packs and the like are never shown as games.
 export const IGDB_GAME_TYPE = {

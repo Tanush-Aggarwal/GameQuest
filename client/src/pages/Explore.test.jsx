@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 
-vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getGameFriends: vi.fn().mockResolvedValue([]), getTrailer: vi.fn().mockResolvedValue(null) }));
+vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getGameFriends: vi.fn().mockResolvedValue([]), getTrailers: vi.fn().mockResolvedValue([]) }));
 vi.mock('@/services/reviewApi.js', () => ({ listReviewsForGame: vi.fn().mockResolvedValue({ items: [] }) }));
 vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn(), addToLibrary: vi.fn(), changeStatus: vi.fn(), removeFromLibrary: vi.fn() }));
 
@@ -35,7 +35,7 @@ const renderAt = (path) =>
 
 const { listLibrary } = await import('@/services/libraryApi.js');
 const { listReviewsForGame } = await import('@/services/reviewApi.js');
-const { getGameFriends, getTrailer } = await import('@/services/gamesApi.js');
+const { getGameFriends, getTrailers } = await import('@/services/gamesApi.js');
 
 // The main grid asks for 24 games; every curated shelf asks for 12 with its own filter.
 const isShelf = (p) => p.limit === 12;
@@ -60,7 +60,7 @@ beforeEach(() => {
   listLibrary.mockResolvedValue({ items: [] });
   listReviewsForGame.mockResolvedValue({ items: [] });
   getGameFriends.mockResolvedValue([]);
-  getTrailer.mockResolvedValue(null);
+  getTrailers.mockResolvedValue([]);
 });
 
 describe('Explore', () => {

@@ -11,10 +11,18 @@ export async function getGame(slug, { signal } = {}) {
   return data.game;
 }
 
-// { videoId, source: 'igdb' | 'youtube' } or null when the game has no trailer.
-export async function getTrailer(slug, { signal } = {}) {
+// Up to 3 [{ videoId, label, source: 'igdb' | 'youtube' }], best first; [] when the game has no trailer.
+export async function getTrailers(slug, { signal } = {}) {
   const { data } = await api.get(`/games/${encodeURIComponent(slug)}/trailer`, { signal });
-  return data.trailer ?? null;
+  return data.trailers ?? [];
+}
+
+// "Wrong trailer?": hides that video for you (and for everyone once a second person reports it).
+// Resolves to { trailers, changed, dropped }: your next list, whether the report counted, and whether
+// the video is now gone for everyone.
+export async function reportTrailer(slug, videoId) {
+  const { data } = await api.post(`/games/${encodeURIComponent(slug)}/trailer/report`, { videoId });
+  return { trailers: data.trailers ?? [], changed: Boolean(data.changed), dropped: Boolean(data.dropped) };
 }
 
 export async function getGameFriends(slug, { signal } = {}) {

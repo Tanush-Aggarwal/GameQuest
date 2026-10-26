@@ -6,10 +6,10 @@ import { vi } from 'vitest';
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
 vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn(), addToLibrary: vi.fn(), changeStatus: vi.fn(), removeFromLibrary: vi.fn() }));
-vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getTrailer: vi.fn().mockResolvedValue(null) }));
+vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getTrailers: vi.fn().mockResolvedValue([]) }));
 
 const { listLibrary, addToLibrary, changeStatus, removeFromLibrary } = await import('@/services/libraryApi.js');
-const { getGame, getTrailer } = await import('@/services/gamesApi.js');
+const { getGame, getTrailers } = await import('@/services/gamesApi.js');
 const { default: Library } = await import('./Library.jsx');
 const { default: Game } = await import('./Game.jsx');
 
@@ -30,7 +30,7 @@ const renderLibrary = (path = '/library') =>
 
 beforeEach(() => {
   vi.resetAllMocks();
-  getTrailer.mockResolvedValue(null); // the game page asks for a trailer; none here
+  getTrailers.mockResolvedValue([]); // the game page asks for a trailer; none here
 });
 
 describe('Library page', () => {

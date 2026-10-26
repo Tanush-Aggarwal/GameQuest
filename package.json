@@ -9,22 +9,24 @@
     "client"
   ],
   "scripts": {
+    "dev": "concurrently -k -n server,client -c magenta,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build -w client",
-    "start": "npm start -w server"
+    "start": "npm start -w server",
+    "seed": "npm run seed -w server"
   },
   "engines": {
     "node": ">=20.19"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "concurrently": "^9.2.5",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0"
   }
 }
-

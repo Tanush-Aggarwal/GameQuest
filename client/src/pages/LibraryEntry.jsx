@@ -106,7 +106,7 @@ export default function LibraryEntry() {
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">{game.developer ?? ''}</p>
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">{game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : ''}</p>
           <h1 className="font-bold font-heading text-2xl leading-tight">{game.title ?? 'Unknown game'}</h1>
 
           {/* Status badge */}
@@ -132,8 +132,8 @@ export default function LibraryEntry() {
             {game.ratingAvg > 0 && (
               <Stat icon={Star} value={game.ratingAvg.toFixed(1)} label="rating" />
             )}
-            {game.timeToBeatMain > 0 && (
-              <Stat icon={Trophy} value={`~${game.timeToBeatMain}h`} label="to beat" />
+            {game.timeToBeat?.main > 0 && (
+              <Stat icon={Trophy} value={`~${game.timeToBeat.main}h`} label="to beat" />
             )}
           </div>
         </div>

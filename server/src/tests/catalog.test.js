@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { createIgdbAdapter, isCatalogGame, isCatalogType, normaliseGame } from '../adapters/content/igdb.js';
-import { createCatalogImportService, blendPopularity } from '../services/catalogImportService.js';
+import { createCatalogImportService, blendPopularity, titleSimilarity } from '../services/catalogImportService.js';
 import { createGameService, withParentArt } from '../services/gameService.js';
 import { createLibraryService } from '../services/libraryService.js';
 import { createRecommendationService } from '../services/recommendationService.js';
@@ -397,6 +397,27 @@ describe('catalog fix', () => {
     expect(bySlug('right-slug')).toBeDefined();
     expect(bySlug('clash')).toBeDefined(); // conflicting slug left alone
     expect(bySlug('god-of-war-ragnark').title).toBe('God of War Ragnarök');
+  });
+
+  it('leaves a game alone when its IGDB id points at a different game', async () => {
+    // e.g. a seeded "Disco Elysium" whose stored id actually belongs to "Pacify", plus a DLC id
+    const { Game, importer } = setupImport(
+      fakeIgdb([raw(1, 'Pacify', { artworks: [{ image_id: 'x' }] }), raw(2, 'Season Pass', { game_type: 1, parent_game: 1 })]),
+    );
+    await Game.create({ title: 'Disco Elysium', slug: 'disco-elysium', externalIds: { igdb: 1 } });
+    await Game.create({ title: 'Dave the Diver', slug: 'dave-the-diver', externalIds: { igdb: 2 } });
+    const report = await importer.runFix();
+    expect(report.suspects).toHaveLength(2);
+    expect(report).toMatchObject({ hidden: 0, slugsFixed: 0, backdropsFilled: 0 });
+    expect(Game.docs.map((g) => g.slug)).toEqual(['disco-elysium', 'dave-the-diver']);
+    expect(Game.docs[0].backdrop).toBeUndefined();
+    expect(Game.docs[1].hidden).toBeUndefined();
+  });
+
+  it('recognises the same title across case, accents, punctuation and roman numerals', () => {
+    expect(titleSimilarity("Baldur's Gate 3", "Baldur's Gate III")).toBeGreaterThanOrEqual(0.5);
+    expect(titleSimilarity('God of War Ragnarök', 'God of war ragnarok')).toBe(1);
+    expect(titleSimilarity('Disco Elysium', 'Pacify')).toBe(0);
   });
 
   it('keeps a main game visible when IGDB has no cover for it', async () => {

@@ -29,6 +29,28 @@ export function blendPopularity(metrics, maxima) {
   return Math.round(score * 1000) / 10;
 }
 
+// Word-overlap similarity (0-1) of two titles, ignoring case, accents, punctuation and roman numerals.
+const ROMAN = { ii: '2', iii: '3', iv: '4', v: '5', vi: '6' };
+const titleTokens = (title) =>
+  new Set(
+    String(title)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .split(' ')
+      .filter(Boolean)
+      .map((t) => ROMAN[t] ?? t),
+  );
+export function titleSimilarity(a, b) {
+  const x = titleTokens(a);
+  const y = titleTokens(b);
+  const shared = [...x].filter((t) => y.has(t)).length;
+  return shared / new Set([...x, ...y]).size || 0;
+}
+// Below this, a stored game and the IGDB game its id points at are treated as different games.
+const SAME_GAME = 0.5;
+
 const chunk = (list, size) => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, (i + 1) * size));
 
 // Bulk catalog tooling: import (resumable, idempotent) and repair of games already in the database.
@@ -298,7 +320,7 @@ export function createCatalogImportService({
     // Re-checks every game with an IGDB id: DLC/bundles/editions become hidden (with parentGameId),
     // missing art is filled, popularity gets a number, and seeded slugs are aligned with IGDB.
     async runFix() {
-      const report = { checked: 0, hidden: 0, unhidden: 0, coversFilled: 0, backdropsFilled: 0, slugsFixed: 0, titlesFixed: 0, parentsLinked: 0, unmatched: [], slugConflicts: [] };
+      const report = { checked: 0, hidden: 0, unhidden: 0, coversFilled: 0, backdropsFilled: 0, slugsFixed: 0, titlesFixed: 0, parentsLinked: 0, unmatched: [], slugConflicts: [], suspects: [] };
       const all = await Game.find({}).lean();
       for (const batch of chunk(all, PAGE)) {
         const withId = batch.filter((g) => g.externalIds?.igdb);
@@ -312,6 +334,10 @@ export function createCatalogImportService({
             continue;
           }
           const result = await this.fixOne(game, raw);
+          if (result.suspect) {
+            report.suspects.push(`${game.slug}: ${result.suspect}`);
+            continue;
+          }
           report.hidden += result.hidden ? 1 : 0;
           report.unhidden += result.unhidden ? 1 : 0;
           report.coversFilled += result.coverFilled ? 1 : 0;
@@ -329,6 +355,10 @@ export function createCatalogImportService({
       const result = {};
       const $set = {};
       const incoming = normaliseGame(raw);
+
+      // The stored IGDB id may point at an unrelated game (a bad seed id, say). Enriching, renaming or
+      // hiding on that basis would corrupt the document, so leave it alone and report it.
+      if (titleSimilarity(game.title, raw.name) < SAME_GAME) return { suspect: `${game.title} -> ${raw.name}` };
       const empty = (v) => v == null || v === '' || (Array.isArray(v) && v.length === 0);
 
       if (!isCatalogType(raw)) {

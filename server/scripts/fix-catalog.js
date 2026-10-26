@@ -42,6 +42,7 @@ try {
   console.log(`  slugs aligned:      ${r.slugsFixed}`);
   console.log(`  titles repaired:    ${r.titlesFixed}`);
   console.log(`  unmatched on IGDB:  ${r.unmatched.length}${r.unmatched.length ? `  (${r.unmatched.join(', ')})` : ''}`);
+  if (r.suspects.length) console.log(`  stored title differs from the IGDB game its id points to (left untouched): ${r.suspects.join('; ')}`);
   if (r.slugConflicts.length) console.log(`  slug conflicts (left as is): ${r.slugConflicts.join('; ')}`);
 } catch (err) {
   console.error('Catalog fix failed:', err.message);

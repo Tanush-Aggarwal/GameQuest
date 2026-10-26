@@ -1,0 +1,28 @@
+/* Design tokens — the only source of colour in the UI. Dark theme by default. */
+:root {
+  --bg: #0e0f14;
+  --surface: #161821;
+  --surface-raised: #1e2130;
+  --border: #2c3044;
+  --text: #f1f2f7;
+  --text-muted: #a3a8bd;
+
+  --accent: #7c5cff;
+  --accent-fg: #ffffff;
+  --reward: #ffc14d; /* gold: quests, trophies and XP only */
+
+  /* status */
+  --success: #3ecf8e;
+  --warning: #f5a524;
+  --danger: #ff5c70;
+  --info: #4cc2ff;
+
+  /* trophies */
+  --trophy-bronze: #cd7f32;
+  --trophy-silver: #c0c6d4;
+  --trophy-gold: #ffc14d;
+  --trophy-platinum: #8fd8ff;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+}

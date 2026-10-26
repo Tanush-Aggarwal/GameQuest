@@ -10,3 +10,8 @@ Format: date — decision — why.
 - 2026-10-26 — Discord: OAuth `identify` + validated pasted invite first; bot-created invites/events second — linking an account cannot create server invites.
 - 2026-10-26 — Dark-first UI with Quest Violet accent and Loot Gold reserved for rewards.
 - 2026-10-26 — 3D features (Blender/VRoid) deferred until the full website is built.
+
+## 2026-10-26 — Claude Code — item 1: monorepo scaffold
+- npm workspaces (shared, server, client); plain JS + ESM everywhere; single flat ESLint config at root.
+- Tailwind v3 (config maps colours to tokens.css CSS variables); Vite client; Jest (ESM via --experimental-vm-modules) server, Vitest client.
+- docs/BLUEPRINT.md is still a placeholder — rules taken from AGENTS.md only.

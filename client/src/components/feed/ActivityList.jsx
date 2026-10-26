@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Clock, Gamepad2, Layers, Star } from 'lucide-react';
+import { CalendarDays, Clock, Gamepad2, Layers, RefreshCw, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
@@ -59,6 +59,11 @@ export function describe(item) {
             {item.game && <> for {game}</>}
           </>
         ),
+      };
+    case 'sync.completed':
+      return {
+        icon: RefreshCw,
+        body: <>synced <span className="tabular-nums">{item.data.count}</span> {item.data.count === 1 ? 'game' : 'games'} from {item.data.platform}</>,
       };
     default:
       return { icon: Gamepad2, body: <>did something</> };

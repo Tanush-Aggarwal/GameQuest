@@ -124,6 +124,27 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       docs.push(doc);
       return structuredClone(doc);
     },
+    // Like Mongo: ordered inserts stop at the first clash; ordered:false stores every doc that does not
+    // clash and then throws, so callers must not assume a thrown insertMany stored nothing.
+    async insertMany(list, { ordered = true } = {}) {
+      const created = [];
+      let failure = null;
+      for (const data of list) {
+        try {
+          created.push(await this.create(data));
+        } catch (err) {
+          failure ??= err;
+          if (ordered) break;
+        }
+      }
+      if (failure) throw failure;
+      return created;
+    },
+    // Only updateOne operations, which is all the services use.
+    async bulkWrite(ops) {
+      for (const op of ops) await this.updateOne(op.updateOne.filter, op.updateOne.update);
+      return { modifiedCount: ops.length };
+    },
     find: (q = {}) => query(docs.filter((d) => matchesQuery(d, q))),
     findOne: (q) => {
       const found = docs.find((d) => matchesQuery(d, q));

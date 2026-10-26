@@ -17,6 +17,12 @@ export const toEntryDto = (entry, game) => ({
     playtimeMin: o.playtimeMin ?? 0,
     lastSyncedAt: o.lastSyncedAt ?? null,
   })),
+  // Latest platform snapshot; unlocked/total are null for games without achievements or before a sync.
+  achievements: {
+    unlocked: entry.achievements?.unlocked ?? null,
+    total: entry.achievements?.total ?? null,
+    fetchedAt: entry.achievements?.fetchedAt ?? null,
+  },
   completedAt: entry.completedAt ?? null,
   hiddenFromFriends: Boolean(entry.hiddenFromFriends),
   addedAt: entry.createdAt,

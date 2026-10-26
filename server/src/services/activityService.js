@@ -57,6 +57,11 @@ export function createActivityService({ Activity, LibraryEntry, Game, User, Coll
           data: { sessionId: payload.sessionId, title: payload.title, startsAt: payload.startsAt },
         });
 
+      case 'sync.completed':
+        // One item per sync that brought something new; a re-sync that only refreshes playtime stays quiet.
+        if (!payload.added) return null;
+        return Activity.create({ ...base, data: { platform: payload.platform, count: payload.added } });
+
       default:
         logger?.warn({ type }, 'unknown activity type');
         return null;

@@ -228,6 +228,27 @@ export function createIgdbAdapter({
       return query('games', `fields ${GAME_FIELDS}; where ${where}; limit ${Math.min(list.length, PAGE_SIZE)};`);
     },
 
+    // Steam appids -> raw IGDB games, through external_games (source 1 = Steam). Returns [{ appid, raw }];
+    // appids IGDB does not know are absent. Callers apply isCatalogGame to what they keep.
+    async fetchBySteamAppIds(appids) {
+      const uids = [...new Set(appids.map(String).filter((a) => /^\d+$/.test(a)))];
+      const pairs = [];
+      for (let start = 0; start < uids.length; start += PAGE_SIZE) {
+        const batch = uids.slice(start, start + PAGE_SIZE);
+        const rows = await query(
+          'external_games',
+          `fields game,uid; where external_game_source = ${STEAM_SOURCE} & uid = (${batch.map((u) => `"${u}"`).join(',')}); limit ${PAGE_SIZE};`,
+        );
+        for (const r of rows) if (r.game && r.uid) pairs.push({ appid: String(r.uid), gameId: r.game });
+      }
+      const raws = new Map();
+      const ids = [...new Set(pairs.map((p) => p.gameId))];
+      for (let start = 0; start < ids.length; start += PAGE_SIZE) {
+        for (const raw of await this.fetchByIds(ids.slice(start, start + PAGE_SIZE))) raws.set(raw.id, raw);
+      }
+      return pairs.filter((p) => raws.has(p.gameId)).map((p) => ({ appid: p.appid, raw: raws.get(p.gameId) }));
+    },
+
     // The catalog filter as an Apicalypse fragment, for building bulk `where` clauses.
     catalogWhere: typeFilter,
 

@@ -13,6 +13,8 @@ import { RecommendationModal } from '@/components/recommendations/Recommendation
 import { getLibraryEntry, changeStatus, setVisibility, removeFromLibrary } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { SteamDetails } from '@/components/steam/SteamBadge.jsx';
+import { otherPlatforms, steamOwnership } from '@/lib/steam.js';
 
 const STATUS_COLORS = {
   wishlist: 'var(--status-wishlist)',
@@ -153,11 +155,12 @@ export default function LibraryEntry() {
       )}
 
       {/* Platforms */}
-      {(entry.ownerships ?? []).length > 0 && (
+      {steamOwnership(entry) && <SteamDetails entry={entry} />}
+      {otherPlatforms(entry).length > 0 && (
         <div>
           <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-2">Platforms</p>
           <div className="flex gap-2 flex-wrap">
-            {entry.ownerships.map((o, i) => (
+            {otherPlatforms(entry).map((o, i) => (
               <span key={i} className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-raised)] border border-[var(--border)]">
                 {o.platform}
                 {o.playtimeMin > 0 && <> · {Math.round(o.playtimeMin / 60)}h</>}

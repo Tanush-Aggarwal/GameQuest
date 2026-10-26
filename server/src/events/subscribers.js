@@ -1,6 +1,6 @@
 // Wires domain-event subscribers. Services emit events and never call each other's side effects
 // directly; anything that reacts (clean-up, activity feed, notifications) subscribes here.
-const ACTIVITY_EVENTS = ['library.statusChanged', 'review.created', 'library.sessionLogged', 'collection.created', 'session.created'];
+const ACTIVITY_EVENTS = ['library.statusChanged', 'review.created', 'library.sessionLogged', 'collection.created', 'session.created', 'sync.completed'];
 
 export function registerSubscribers({ eventBus, collectionService, activityService, recommendationService }) {
   // A deleted library entry must disappear from every manual collection that held it.

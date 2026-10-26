@@ -39,6 +39,19 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
 
   const keyRejected = (status) => status === 401 || status === 403;
 
+  const PRIVATE_MESSAGE =
+    'Your Steam game details are private. In Steam, open Edit Profile > Privacy Settings and set "Game details" to Public, then sync again.';
+
+  async function getAchievements(steamId, appid) {
+    const { status, body } = await call('ISteamUserStats/GetPlayerAchievements/v0001', { steamid: steamId, appid: String(appid) });
+    // "Requested app has no stats" comes back as 400: the game simply has no achievements.
+    if (status === 400) return { unlocked: null, total: null };
+    if (status >= 400) throw new UpstreamError(`Steam would not return achievements (HTTP ${status}).`);
+    const list = body?.playerstats?.achievements;
+    if (!Array.isArray(list) || !list.length) return { unlocked: null, total: null };
+    return { unlocked: list.filter((a) => a.achieved === 1).length, total: list.length };
+  }
+
   return {
     name: 'steam',
     isConfigured,
@@ -69,6 +82,46 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
         // 3 = public, 2 = friends only, 1 = private
         visibility: player.communityvisibilitystate === 3 ? 'public' : player.communityvisibilitystate === 2 ? 'friends' : 'private',
       };
+    },
+
+    // Owned games including free ones. A private profile answers with an empty `response`, which is
+    // reported as a clear, fixable error rather than "you own no games".
+    async getOwnedGames(steamId) {
+      const { status, body } = await call('IPlayerService/GetOwnedGames/v0001', {
+        steamid: steamId,
+        include_appinfo: '1',
+        include_played_free_games: '1',
+      });
+      if (keyRejected(status)) throw new UpstreamError('Steam rejected the API key configured for GameQuest.');
+      if (status >= 400) throw new UpstreamError(`Steam would not return your games (HTTP ${status}).`);
+      const response = body?.response;
+      if (!response || (response.game_count === undefined && !Array.isArray(response.games))) throw new UpstreamError(PRIVATE_MESSAGE);
+      return (response.games ?? []).map((g) => ({
+        appid: String(g.appid),
+        name: g.name ?? '',
+        playtimeMin: g.playtime_forever ?? 0,
+        playtime2wMin: g.playtime_2weeks ?? 0,
+        lastPlayedAt: g.rtime_last_played > 0 ? new Date(g.rtime_last_played * 1000) : null,
+      }));
+    },
+
+    getAchievements,
+
+    // Achievements for many games, `size` at a time. A game that fails is left out of `results`
+    // (and counted in `failed`) so one bad response never fails the sync.
+    async getAchievementsBatch(steamId, appids, { size = 10, onProgress } = {}) {
+      const results = new Map();
+      let failed = 0;
+      for (let start = 0; start < appids.length; start += size) {
+        const batch = appids.slice(start, start + size);
+        const settled = await Promise.allSettled(batch.map((appid) => getAchievements(steamId, appid)));
+        settled.forEach((r, i) => {
+          if (r.status === 'fulfilled') results.set(batch[i], r.value);
+          else failed += 1;
+        });
+        onProgress?.(Math.min(start + size, appids.length), appids.length);
+      }
+      return { results, failed };
     },
   };
 }

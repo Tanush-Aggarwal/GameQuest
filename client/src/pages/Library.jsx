@@ -18,6 +18,8 @@ import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { CoverImage, GameCardSkeleton, GameCover } from '@/components/games/GameCard.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { MoveStatusSelect } from '@/components/library/MoveStatusSelect.jsx';
+import { SteamBadge } from '@/components/steam/SteamBadge.jsx';
+import { otherPlatforms, steamOwnership } from '@/lib/steam.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getErrorInfo } from '@/services/api.js';
 import { changeStatus, listLibrary, removeFromLibrary } from '@/services/libraryApi.js';
@@ -38,15 +40,16 @@ function LibraryCard({ entry, onMove, onRemove, busy }) {
       <div className="flex flex-1 flex-col gap-2 p-3">
         <h3 className="line-clamp-2 text-sm font-semibold">{game?.title ?? 'Unknown game'}</h3>
         <StatusBadge status={entry.status} />
-        {entry.ownerships?.length > 0 && (
+        {otherPlatforms(entry).length > 0 && (
           <ul className="flex flex-wrap gap-1" aria-label="Platforms">
-            {entry.ownerships.map((o) => (
+            {otherPlatforms(entry).map((o) => (
               <li key={o.platform} className="rounded-control border border-border px-2 py-0.5 text-xs text-text-muted">
                 {o.platform}
               </li>
             ))}
           </ul>
         )}
+        <SteamBadge entry={entry} />
         <div className="mt-auto flex flex-col gap-2 pt-2">
           <MoveStatusSelect entry={entry} onMove={onMove} disabled={busy} />
           {confirming ? (
@@ -87,16 +90,17 @@ function LibraryRow({ entry, onMove, onRemove, busy }) {
           </Link>
           <div className="flex items-center gap-2 flex-wrap text-xs">
             <StatusBadge status={entry.status} />
-            {entry.ownerships?.length > 0 && (
+            {otherPlatforms(entry).length > 0 && (
               <ul className="flex flex-wrap gap-1" aria-label="Platforms">
-                {entry.ownerships.map((o) => (
+                {otherPlatforms(entry).map((o) => (
                   <li key={o.platform} className="rounded border border-border px-1.5 py-0.5 text-[11px] text-text-muted">
                     {o.platform}
                   </li>
                 ))}
               </ul>
             )}
-            {playtimeHours > 0 && (
+            <SteamBadge entry={entry} />
+            {playtimeHours > 0 && !steamOwnership(entry) && (
               <span className="text-text-muted flex items-center gap-1 font-medium">
                 <Clock className="h-3 w-3" /> {playtimeHours}h played
               </span>

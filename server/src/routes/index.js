@@ -11,6 +11,7 @@ import { createSocialRouters } from './social.js';
 import { createSessionsRouter } from './sessions.js';
 import { createRecommendationsRouter } from './recommendations.js';
 import { createSteamRouter } from './steam.js';
+import { createSyncRouter } from './sync.js';
 import { createRequireAuth } from '../middleware/auth.js';
 
 export function createRoutes({
@@ -27,6 +28,7 @@ export function createRoutes({
   sessionService,
   recommendationService,
   steamService,
+  steamSyncService,
   LibraryEntry,
   config,
 }) {
@@ -48,6 +50,7 @@ export function createRoutes({
   router.use('/feed', social.feed);
   router.use('/sessions', createSessionsRouter({ authService, sessionService }));
   router.use('/steam', createSteamRouter({ authService, steamService }));
+  router.use('/sync', createSyncRouter({ authService, steamSyncService }));
   if (recommendationService) {
     router.use('/recommendations', createRecommendationsRouter({ authService, recommendationService }));
   }

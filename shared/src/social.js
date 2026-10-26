@@ -45,4 +45,5 @@ export const ACTIVITY_TYPES = [
   'library.sessionLogged',
   'collection.created',
   'session.created',
+  'sync.completed',
 ];

@@ -1,5 +1,5 @@
 import { useCallback, useId, useState } from 'react';
-import { ExternalLink, Gamepad2, Info, Link2, Unlink } from 'lucide-react';
+import { ExternalLink, Gamepad2, Info, Link2, RefreshCw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { STEAM_PRIVACY_URL } from '@gamequest/shared';
 import { Button } from '@/components/ui/button.jsx';
@@ -9,7 +9,9 @@ import { ErrorState } from '@/components/ui/states.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
-import { getSteamStatus, linkSteam, unlinkSteam } from '@/services/steamApi.js';
+import { getSteamStatus, linkSteam, syncSteam, unlinkSteam } from '@/services/steamApi.js';
+import { formatPlaytime } from '@/lib/steam.js';
+import { formatDateTime } from '@/lib/time.js';
 
 const VISIBILITY_LABEL = { public: 'Public profile', friends: 'Friends-only profile', private: 'Private profile' };
 
@@ -86,7 +88,91 @@ function LinkForm({ onLinked }) {
   );
 }
 
-function LinkedAccount({ steam, onUnlinked }) {
+function SyncSection({ steam, onSynced }) {
+  const [syncing, setSyncing] = useState(false);
+  const [result, setResult] = useState(null);
+  const [problem, setProblem] = useState('');
+
+  async function sync() {
+    setSyncing(true);
+    setProblem('');
+    try {
+      const data = await syncSteam();
+      setResult(data);
+      onSynced({ at: new Date().toISOString(), added: data.added, updated: data.updated, unmatchedCount: data.unmatched.length });
+      toast.success(`Steam synced: ${data.added} added, ${data.updated} updated`);
+    } catch (err) {
+      setProblem(getErrorInfo(err).message);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  const last = steam.lastSync;
+  return (
+    <div className="flex flex-col gap-3 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-text-muted">
+          {last ? (
+            <>
+              Last synced <time dateTime={new Date(last.at).toISOString()}>{formatDateTime(last.at)}</time>
+              {' · '}
+              <span className="tabular-nums">
+                {last.added} added, {last.updated} updated, {last.unmatchedCount} not matched
+              </span>
+            </>
+          ) : (
+            'Not synced yet.'
+          )}
+        </p>
+        <Button onClick={sync} disabled={syncing} aria-busy={syncing}>
+          <RefreshCw className={`h-4 w-4 ${syncing ? 'motion-safe:animate-spin' : ''}`} aria-hidden="true" />
+          {syncing ? 'Syncing…' : 'Sync now'}
+        </Button>
+      </div>
+      {syncing && (
+        <p role="status" className="text-xs text-text-muted">
+          Reading your Steam library and achievements. A big library can take a few minutes; you can leave this page open.
+        </p>
+      )}
+      {problem && (
+        <p role="alert" className="rounded-control border border-border bg-bg p-3 text-sm text-danger">
+          {problem}
+        </p>
+      )}
+      {result && !syncing && (
+        <div role="status" className="flex flex-col gap-2 rounded-control border border-border bg-bg p-3 text-sm">
+          <p>
+            <span className="font-semibold tabular-nums">{result.added}</span> added,{' '}
+            <span className="font-semibold tabular-nums">{result.updated}</span> updated,{' '}
+            <span className="font-semibold tabular-nums">{result.unmatched.length}</span> not matched.
+          </p>
+          {result.warnings?.map((w) => (
+            <p key={w} className="text-xs text-text-muted">
+              {w}
+            </p>
+          ))}
+          {result.unmatched.length > 0 && (
+            <details className="text-xs text-text-muted">
+              <summary className="cursor-pointer font-medium text-text">Which games were not matched?</summary>
+              <p className="mt-2">Tools, soundtracks, DLC and games missing from the catalog are listed here but not added to your library.</p>
+              <ul className="mt-2 max-h-48 overflow-y-auto">
+                {result.unmatched.map((u) => (
+                  <li key={u.appid} className="flex justify-between gap-3 py-0.5">
+                    <span className="truncate">{u.name || `App ${u.appid}`}</span>
+                    <span className="shrink-0 tabular-nums">{formatPlaytime(u.playtimeMin)}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LinkedAccount({ steam, onUnlinked, onSynced }) {
   const [confirming, setConfirming] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -160,6 +246,7 @@ function LinkedAccount({ steam, onUnlinked }) {
           Your Steam profile is not public, so your games may not be readable.
         </p>
       )}
+      <SyncSection steam={steam} onSynced={onSynced} />
       <PrivacyNote />
     </div>
   );
@@ -182,7 +269,11 @@ export function SteamLinkCard() {
   return (
     <div className="flex max-w-2xl flex-col gap-4 rounded-card border border-border bg-surface p-6">
       {steam.linked ? (
-        <LinkedAccount steam={steam} onUnlinked={() => setSteam({ linked: false })} />
+        <LinkedAccount
+          steam={steam}
+          onUnlinked={() => setSteam({ linked: false })}
+          onSynced={(lastSync) => setSteam((current) => ({ ...current, lastSync }))}
+        />
       ) : (
         <>
           <p className="text-sm text-text-muted">

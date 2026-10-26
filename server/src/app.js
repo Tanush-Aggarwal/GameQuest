@@ -38,6 +38,9 @@ import { Recommendation } from './models/Recommendation.js';
 import { createRecommendationService } from './services/recommendationService.js';
 import { createSteamAdapter } from './adapters/platforms/steam.js';
 import { createSteamService } from './services/steamService.js';
+import { createSteamSyncService } from './services/steamSyncService.js';
+import { createCatalogImportService } from './services/catalogImportService.js';
+import { MediaCache } from './models/MediaCache.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -55,8 +58,10 @@ export function createApp({
   profileService: _profileSvc,
   sessionService: _sessionSvc,
   recommendationService: _recSvc,
+  igdbAdapter = createIgdbAdapter({ config }),
   steamAdapter = createSteamAdapter({ config }),
   steamService: _steamSvc,
+  steamSyncService: _steamSyncSvc,
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -66,7 +71,7 @@ export function createApp({
   const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, eventBus });
   const gameService =
     _gameSvc ??
-    createGameService({ Game, igdb: createIgdbAdapter({ config }), logger, friendService, LibraryEntry, User });
+    createGameService({ Game, igdb: igdbAdapter, logger, friendService, LibraryEntry, User });
   const collectionService =
     _collectionSvc ??
     createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });
@@ -90,6 +95,19 @@ export function createApp({
       logger,
     });
   const steamService = _steamSvc ?? createSteamService({ User, steam: steamAdapter });
+  const steamSyncService =
+    _steamSyncSvc ??
+    createSteamSyncService({
+      User,
+      Game,
+      LibraryEntry,
+      StatusHistory,
+      steam: steamAdapter,
+      igdb: igdbAdapter,
+      importGame: createCatalogImportService({ Game, MediaCache, igdb: igdbAdapter }).upsertGame,
+      eventBus,
+      logger,
+    });
   registerSubscribers({ eventBus, collectionService, activityService, recommendationService });
 
   const app = express();
@@ -117,6 +135,7 @@ export function createApp({
       sessionService,
       recommendationService,
       steamService,
+      steamSyncService,
       LibraryEntry,
       config,
     }));

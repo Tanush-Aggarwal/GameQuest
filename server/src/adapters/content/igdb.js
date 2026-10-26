@@ -252,17 +252,21 @@ export function createIgdbAdapter({
       const types = asIds(typeIds);
       const out = new Map();
       if (!ids.length || !types.length) return out;
-      for (let offset = 0; ; offset += PAGE_SIZE) {
-        const rows = await query(
-          'popularity_primitives',
-          `fields game_id,popularity_type,value; where game_id = (${ids.join(',')}) & popularity_type = (${types.join(',')}); limit ${PAGE_SIZE}; offset ${offset};`,
-        );
-        for (const r of rows) {
-          const byType = out.get(r.game_id) ?? {};
-          byType[r.popularity_type] = r.value;
-          out.set(r.game_id, byType);
+      // Large id lists are split so the request body stays small (IGDB answers 413 otherwise).
+      for (let start = 0; start < ids.length; start += PAGE_SIZE) {
+        const batch = ids.slice(start, start + PAGE_SIZE);
+        for (let offset = 0; ; offset += PAGE_SIZE) {
+          const rows = await query(
+            'popularity_primitives',
+            `fields game_id,popularity_type,value; where game_id = (${batch.join(',')}) & popularity_type = (${types.join(',')}); limit ${PAGE_SIZE}; offset ${offset};`,
+          );
+          for (const r of rows) {
+            const byType = out.get(r.game_id) ?? {};
+            byType[r.popularity_type] = r.value;
+            out.set(r.game_id, byType);
+          }
+          if (rows.length < PAGE_SIZE) break;
         }
-        if (rows.length < PAGE_SIZE) break;
       }
       return out;
     },

@@ -51,7 +51,7 @@ gamequest/
 │       ├── pages/       # Route-level pages
 │       └── services/    # Axios API wrappers
 ├── server/          # Express API
-│   ├── scripts/         # seed.js
+│   ├── scripts/         # seed.js, import-catalog.js, fix-catalog.js, sync-indexes.js
 │   └── src/
 │       ├── adapters/    # IGDB content adapter
 │       ├── config/      # Env validation (Zod)
@@ -121,7 +121,19 @@ The seed is idempotent. It creates:
 - **alex** — `alex@gamequest.dev` / `Demo1234!`, friends with demo, with a library, two reviews and a public collection, so demo's activity feed has content
 - An upcoming session hosted by alex ("Hades night") with demo invited
 
-Alex's activity is created through the real services and event bus, not inserted directly.
+Alex's activity is created through the real services and event bus, not inserted directly. The seed also runs `npm run db:indexes`.
+
+### 3b. Import the game catalog (needs `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET`)
+
+```bash
+npm run catalog:import     # ~3,000 games from IGDB; resumable, safe to re-run (add `-- --fresh` to start over)
+npm run catalog:fix        # repair games already in the database
+npm run db:indexes         # build indexes (production runs with autoIndex off)
+```
+
+`catalog:import` fills the catalog in three steps — top PC games (~1,500, by Steam peak players and IGDB visits / want-to-play), top PS5 / PS4 / Xbox Series / Xbox One / Switch games by rating count (~1,000), and releases from the last 12 months or the next 3 (~500). Every game gets covers, artworks, screenshots, a wide `backdrop`, developer / publisher, themes, modes, ratings, time to beat and a blended `popularity` score that the catalog sorts by. Progress is kept in one `MediaCache` document, so an interrupted run continues where it stopped.
+
+Only main games, remakes, remasters, expanded games, ports and standalone expansions are catalog games, and they need a cover and no `version_parent`. DLC, bundles, mods, episodes, seasons, updates, packs and editions are never imported and never returned by live search. `catalog:fix` re-checks games already stored: DLC / bundles / editions become `hidden: true` with `parentGameId` set (library entries pointing at them keep working and show the parent game's art), missing art is filled, and seeded slugs are aligned with IGDB's.
 
 ### 4. Run in development
 

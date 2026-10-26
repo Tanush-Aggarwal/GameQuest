@@ -159,6 +159,14 @@ describe('IGDB adapter limits', () => {
     expect(calls).toHaveLength(6); // first try + 5 retries
   });
 
+  it('splits a long id list into requests of at most 500 ids', async () => {
+    const { igdb, calls } = adapter([jsonResponse([])], { minIntervalMs: 0 });
+    await igdb.getPopularityFor(Array.from({ length: 1200 }, (_, i) => i + 1), [1]);
+    expect(calls).toHaveLength(3);
+    const idsIn = (body) => /game_id = \(([^)]*)\)/.exec(body)[1].split(',').length;
+    expect(calls.map((c) => idsIn(c.body))).toEqual([500, 500, 200]);
+  });
+
   it('pages popularity lookups when a batch returns a full page', async () => {
     const rows = Array.from({ length: 500 }, (_, i) => ({ game_id: 1, popularity_type: 5, value: i }));
     const { igdb, calls } = adapter([jsonResponse(rows), jsonResponse([{ game_id: 2, popularity_type: 1, value: 7 }])], { minIntervalMs: 0 });

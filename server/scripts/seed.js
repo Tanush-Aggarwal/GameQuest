@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Demo seed — creates a demo account plus six games with library entries,
  * status history, play logs and reviews so graders can log in and see the app.
  *
@@ -53,7 +53,8 @@ const GAMES = [
     platforms: ['PC (Microsoft Windows)', 'Nintendo Switch'], timeToBeat: { main: 8 },
   },
   {
-    title: 'Hades', slug: 'hades', externalIds: { igdb: 113112 },
+    // IGDB's slug for Supergiant's Hades is "hades--1"; plain "hades" is an unrelated 2015 game.
+    title: 'Hades', slug: 'hades--1', externalIds: { igdb: 113112 },
     summary: 'Defy the god of the dead as you hack and slash your way out of the Underworld.',
     cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co39vc.jpg',
     releaseDate: new Date('2020-09-17'), genres: ['Role-playing (RPG)', 'Hack and slash/Beat \'em up', 'Indie'],
@@ -79,8 +80,14 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 const utcDay = (n) => { const d = daysAgo(n); d.setUTCHours(0, 0, 0, 0); return d; };
 
 async function ensureGame(data) {
-  return (await Game.findOne({ $or: [{ slug: data.slug }, { 'externalIds.igdb': data.externalIds.igdb }] }))
-    ?? Game.create({ ...data, source: 'igdb' });
+  // The IGDB id is the identity; the slug is only corrected on a previously seeded doc.
+  const existing = (await Game.findOne({ 'externalIds.igdb': data.externalIds.igdb })) ?? (await Game.findOne({ slug: data.slug }));
+  if (!existing) return Game.create({ ...data, source: 'igdb' });
+  if (existing.slug !== data.slug && existing.externalIds?.igdb === data.externalIds.igdb) {
+    existing.slug = data.slug;
+    await existing.save();
+  }
+  return existing;
 }
 
 async function seed() {
@@ -120,7 +127,7 @@ async function seed() {
     ownerships: [{ platform: 'Steam', playtimeMin: 2550 }],
   });
   await ensureEntry('celeste', 'backlog', { ownerships: [{ platform: 'Nintendo Switch', playtimeMin: 0 }] });
-  const hades = await ensureEntry('hades', 'playing', {
+  const hades = await ensureEntry('hades--1', 'playing', {
     manualProgress: 30, loggedMinutes: 105, lastPlayedAt: daysAgo(5),
     ownerships: [{ platform: 'Steam', playtimeMin: 800 }],
   });
@@ -132,7 +139,7 @@ async function seed() {
 
   const sessions = [
     [elden, 'elden-ring', [[1, 90, 'Defeated Morgott!'], [3, 120, ''], [7, 60, 'Exploring the Mountaintops']]],
-    [hades, 'hades', [[5, 60, 'First Theseus clear'], [6, 45, '']]],
+    [hades, 'hades--1', [[5, 60, 'First Theseus clear'], [6, 45, '']]],
   ];
   for (const [entry, slug, logs] of sessions) {
     for (const [ago, minutes, note] of logs) {

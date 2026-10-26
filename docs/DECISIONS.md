@@ -15,3 +15,15 @@ Format: date — decision — why.
 - npm workspaces (shared, server, client); plain JS + ESM everywhere; single flat ESLint config at root.
 - Tailwind v3 (config maps colours to tokens.css CSS variables); Vite client; Jest (ESM via --experimental-vm-modules) server, Vitest client.
 - docs/BLUEPRINT.md is still a placeholder — rules taken from AGENTS.md only.
+
+## 2026-10-26 — Claude Code — item 3: auth design
+- Access JWT (15 min) in HTTP-only cookie `gq_access` (path /); refresh JWT (7 d) in `gq_refresh` scoped to path /api/v1/auth. Prod cookies are Secure + SameSite=None, dev Lax.
+- Refresh rotation: one RefreshToken doc per issued token (jti, familyId, usedAt, TTL on expiresAt). Used tokens are kept until expiry; replaying one deletes the whole family (reuse detection).
+- Services take models by injection (`createAuthService({ User, RefreshToken, config })`) so tests run on in-memory fakes with no MongoDB. Real-DB behaviour (unique indexes, TTL) is not covered by tests yet.
+- CSRF: no token yet. Mutations only accept JSON bodies (cross-site forms can't send them without a CORS preflight, which the CORS allow-list blocks). Revisit if non-JSON mutations are added.
+- Register returns 409 naming the taken field (email/username). Accepted trade-off: it allows account enumeration, mitigated by the per-IP rate limit; revisit if email verification is added.
+- Passwords are capped at 72 bytes in the shared schema because bcrypt silently truncates beyond that.
+- A replayed refresh token within 10 s of its rotation returns 401 without revoking the family (two tabs refreshing at once); later replays revoke the whole family.
+- If a DB error happens after a refresh token is claimed but before new ones are issued, the user must log in again (accepted).
+- Logout deletes the refresh family; the access token stays valid until its 15 min expiry.
+- Login does a dummy bcrypt compare for unknown emails to keep timing uniform.

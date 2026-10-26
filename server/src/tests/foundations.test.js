@@ -1,15 +1,14 @@
-import request from 'supertest';
+﻿import request from 'supertest';
 import express from 'express';
 import { z } from 'zod';
-import pino from 'pino';
 import { createApp } from '../app.js';
 import { loadConfig } from '../config/index.js';
+import { logger, testConfig } from './helpers.js';
 import { errorHandler } from '../middleware/errorHandler.js';
 import { validate } from '../middleware/validate.js';
 import { ConflictError, UpstreamError } from '../utils/errors.js';
 
-const logger = pino({ level: 'silent' });
-const config = loadConfig({ NODE_ENV: 'test', MONGODB_URI: 'mongodb://localhost/test' });
+const config = testConfig();
 
 describe('config', () => {
   it('throws a readable error when MONGODB_URI is missing', () => {
@@ -17,7 +16,7 @@ describe('config', () => {
   });
 
   it('requires CLIENT_ORIGIN in production', () => {
-    expect(() => loadConfig({ NODE_ENV: 'production', MONGODB_URI: 'mongodb://x' })).toThrow(/CLIENT_ORIGIN/);
+    expect(() => loadConfig({ NODE_ENV: 'production', MONGODB_URI: 'mongodb://x', JWT_ACCESS_SECRET: 'a'.repeat(32), JWT_REFRESH_SECRET: 'b'.repeat(32) })).toThrow(/CLIENT_ORIGIN/);
   });
 });
 
@@ -112,3 +111,4 @@ describe('error handler + validate', () => {
     expect(ok.body).toEqual({ n: 5 });
   });
 });
+

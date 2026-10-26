@@ -3,10 +3,18 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import pinoHttp from 'pino-http';
-import routes from './routes/index.js';
+import { createRoutes } from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { createAuthService } from './services/authService.js';
+import { User } from './models/User.js';
+import { RefreshToken } from './models/RefreshToken.js';
 
-export function createApp({ config, logger }) {
+// `authService` can be injected (tests pass one backed by in-memory models).
+export function createApp({
+  config,
+  logger,
+  authService = createAuthService({ User, RefreshToken, config }),
+}) {
   const app = express();
 
   // Render sits behind a proxy; needed for secure cookies and correct client IPs.
@@ -18,7 +26,7 @@ export function createApp({ config, logger }) {
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 
-  app.use('/api/v1', routes);
+  app.use('/api/v1', createRoutes({ authService, config }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

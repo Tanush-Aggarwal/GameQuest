@@ -1,11 +1,16 @@
 import { z } from 'zod';
 
+const secret = (name) => z.string().min(32, `${name} must be at least 32 characters`);
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  JWT_ACCESS_SECRET: secret('JWT_ACCESS_SECRET'),
+  JWT_REFRESH_SECRET: secret('JWT_REFRESH_SECRET'),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
 });
 
 export function loadConfig(env = process.env) {
@@ -25,5 +30,12 @@ export function loadConfig(env = process.env) {
     clientOrigin: e.CLIENT_ORIGIN,
     mongoUri: e.MONGODB_URI,
     logLevel: e.LOG_LEVEL,
+    auth: {
+      accessSecret: e.JWT_ACCESS_SECRET,
+      refreshSecret: e.JWT_REFRESH_SECRET,
+      accessTtlSeconds: 15 * 60,
+      refreshTtlSeconds: 7 * 24 * 60 * 60,
+      rateLimitMax: e.AUTH_RATE_LIMIT_MAX,
+    },
   };
 }

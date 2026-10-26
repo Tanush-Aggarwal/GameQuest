@@ -20,3 +20,6 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+
+# update bundles from the cloud session
+*.bundle

@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 
 vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn() }));
+vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn(), addToLibrary: vi.fn(), changeStatus: vi.fn(), removeFromLibrary: vi.fn() }));
 
 const { searchGames, getGame } = await import('@/services/gamesApi.js');
 const { default: Explore } = await import('./Explore.jsx');
@@ -31,7 +32,12 @@ const renderAt = (path) =>
     </MemoryRouter>,
   );
 
-beforeEach(() => vi.resetAllMocks());
+const { listLibrary } = await import('@/services/libraryApi.js');
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  listLibrary.mockResolvedValue({ items: [] });
+});
 
 describe('Explore', () => {
   it('shows a skeleton, then the results as links to game pages', async () => {

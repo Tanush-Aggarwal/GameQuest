@@ -11,6 +11,10 @@ import { RefreshToken } from './models/RefreshToken.js';
 import { Game } from './models/Game.js';
 import { createIgdbAdapter } from './adapters/content/igdb.js';
 import { createGameService } from './services/gameService.js';
+import { LibraryEntry } from './models/LibraryEntry.js';
+import { StatusHistory } from './models/StatusHistory.js';
+import { createLibraryService } from './services/libraryService.js';
+import { createEventBus } from './events/eventBus.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -18,6 +22,7 @@ export function createApp({
   logger,
   authService = createAuthService({ User, RefreshToken, config }),
   gameService = createGameService({ Game, igdb: createIgdbAdapter({ config }), logger }),
+  libraryService = createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus: createEventBus({ logger }), logger }),
 }) {
   const app = express();
 
@@ -30,7 +35,7 @@ export function createApp({
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 
-  app.use('/api/v1', createRoutes({ authService, gameService, config }));
+  app.use('/api/v1', createRoutes({ authService, gameService, libraryService, config }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

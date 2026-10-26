@@ -1,4 +1,4 @@
-/* Design tokens — the only source of colour in the UI. Dark theme by default. */
+﻿/* Design tokens â€” the only source of colour in the UI. Dark theme by default. */
 :root {
   --bg: #0e0f14;
   --surface: #161821;
@@ -16,6 +16,13 @@
   --warning: #f5a524;
   --danger: #ff5c70;
   --info: #4cc2ff;
+
+  /* library status (always paired with an icon and a label) */
+  --status-playing: #22d3ee;
+  --status-completed: #34d399;
+  --status-backlog: #94a3b8;
+  --status-wishlist: #f472b6;
+  --status-dropped: #f87171;
 
   /* trophies */
   --trophy-bronze: #cd7f32;

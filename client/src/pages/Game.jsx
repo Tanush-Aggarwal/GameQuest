@@ -4,6 +4,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCover } from '@/components/games/GameCard.jsx';
+import { GameLibraryPanel } from '@/components/library/GameLibraryPanel.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getGame } from '@/services/gamesApi.js';
 
@@ -76,6 +77,7 @@ export default function Game() {
             </div>
             {game.platforms.length > 0 && <p className="text-sm text-text-muted">{game.platforms.join(' · ')}</p>}
             <p className="max-w-prose text-sm">{game.summary || 'No description available yet.'}</p>
+            <GameLibraryPanel game={game} />
             <div className="max-w-xs">
               <TimeToBeat timeToBeat={game.timeToBeat} />
             </div>

@@ -1,4 +1,4 @@
-import { NotFoundError } from '../utils/errors.js';
+﻿import { NotFoundError } from '../utils/errors.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -44,7 +44,7 @@ export function createGameService({
     const at = now();
     const results = await Promise.allSettled(
       games.map((g) =>
-        Game.findOneAndUpdate({ 'externalIds.igdb': g.externalIds.igdb }, toUpsertUpdate(g, at), { upsert: true, new: true }),
+        Game.findOneAndUpdate({ 'externalIds.igdb': g.externalIds.igdb }, toUpsertUpdate(g, at), { upsert: true, returnDocument: 'after' }),
       ),
     );
     results.forEach((r) => {

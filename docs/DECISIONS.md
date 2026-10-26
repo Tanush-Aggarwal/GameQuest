@@ -37,3 +37,14 @@ Format: date — decision — why.
 - `/games` requires auth and has its own rate-limit bucket (300 / 15 min), because search can fan out to IGDB.
 - Client: `useAsync` hook derives loading/error from the current load function so effects never set state synchronously (react-hooks lint rule) and stale responses are ignored. The Explore query lives in the URL (`?q=`).
 - Server `dev` script uses `--watch-path=src` so OneDrive churn in node_modules cannot restart the server.
+
+## 2026-10-26 — Claude Code — item 6: unified library
+- Transitions (shared `LIBRARY_TRANSITIONS`, used by server and client): wishlist→backlog; backlog→playing|dropped|wishlist; playing→completed|dropped|backlog; completed→playing; dropped→backlog|playing. Includes the "undo" moves players really make (pause, resume, replay). Same-status and every other jump return 409 with `{from,to,allowed}`.
+- New entries may only start as wishlist, backlog or playing (default backlog); Completed/Dropped are reached by moving, so the state machine cannot be bypassed on creation. Creation writes a StatusHistory row with `from: null`.
+- Status change is a conditional update (`status: from` in the filter), so a double-click or second tab loses the race with a 409 instead of writing two history rows. No multi-document transaction: if the history write fails the status change stands and the error is logged.
+- Completed sets `completedAt` and `manualProgress = 100`; leaving Completed clears `completedAt` and keeps progress.
+- Entries are scoped by `userId` from the auth cookie in every query; someone else's entry is a 404, never a 403, so ids can't be probed.
+- `GET /library` supports `?status=`, `?gameId=` (game page lookup) and cursor = last `_id` (newest first); tab counts are returned on the first page only. `PATCH /library/:id/visibility` is the dedicated hide-from-friends endpoint (no UI yet).
+- `library.statusChanged` is emitted on an in-process event bus (`events/eventBus.js`); subscriber errors are caught and logged so they never fail a request. No subscribers yet (quests/activity come in Tier 4).
+- Removing an entry also deletes its StatusHistory. The client confirms removal inline (Remove → Confirm/Cancel) rather than offering Undo.
+- Server-test fakes: `createFakeCollection` in tests/helpers.js covers the Mongoose calls the services use; real indexes (unique pairs, sparse unique) are still not exercised against MongoDB.

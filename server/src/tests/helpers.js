@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import pino from 'pino';
 import { loadConfig } from '../config/index.js';
 
@@ -87,7 +87,8 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
     docs,
     async create(data) {
       seq += 1;
-      const doc = { _id: String(seq).padStart(6, '0'), createdAt: new Date(), updatedAt: new Date(), ...structuredClone(defaults), ...data };
+      // ids are shaped like ObjectIds so the shared id schemas accept them
+      const doc = { _id: String(seq).padStart(24, '0'), createdAt: new Date(), updatedAt: new Date(), ...structuredClone(defaults), ...data };
       assertUnique(doc);
       docs.push(doc);
       return structuredClone(doc);
@@ -113,7 +114,7 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       if (!doc) return null;
       applyUpdate(doc, update);
       doc.updatedAt = new Date();
-      return structuredClone(opts.new ? doc : before);
+      return structuredClone(opts.returnDocument === 'after' ? doc : before);
     },
     async countDocuments(q = {}) {
       return docs.filter((d) => matchesQuery(d, q)).length;

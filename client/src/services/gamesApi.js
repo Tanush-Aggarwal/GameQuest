@@ -11,6 +11,12 @@ export async function getGame(slug, { signal } = {}) {
   return data.game;
 }
 
+// { videoId, source: 'igdb' | 'youtube' } or null when the game has no trailer.
+export async function getTrailer(slug, { signal } = {}) {
+  const { data } = await api.get(`/games/${encodeURIComponent(slug)}/trailer`, { signal });
+  return data.trailer ?? null;
+}
+
 export async function getGameFriends(slug, { signal } = {}) {
   const { data } = await api.get(`/games/${encodeURIComponent(slug)}/friends`, { signal });
   return data.items ?? [];

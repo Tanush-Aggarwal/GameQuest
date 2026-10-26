@@ -6,10 +6,10 @@ import { vi } from 'vitest';
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
 vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn(), addToLibrary: vi.fn(), changeStatus: vi.fn(), removeFromLibrary: vi.fn() }));
-vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn() }));
+vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getTrailer: vi.fn().mockResolvedValue(null) }));
 
 const { listLibrary, addToLibrary, changeStatus, removeFromLibrary } = await import('@/services/libraryApi.js');
-const { getGame } = await import('@/services/gamesApi.js');
+const { getGame, getTrailer } = await import('@/services/gamesApi.js');
 const { default: Library } = await import('./Library.jsx');
 const { default: Game } = await import('./Game.jsx');
 
@@ -28,7 +28,10 @@ const renderLibrary = (path = '/library') =>
     </MemoryRouter>,
   );
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  getTrailer.mockResolvedValue(null); // the game page asks for a trailer; none here
+});
 
 describe('Library page', () => {
   it('shows a skeleton, then entries with status icon + label, platforms and tab counts', async () => {

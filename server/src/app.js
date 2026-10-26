@@ -42,6 +42,8 @@ import { createSteamSyncService } from './services/steamSyncService.js';
 import { createCatalogImportService } from './services/catalogImportService.js';
 import { MediaCache } from './models/MediaCache.js';
 import { createArtService } from './services/artService.js';
+import { createYoutubeAdapter } from './adapters/content/youtube.js';
+import { createTrailerService } from './services/trailerService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -63,6 +65,8 @@ export function createApp({
   steamAdapter = createSteamAdapter({ config }),
   steamService: _steamSvc,
   steamSyncService: _steamSyncSvc,
+  youtubeAdapter = createYoutubeAdapter({ config }),
+  trailerService: _trailerSvc,
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -97,6 +101,7 @@ export function createApp({
       logger,
     });
   const steamService = _steamSvc ?? createSteamService({ User, steam: steamAdapter });
+  const trailerService = _trailerSvc ?? createTrailerService({ Game, MediaCache, youtube: youtubeAdapter, logger });
   const steamSyncService =
     _steamSyncSvc ??
     createSteamSyncService({
@@ -139,6 +144,7 @@ export function createApp({
       recommendationService,
       steamService,
       steamSyncService,
+      trailerService,
       LibraryEntry,
       config,
     }));

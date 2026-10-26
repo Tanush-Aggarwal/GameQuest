@@ -15,6 +15,7 @@ import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCover, getHighResCover } from '@/components/games/GameCard.jsx';
+import { TrailerPlayer } from '@/components/games/TrailerPlayer.jsx';
 import { GameLibraryPanel } from '@/components/library/GameLibraryPanel.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { RecommendationModal } from '@/components/recommendations/RecommendationModal.jsx';
@@ -396,6 +397,9 @@ export default function Game() {
           {/* Tab Content */}
           {activeTab === 'overview' && (
             <div className="flex flex-col gap-6">
+              {/* Trailer: IGDB video first, YouTube search as fallback; hidden when there is none */}
+              <TrailerPlayer slug={game.slug} title={game.title} />
+
               {/* Synopsis */}
               <div className="rounded-card border border-border bg-surface p-5">
                 <h3 className="font-heading text-sm font-semibold tracking-wide uppercase text-text-muted mb-2">

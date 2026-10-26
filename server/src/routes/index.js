@@ -29,6 +29,7 @@ export function createRoutes({
   recommendationService,
   steamService,
   steamSyncService,
+  trailerService,
   LibraryEntry,
   config,
 }) {
@@ -38,7 +39,7 @@ export function createRoutes({
 
   router.get('/health', health);
   router.use('/auth', createAuthRouter({ authService, config }));
-  router.use('/games', createGamesRouter({ authService, gameService }));
+  router.use('/games', createGamesRouter({ authService, gameService, trailerService }));
   router.use('/library', createLibraryRouter({ authService, libraryService }));
   router.use('/library', createProgressRouter({ requireAuth, progressService }));
   router.use('/insights', createInsightsRouter({ requireAuth, insightsService }));

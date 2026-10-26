@@ -10,6 +10,8 @@ coverage/
 .env
 .env.*
 !.env.example
+*.env
+*credentials*
 
 # AI tool local state (keep shared config, ignore personal settings)
 .claude/settings.local.json

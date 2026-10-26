@@ -1,4 +1,5 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
+import { PROFILE_PRIVACY } from '@gamequest/shared';
 
 const userSchema = new mongoose.Schema(
   {
@@ -8,6 +9,8 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    // Who may open /u/:username: everyone, friends only, or just the owner.
+    privacy: { type: String, enum: PROFILE_PRIVACY, default: 'public' },
   },
   { timestamps: true },
 );

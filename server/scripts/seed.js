@@ -19,6 +19,14 @@ import { PlayLog } from '../src/models/PlayLog.js';
 import { Review } from '../src/models/Review.js';
 import { Collection } from '../src/models/Collection.js';
 import { CollectionItem } from '../src/models/CollectionItem.js';
+import { Friendship } from '../src/models/Friendship.js';
+import { Activity } from '../src/models/Activity.js';
+import { createEventBus } from '../src/events/eventBus.js';
+import { registerSubscribers } from '../src/events/subscribers.js';
+import { createLibraryService } from '../src/services/libraryService.js';
+import { createReviewService } from '../src/services/reviewService.js';
+import { createCollectionService } from '../src/services/collectionService.js';
+import { createActivityService } from '../src/services/activityService.js';
 
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
@@ -29,6 +37,7 @@ if (!MONGO_URI) {
 const DEMO_EMAIL = 'demo@gamequest.dev';
 const DEMO_PASSWORD = 'Demo1234!';
 const DEMO_USERNAME = 'demo';
+const ALEX_EMAIL = 'alex@gamequest.dev';
 
 // externalIds.igdb lets live IGDB results merge into these docs instead of
 // colliding on the unique slug.
@@ -205,6 +214,55 @@ async function seed() {
     ],
   });
   console.log('Collections ready');
+
+  // ── a second player, friends with demo, whose activity fills the feed ─────────
+  // Activity is only ever written by event-bus subscribers, so alex's library is built through the
+  // real services and the same subscribers the API uses (never by inserting Activity rows here).
+  let alex = await User.findOne({ email: ALEX_EMAIL });
+  if (!alex) {
+    alex = await User.create({
+      username: 'alex', usernameLower: 'alex', email: ALEX_EMAIL,
+      passwordHash: await bcrypt.hash(DEMO_PASSWORD, 12), role: 'user',
+    });
+    console.log(`Created user ${ALEX_EMAIL}`);
+  }
+  const [userA, userB] = [String(user._id), String(alex._id)].sort();
+  if (!(await Friendship.findOne({ userA, userB }))) {
+    await Friendship.create({ userA, userB, status: 'accepted', requestedBy: user._id, acceptedAt: new Date() });
+  }
+  console.log('Friendship ready');
+
+  if (!(await Activity.countDocuments({ actorId: alex._id }))) {
+    const eventBus = createEventBus();
+    const collectionService = createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus });
+    const activityService = createActivityService({ Activity, LibraryEntry, Game, User, Collection, social: {} });
+    registerSubscribers({ eventBus, collectionService, activityService });
+    const libraryService = createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus });
+    const reviewService = createReviewService({ Review, Game, User, eventBus });
+
+    // [slug, statuses to walk through, optional review]
+    const plan = [
+      ['hollow-knight', ['playing', 'completed'], [5, 'Gorgeous, haunting and enormous. Hallownest stays with you.']],
+      ['celeste', ['playing', 'completed'], [5, 'Short, tough and kind. The assist mode is a lovely touch.']],
+      ['hades--1', ['playing'], null],
+      ['undertale', ['backlog'], null],
+    ];
+    for (const [slug, steps, review] of plan) {
+      const gameId = games[slug]._id;
+      if (await LibraryEntry.findOne({ userId: alex._id, gameId })) continue;
+      const [first, ...rest] = steps;
+      const entry = await libraryService.add(alex._id, { gameId, status: first });
+      for (const next of rest) await libraryService.changeStatus(alex._id, entry.id, next);
+      if (review) await reviewService.upsert(alex._id, gameId, { rating: review[0], body: review[1] }, LibraryEntry);
+    }
+    if (!(await Collection.findOne({ ownerId: alex._id, name: 'Cosy weekend games' }))) {
+      await collectionService.create(alex._id, {
+        name: 'Cosy weekend games', description: 'Low-stress picks.', visibility: 'public', type: 'manual', rules: [],
+      });
+    }
+    await new Promise((resolve) => setTimeout(resolve, 800)); // let the async subscribers finish writing
+  }
+  console.log('Alex activity ready');
 
   console.log(`\nSeed complete. Log in with ${DEMO_EMAIL} / ${DEMO_PASSWORD}\n`);
 }

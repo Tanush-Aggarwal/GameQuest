@@ -1,5 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
-import pino from 'pino';
+﻿import pino from 'pino';
 import { loadConfig } from '../config/index.js';
 
 export const logger = pino({ level: 'silent' });
@@ -32,6 +31,7 @@ const OPS = {
   $gte: (a, v) => a != null && a >= v,
   $lt: (a, v) => a != null && a < v,
   $lte: (a, v) => a != null && a <= v,
+  $regex: (a, v) => typeof a === 'string' && new RegExp(v).test(a),
 };
 
 function matchValue(actual, cond) {
@@ -185,7 +185,6 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
 
 // Minimal in-memory stand-ins for the Mongoose models, enough for authService.
 export function createFakeModels() {
-  const users = [];
   const tokens = [];
 
   const matches = (doc, q) =>
@@ -194,27 +193,19 @@ export function createFakeModels() {
       return doc[k] === v;
     });
 
-  const User = {
-    docs: users,
+  // Users share the generic fake collection (24-hex ids, find/$in/$regex) so social tests can query them too.
+  const userCollection = createFakeCollection({ unique: [['email'], ['usernameLower']], defaults: { role: 'user', privacy: 'public' } });
+  const baseFindOne = userCollection.findOne;
+  const User = Object.assign(userCollection, {
     findOne(q) {
-      const found = users.find((u) => matches(u, q)) ?? null;
-      const p = Promise.resolve(found);
-      p.select = () => p;
+      const p = baseFindOne(q);
+      p.select = () => p; // authService asks for +passwordHash; the fake always includes it
       return p;
     },
     async findById(id) {
-      return users.find((u) => String(u._id) === String(id)) ?? null;
+      return userCollection.docs.find((u) => String(u._id) === String(id)) ?? null;
     },
-    async create(data) {
-      if (users.some((u) => u.email === data.email || u.usernameLower === data.usernameLower)) {
-        throw Object.assign(new Error('E11000 duplicate key'), { code: 11000 });
-      }
-      const doc = { _id: randomUUID(), role: 'user', createdAt: new Date(), ...data };
-      users.push(doc);
-      return doc;
-    },
-  };
-
+  });
   const RefreshToken = {
     docs: tokens,
     async create(data) {

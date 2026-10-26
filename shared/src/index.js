@@ -5,3 +5,4 @@ export * from './library.js';
 export * from './progress.js';
 export * from './review.js';
 export * from './collection.js';
+export * from './social.js';

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getDashboard, getPlayNext } from '@/services/progressApi.js';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
+import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -28,6 +29,9 @@ export default function Home() {
 
       {/* Play next */}
       <PlayNextSection playNext={playNext} />
+
+      {/* What friends are up to */}
+      <FriendFeed />
 
       {/* Backlog health */}
       <BacklogHealth dashboard={dashboard} />

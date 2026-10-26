@@ -24,7 +24,7 @@ async function refreshGameRating(Game, Review, gameId) {
   await Game.updateOne({ _id: gameId }, { $set: { ratingAvg: avg, ratingCount: count } });
 }
 
-export function createReviewService({ Review, Game, User }) {
+export function createReviewService({ Review, Game, User, eventBus }) {
   return {
     // Upsert — create or replace the user's review of a game.
     // Only allowed for games the user has in their library past wishlist.
@@ -50,6 +50,14 @@ export function createReviewService({ Review, Game, User }) {
         );
       } else {
         review = await Review.create({ userId, gameId, rating, body: body ?? null });
+        // Only a first review is news; edits stay quiet.
+        eventBus?.emit('review.created', {
+          userId: String(userId),
+          gameId: String(gameId),
+          reviewId: String(review._id),
+          rating,
+          at: new Date(),
+        });
       }
 
       await refreshGameRating(Game, Review, review.gameId);

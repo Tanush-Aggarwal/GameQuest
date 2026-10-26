@@ -7,11 +7,26 @@ import { createProgressRouter } from './progress.js';
 import { createInsightsRouter } from './insights.js';
 import { createReviewsRouter } from './reviews.js';
 import { createCollectionsRouter } from './collections.js';
+import { createSocialRouters } from './social.js';
 import { createRequireAuth } from '../middleware/auth.js';
 
-export function createRoutes({ authService, gameService, libraryService, progressService, insightsService, reviewService, collectionService, LibraryEntry, config }) {
+export function createRoutes({
+  authService,
+  gameService,
+  libraryService,
+  progressService,
+  insightsService,
+  reviewService,
+  collectionService,
+  friendService,
+  activityService,
+  profileService,
+  LibraryEntry,
+  config,
+}) {
   const router = Router();
   const requireAuth = createRequireAuth(authService);
+  const social = createSocialRouters({ authService, friendService, profileService, activityService });
 
   router.get('/health', health);
   router.use('/auth', createAuthRouter({ authService, config }));
@@ -21,6 +36,10 @@ export function createRoutes({ authService, gameService, libraryService, progres
   router.use('/insights', createInsightsRouter({ requireAuth, insightsService }));
   router.use('/collections', createCollectionsRouter({ authService, collectionService }));
   router.use('/reviews', createReviewsRouter({ requireAuth, reviewService, LibraryEntry }));
+  router.use('/friends', social.friends);
+  router.use('/blocks', social.blocks);
+  router.use('/users', social.users);
+  router.use('/feed', social.feed);
 
   return router;
 }

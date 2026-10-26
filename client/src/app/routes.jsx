@@ -14,6 +14,7 @@ const Register = lazy(() => import('@/pages/Register.jsx'));
 const LibraryEntry = lazy(() => import('@/pages/LibraryEntry.jsx'));
 const Collections = lazy(() => import('@/pages/Collections.jsx'));
 const Collection = lazy(() => import('@/pages/Collection.jsx'));
+const UserProfile = lazy(() => import('@/pages/UserProfile.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
 export const routes = [
@@ -39,6 +40,7 @@ export const routes = [
           { path: '/games/:slug', element: <Game /> },
           { path: '/friends', element: <Friends /> },
           { path: '/profile', element: <Profile /> },
+          { path: '/u/:username', element: <UserProfile /> },
         ],
       },
     ],

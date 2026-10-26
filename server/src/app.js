@@ -25,6 +25,12 @@ import { Collection } from './models/Collection.js';
 import { CollectionItem } from './models/CollectionItem.js';
 import { createCollectionService } from './services/collectionService.js';
 import { registerSubscribers } from './events/subscribers.js';
+import { Friendship } from './models/Friendship.js';
+import { Block } from './models/Block.js';
+import { Activity } from './models/Activity.js';
+import { createFriendService } from './services/friendService.js';
+import { createActivityService } from './services/activityService.js';
+import { createProfileService } from './services/profileService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -37,15 +43,24 @@ export function createApp({
   insightsService: _insightsSvc,
   reviewService: _reviewSvc,
   collectionService: _collectionSvc,
+  friendService: _friendSvc,
+  activityService: _activitySvc,
+  profileService: _profileSvc,
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
   const progressService = _progressSvc ?? createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger });
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
-  const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, logger });
+  const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, eventBus });
+  const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, eventBus });
   const collectionService =
-    _collectionSvc ?? createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger });
-  registerSubscribers({ eventBus, collectionService });
+    _collectionSvc ??
+    createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });
+  const activityService =
+    _activitySvc ?? createActivityService({ Activity, LibraryEntry, Game, User, Collection, social: friendService, logger });
+  const profileService =
+    _profileSvc ?? createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService });
+  registerSubscribers({ eventBus, collectionService, activityService });
 
   const app = express();
 
@@ -58,7 +73,20 @@ export function createApp({
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 
-  app.use('/api/v1', createRoutes({ authService, gameService, libraryService, progressService, insightsService, reviewService, collectionService, LibraryEntry, config }));
+  app.use('/api/v1', createRoutes({
+      authService,
+      gameService,
+      libraryService,
+      progressService,
+      insightsService,
+      reviewService,
+      collectionService,
+      friendService,
+      activityService,
+      profileService,
+      LibraryEntry,
+      config,
+    }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

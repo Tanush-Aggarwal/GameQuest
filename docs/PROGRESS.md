@@ -1,4 +1,4 @@
-﻿# GameQuest — Progress log
+# GameQuest — Progress log
 
 Every AI tool reads this at the start of a session and updates it at the end.
 Keep it short: newest first, one line per item.
@@ -14,6 +14,7 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 14. Cloud deploy (postponed to end): Atlas + Render + Vercel
 
 ## Done
+- Database improvements: connection pooling & Atlas resilience in connectDb (maxPoolSize 20, minPoolSize 2, socketTimeoutMS 45s, autoIndex off in prod, error event listener), Game compound & weighted text indexes, MediaCache model with TTL, User profile fields (avatar, bio, favouriteGames <= 4, discord, notificationPrefs), aggregation ObjectId casting in reviewService, projection optimizations in insightsService, and dedicated db.test.js suite; 231 server tests + 108 client tests pass (339 total tests pass)
 - Item 12 (game recommendations): Recommendation model with unique (fromId, toId, gameId) index, recommendationService (friend/block verification, review snippet linkage, inbox/sent listing, outcome tracking on status/review events, pick score calculation), /recommendations endpoints (create rate-limited, respond, delete, score), RecommendationsTab in Friends hub with Pick Score banner, RecommendationModal on Game and LibraryEntry pages, RecommendationWidget on Home dashboard, seeded recommendation from alex to demo; 11 server tests + 3 client tests (330 total tests pass)
 - Item 11 (deploy readiness & verification): Vercel proxy rewrite + Render blueprint confirmed, automated post-deploy verification script (scripts/verify-deploy.js), CLIENT_ORIGIN trailing-slash normalization in config, package.json verify-deploy script, README deployment section updated; 211 server + 105 client tests pass
 - Item 10 (game sessions): GameSession + Rsvp models, sessionService (friends/invite visibility, blocks, host-only update/cancel, RSVP with capacity, upcoming list with composite cursor, .ics), /sessions routes (create rate-limited), Sessions page grouped by local day, schedule form (game search or ?game=, invitees, Discord pattern check, UTC conversion), session detail (optimistic RSVP with rollback, attendees, Add to calendar, Join Discord, host edit/cancel), Home upcoming widget, seeded Hades night; 35 server + 19 client tests, hardened after review: atomic seat counter, friend-gated access, privacy-aware attendee lists
@@ -47,6 +48,7 @@ pm run seed to get a fresh upcoming one after it ends.
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Antigravity — database optimization & model enhancements (db options, Game indexes, MediaCache, User fields, reviewService aggregation cast, insights projections, db.test.js); 231 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — game recommendations (model, service, endpoints, Friends tab, modals, Home widget, seed); 222 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — deploy verification script, CORS origin trailing-slash normalization, updated README & deploy docs; 211 server tests, 105 client tests pass clean
 - 2026-10-27 — Claude Code — collections (3e292b5), friends + activity feed (797dd90), game sessions + README; server 211 tests, client 105; demo + alex seeded

@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { loadConfig } from '../config/index.js';
 
 export const logger = pino({ level: 'silent' });
@@ -36,7 +36,12 @@ const OPS = {
 };
 
 const isDate = (v) => v != null && typeof v === 'object' && typeof v.getTime === 'function'; // duck-typed: structuredClone yields cross-realm Dates
-const sameValue = (a, b) => (isDate(a) && isDate(b) ? a.getTime() === b.getTime() : a === b);
+const isObjectId = (v) => v != null && typeof v === 'object' && ('_bsontype' in v || v.constructor?.name === 'ObjectId');
+const sameValue = (a, b) => {
+  if (isDate(a) && isDate(b)) return a.getTime() === b.getTime();
+  if (isObjectId(a) || isObjectId(b)) return String(a) === String(b);
+  return a === b;
+};
 
 function matchValue(actual, cond) {
   const isOps = cond && typeof cond === 'object' && !isDate(cond) && Object.keys(cond).every((k) => k.startsWith('$'));
@@ -118,6 +123,7 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       const found = docs.find((d) => matchesQuery(d, q));
       const p = Promise.resolve(found ? structuredClone(found) : null);
       p.lean = () => p;
+      p.select = () => p;
       return p;
     },
     async findOneAndUpdate(q, update, opts = {}) {
@@ -217,7 +223,18 @@ export function createFakeModels() {
     });
 
   // Users share the generic fake collection (24-hex ids, find/$in/$regex) so social tests can query them too.
-  const userCollection = createFakeCollection({ unique: [['email'], ['usernameLower']], defaults: { role: 'user', privacy: 'public' } });
+  const userCollection = createFakeCollection({
+    unique: [['email'], ['usernameLower']],
+    defaults: {
+      role: 'user',
+      privacy: 'public',
+      avatar: null,
+      bio: '',
+      favouriteGames: [],
+      discord: { id: null, username: null },
+      notificationPrefs: { email: false, digest: false },
+    },
+  });
   const baseFindOne = userCollection.findOne;
   const User = Object.assign(userCollection, {
     findOne(q) {

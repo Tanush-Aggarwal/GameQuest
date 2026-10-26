@@ -114,3 +114,11 @@ Format: date — decision — why.
 - Pick score: aggregated metrics on sent recommendations (totalSent, acceptedCount, completedCount, averageRating) reflecting recommender tastemaker quality.
 - Accepting a recommendation automatically calls libraryService.add (defaulting to backlog or chosen status), catching conflicts cleanly if the recipient already owns the game.
 - UI: Recommendations tab in Friends hub with Pick score banner, Inbox and Sent views; quick Recommend modal accessible on both Game detail and Library Entry pages; Home dashboard widget highlighting pending friend recommendations.
+
+
+## 2026-10-27 — Antigravity — database optimization & model enhancements
+- Connection pooling & Atlas resilience: Added `maxPoolSize: 20`, `minPoolSize: 2`, `socketTimeoutMS: 45_000`, `serverSelectionTimeoutMS: 10_000`, and error event listener in `server/src/config/db.js`. Disabled `autoIndex` in production to prevent startup stalls during deploys.
+- Schema indexing: Enhanced `Game` model with weighted text index `{ title: 'text', summary: 'text' }, { weights: { title: 10, summary: 1 } }` and compound indexes `{ 'timeToBeat.main': 1, slug: 1 }`, `{ ratingAvg: -1, ratingCount: -1, slug: 1 }`, and `{ releaseDate: -1, slug: 1 }`.
+- Missing Blueprint models & fields: Added `MediaCache` model with `(gameId, source)` unique index and `expiresAt` TTL index. Added `avatar`, `bio`, `favouriteGames` (validated max 4), `discord`, and `notificationPrefs` to `User` model and exposed them in profile reads.
+- Aggregation casting & queries: Fixed `refreshGameRating` in `reviewService.js` to cast `gameId` to `new mongoose.Types.ObjectId(gameId)` when valid, avoiding silent aggregation mismatches in native MongoDB. Added projection `.select(...)` to `insightsService.js` game queries.
+- Added comprehensive database test suite (`server/src/tests/db.test.js`) verifying all model schemas, compound indexes, validators, and connection options.

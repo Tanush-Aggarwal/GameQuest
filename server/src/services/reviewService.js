@@ -1,4 +1,5 @@
-﻿import { ForbiddenError, NotFoundError } from '../utils/errors.js';
+import mongoose from 'mongoose';
+import { ForbiddenError, NotFoundError } from '../utils/errors.js';
 
 // DTOs
 export const toReviewDto = (r, user) => ({
@@ -14,9 +15,14 @@ export const toReviewDto = (r, user) => ({
 
 // Atomically recalculate the game's ratingAvg and ratingCount from the
 // aggregate rather than trying to keep running sums in sync.
+// Native MongoDB aggregation pipelines do not cast strings to ObjectId in $match,
+// so gameId must be cast to ObjectId when valid.
 async function refreshGameRating(Game, Review, gameId) {
+  const matchId = typeof gameId === 'string' && mongoose.Types.ObjectId.isValid(gameId)
+    ? new mongoose.Types.ObjectId(gameId)
+    : gameId;
   const [agg] = await Review.aggregate([
-    { $match: { gameId } },
+    { $match: { gameId: matchId } },
     { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
   ]);
   const avg = agg ? Math.round(agg.avg * 10) / 10 : 0;

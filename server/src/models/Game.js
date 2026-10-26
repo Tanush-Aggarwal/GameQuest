@@ -30,8 +30,12 @@ const gameSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-gameSchema.index({ title: 'text' });
+// Catalog searches and filters
+gameSchema.index({ title: 'text', summary: 'text' }, { weights: { title: 10, summary: 1 } });
 gameSchema.index({ genres: 1, slug: 1 });
 gameSchema.index({ platforms: 1, slug: 1 });
+gameSchema.index({ 'timeToBeat.main': 1, slug: 1 });
+gameSchema.index({ ratingAvg: -1, ratingCount: -1, slug: 1 });
+gameSchema.index({ releaseDate: -1, slug: 1 });
 
 export const Game = mongoose.models.Game ?? mongoose.model('Game', gameSchema);

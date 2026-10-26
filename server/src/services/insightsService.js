@@ -49,7 +49,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     // Top genres from backlog+playing (what they're into).
     const backlogIds = all.filter((e) => ['backlog', 'playing', 'wishlist'].includes(e.status)).map((e) => e.gameId);
     if (backlogIds.length) {
-      const games = await Game.find({ _id: { $in: backlogIds } }).lean();
+      const games = await Game.find({ _id: { $in: backlogIds } }).select('genres').lean();
       for (const g of games) {
         for (const genre of g.genres ?? []) {
           genreMap[genre] = (genreMap[genre] ?? 0) + 1;
@@ -66,7 +66,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     const backlogGameIds = backlogEntries.map((e) => e.gameId);
     let backlogHours = null;
     if (backlogGameIds.length) {
-      const backlogGames = await Game.find({ _id: { $in: backlogGameIds } }).lean();
+      const backlogGames = await Game.find({ _id: { $in: backlogGameIds } }).select('timeToBeat').lean();
       const ttbTotal = backlogGames.reduce((s, g) => s + (g.timeToBeat?.main ?? 0), 0);
       if (ttbTotal > 0) backlogHours = ttbTotal;
     }
@@ -77,7 +77,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     if (lastLogDoc) {
       const playingEntry = all.find((e) => String(e.gameId) === String(lastLogDoc.gameId));
       if (playingEntry) {
-        const game = await Game.findOne({ _id: lastLogDoc.gameId }).lean();
+        const game = await Game.findOne({ _id: lastLogDoc.gameId }).select('title cover').lean();
         resumeCard = {
           entryId: String(playingEntry._id),
           gameId: String(playingEntry.gameId),
@@ -110,12 +110,12 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     // Genres the user has played/completed (preference signal).
     const doneEntries = await LibraryEntry.find({ userId, status: { $in: ['completed', 'playing'] } }).lean();
     const doneGameIds = doneEntries.map((e) => e.gameId);
-    const doneGames = doneGameIds.length ? await Game.find({ _id: { $in: doneGameIds } }).lean() : [];
+    const doneGames = doneGameIds.length ? await Game.find({ _id: { $in: doneGameIds } }).select('genres').lean() : [];
     const preferredGenres = {};
     for (const g of doneGames) for (const genre of g.genres ?? []) preferredGenres[genre] = (preferredGenres[genre] ?? 0) + 1;
 
     const candidateIds = allEntries.map((e) => e.gameId);
-    const games = await Game.find({ _id: { $in: candidateIds } }).lean();
+    const games = await Game.find({ _id: { $in: candidateIds } }).select('title cover genres timeToBeat').lean();
     const gameById = Object.fromEntries(games.map((g) => [String(g._id), g]));
 
     const now = Date.now();

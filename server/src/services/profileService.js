@@ -45,8 +45,15 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
         user: {
           id: String(user._id),
           username: user.username,
+          avatar: user.avatar ?? null,
+          bio: user.bio ?? '',
+          favouriteGames: user.favouriteGames ?? [],
           memberSince: user.createdAt,
-          ...(self && { privacy: user.privacy ?? 'public' }),
+          ...(self && {
+            privacy: user.privacy ?? 'public',
+            notificationPrefs: user.notificationPrefs ?? { email: false, digest: false },
+            discord: user.discord ?? { id: null, username: null },
+          }),
         },
         relation,
         restricted: !allowed,

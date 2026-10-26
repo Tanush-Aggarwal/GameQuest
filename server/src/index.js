@@ -1,4 +1,4 @@
-﻿import { loadConfig } from './config/index.js';
+import { loadConfig } from './config/index.js';
 import { connectDb, disconnectDb } from './config/db.js';
 import { createLogger } from './utils/logger.js';
 import { createApp } from './app.js';
@@ -15,7 +15,7 @@ try {
 const logger = createLogger({ level: config.logLevel, env: config.env });
 
 try {
-  await connectDb(config.mongoUri, logger);
+  await connectDb(config.mongoUri, logger, { autoIndex: !config.isProd });
 } catch (err) {
   logger.fatal({ err }, 'Could not connect to MongoDB');
   process.exit(1);

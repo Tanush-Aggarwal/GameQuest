@@ -26,8 +26,7 @@ Tier 2 — In Progress (Progress tracking, Reviews complete)
 - Item 4: client shell (lazy routes, top nav + mobile tab bar, login/register using shared Zod schemas, protected/public-only routes, session restore + refresh-on-401, toasts, ui primitives; 20 client tests)
 
 ## Known issues / blockers
-- IGDB lookups have never run against real credentials; adapter is tested with a mocked fetch only. Set TWITCH_CLIENT_ID/SECRET in server/.env and do one manual search to verify.
-- Seed script (server/scripts/seed.js) needs MONGODB_URI in server/.env; run `cd server && node scripts/seed.js` once per Atlas cluster.
+- Seed: `npm run seed` (idempotent, reads MONGODB_URI from server/.env); Atlas must allow your current IP (Network Access).
 - Library has no UI for adding ownerships/platforms (arrives with platform sync).
 - Catalog search/refresh cooldowns are in-memory per instance (reset on restart, not shared across instances).
 - Auth rate limiter uses the in-memory store (per instance, resets on restart).
@@ -39,5 +38,6 @@ Tier 2 — In Progress (Progress tracking, Reviews complete)
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Claude Code — applied bundle ce99c9c, approved install scripts, `npm run seed` + `npm run dev` verified against Atlas and real IGDB (Celeste/Hades search OK, no upstream errors); fixed seed giving Hades the wrong slug (IGDB: `hades--1`), which made IGDB's own `hades` fail to cache with E11000.
 - 2026-10-26 — Claude Code — reviews + seed script + README; 83 server tests — 349fdc2
 - 2026-10-26 — Claude Code — progress/insights/LibraryEntry page; 77→83 tests — 556e9fb

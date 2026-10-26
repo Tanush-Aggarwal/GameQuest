@@ -1,6 +1,6 @@
 import { LIBRARY_STATUSES, LIBRARY_TRANSITIONS } from '@gamequest/shared';
 import { ConflictError, NotFoundError, ValidationError } from '../utils/errors.js';
-import { toGameDto } from './gameService.js';
+import { toGameDto, withParentArt } from './gameService.js';
 
 export const STATUSES = LIBRARY_STATUSES;
 export const TRANSITIONS = LIBRARY_TRANSITIONS;
@@ -86,7 +86,8 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
         .limit(limit + 1)
         .lean();
       const page = rows.slice(0, limit);
-      const games = page.length ? await Game.find({ _id: { $in: page.map((e) => e.gameId) } }).lean() : [];
+      const found = page.length ? await Game.find({ _id: { $in: page.map((e) => e.gameId) } }).lean() : [];
+      const games = await withParentArt(Game, found);
       const byId = new Map(games.map((g) => [String(g._id), g]));
 
       // Tab counts only on the first page; later pages are "load more" and don't need them.
@@ -138,7 +139,8 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
     async getEntry(userId, entryId) {
       const entry = await findOwned(userId, entryId);
       const game = await Game.findOne({ _id: entry.gameId }).lean();
-      return toEntryDto(entry, game);
+      const [display] = game ? await withParentArt(Game, [game]) : [game];
+      return toEntryDto(entry, display);
     },
 
     async history(userId, entryId) {

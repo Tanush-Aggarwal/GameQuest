@@ -10,6 +10,8 @@
     "lint": "eslint src",
     "test": "node --experimental-vm-modules ../node_modules/jest/bin/jest.js --passWithNoTests",
     "seed": "node --env-file-if-exists=.env scripts/seed.js",
+    "catalog:import": "node --env-file-if-exists=.env scripts/import-catalog.js",
+    "catalog:fix": "node --env-file-if-exists=.env scripts/fix-catalog.js",
     "db:indexes": "node --env-file-if-exists=.env scripts/sync-indexes.js"
   },
   "jest": {

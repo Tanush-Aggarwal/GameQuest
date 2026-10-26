@@ -65,7 +65,8 @@ export function createRecommendationService({
       }
 
       const game = await Game.findOne({ _id: gameId }).lean();
-      if (!game) throw new NotFoundError('Game not found');
+      // DLC / bundles / editions are not catalog games and can't be recommended.
+      if (!game || game.hidden) throw new NotFoundError('Game not found');
 
       // Check if recommendation already exists between this pair for this game
       let rec = await Recommendation.findOne({ fromId, toId, gameId });

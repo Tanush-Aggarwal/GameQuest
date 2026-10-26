@@ -15,6 +15,7 @@ const rawGame = (id, name, extra = {}) => ({
   slug: name.toLowerCase().replace(/\s+/g, '-'),
   summary: `${name} summary`,
   first_release_date: 1_600_000_000,
+  game_type: 0,
   cover: { image_id: `cover${id}` },
   genres: [{ name: 'RPG' }],
   platforms: [{ name: 'PC' }],
@@ -40,7 +41,7 @@ describe('IGDB adapter', () => {
     expect(g).toMatchObject({
       title: 'Hades',
       slug: 'hades',
-      cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/cover7.jpg',
+      cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/cover7.jpg',
       genres: ['RPG'],
       platforms: ['PC'],
       externalIds: { igdb: 7, steam: '1145360' },
@@ -62,7 +63,7 @@ describe('IGDB adapter', () => {
       games: [rawGame(7, 'Hades')],
       times: [{ game_id: 7, hastily: 36000, normally: 72000, completely: 144000 }],
     });
-    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl });
+    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl, minIntervalMs: 0 });
     const [game] = await igdb.search('hades');
     expect(game.timeToBeat).toEqual({ main: 20, extras: 10, full: 40 });
     await igdb.search('hades');
@@ -72,14 +73,14 @@ describe('IGDB adapter', () => {
 
   it('escapes quotes in the search term', async () => {
     const fetchImpl = fakeFetch();
-    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl });
+    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl, minIntervalMs: 0 });
     await igdb.search('a"; limit 500; "');
     const body = fetchImpl.mock.calls.find(([u]) => String(u).endsWith('/games'))[1].body;
     expect(body).toContain('search "a\\"; limit 500; \\"";');
   });
 
   it('maps a rejected token request to UpstreamError', async () => {
-    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl: fakeFetch({ tokenStatus: 403 }) });
+    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl: fakeFetch({ tokenStatus: 403 }), minIntervalMs: 0 });
     await expect(igdb.search('x')).rejects.toThrow(/rejected the IGDB credentials/);
   });
 
@@ -89,7 +90,7 @@ describe('IGDB adapter', () => {
       if (String(url).endsWith('/game_time_to_beats')) return jsonResponse({}, 500);
       return jsonResponse([rawGame(1, 'Celeste')]);
     });
-    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl });
+    const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl, minIntervalMs: 0 });
     const [game] = await igdb.search('celeste');
     expect(game.title).toBe('Celeste');
     expect(game.timeToBeat).toBeUndefined();
@@ -117,6 +118,7 @@ const stored = (title, extra = {}) => ({
   genres: ['RPG'],
   platforms: ['PC'],
   externalIds: { igdb: Math.floor(Math.random() * 1e6) },
+  popularity: 0,
   cachedAt: new Date('2026-10-26T00:00:00Z'),
   ...extra,
 });
@@ -127,7 +129,7 @@ describe('gameService.search (cache-first)', () => {
     await ctx.seed;
     const res = await ctx.gameService.search({ q: 'hades', limit: 2 });
     expect(res.items).toHaveLength(2);
-    expect(res.nextCursor).toBe('hades-three');
+    expect(res.nextCursor).toBe('0~hades-three');
     expect(ctx.igdb.search).not.toHaveBeenCalled();
   });
 

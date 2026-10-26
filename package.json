@@ -18,6 +18,8 @@
     "start": "npm start -w server",
     "seed": "npm run seed -w server",
     "db:indexes": "npm run db:indexes -w server",
+    "catalog:import": "npm run catalog:import -w server --",
+    "catalog:fix": "npm run catalog:fix -w server",
     "verify-deploy": "node scripts/verify-deploy.js"
   },
   "engines": {

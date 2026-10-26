@@ -3,7 +3,7 @@ import { NotFoundError } from '../utils/errors.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Flat $set keys so a refresh never wipes externalIds from other sources or user-maintained fields.
-function toUpsertUpdate(game, at) {
+export function toUpsertUpdate(game, at) {
   const { slug, externalIds, timeToBeat, ...rest } = game;
   const $set = { ...rest, cachedAt: at };
   for (const [key, value] of Object.entries(externalIds ?? {})) $set[`externalIds.${key}`] = value;
@@ -18,13 +18,53 @@ export const toGameDto = (g) => ({
   slug: g.slug,
   summary: g.summary ?? '',
   cover: g.cover ?? null,
+  backdrop: g.backdrop ?? null,
+  artworks: g.artworks ?? [],
+  screenshots: g.screenshots ?? [],
+  videos: g.videos ?? [],
+  developer: g.developer ?? [],
+  publisher: g.publisher ?? [],
   genres: g.genres ?? [],
+  themes: g.themes ?? [],
+  gameModes: g.gameModes ?? [],
   platforms: g.platforms ?? [],
+  storyline: g.storyline ?? '',
   releaseDate: g.releaseDate ?? null,
   timeToBeat: { main: g.timeToBeat?.main ?? null, extras: g.timeToBeat?.extras ?? null, full: g.timeToBeat?.full ?? null },
+  totalRating: g.totalRating ?? null,
+  totalRatingCount: g.totalRatingCount ?? 0,
+  popularity: g.popularity ?? 0,
+  gameType: g.gameType ?? null,
   ratingAvg: g.ratingAvg ?? 0,
   ratingCount: g.ratingCount ?? 0,
 });
+
+// A hidden game (DLC, bundle, edition) that someone still has in their library shows its parent's art.
+// Returns the same games with cover/backdrop/artworks/screenshots swapped in where a parent exists.
+export async function withParentArt(Game, games) {
+  const parentIds = [...new Set(games.filter((g) => g?.hidden && g.parentGameId).map((g) => String(g.parentGameId)))];
+  if (!parentIds.length) return games;
+  const parents = new Map((await Game.find({ _id: { $in: parentIds } }).lean()).map((p) => [String(p._id), p]));
+  return games.map((g) => {
+    const parent = g?.hidden && g.parentGameId ? parents.get(String(g.parentGameId)) : null;
+    if (!parent) return g;
+    return {
+      ...g,
+      cover: parent.cover ?? g.cover,
+      backdrop: parent.backdrop ?? g.backdrop,
+      artworks: parent.artworks?.length ? parent.artworks : g.artworks,
+      screenshots: parent.screenshots?.length ? parent.screenshots : g.screenshots,
+    };
+  });
+}
+
+// Catalog order is popularity (highest first) then slug; the cursor carries both so paging is stable.
+const encodeCursor = (g) => `${g.popularity ?? 0}~${g.slug}`;
+function decodeCursor(cursor) {
+  const at = cursor.indexOf('~');
+  const popularity = Number(cursor.slice(0, at));
+  return at > 0 && Number.isFinite(popularity) ? { popularity, slug: cursor.slice(at + 1) } : null;
+}
 
 // Cache-first catalog: MongoDB answers first; IGDB is only asked when local results run short.
 export function createGameService({
@@ -73,22 +113,26 @@ export function createGameService({
   }
 
   function buildFilter({ q, genre, platform, maxHours, cursor }) {
-    const filter = {};
+    // DLC, bundles and editions are hidden from every catalog read.
+    const filter = { hidden: { $ne: true } };
     if (q) filter.$text = { $search: q };
     if (genre) filter.genres = genre;
     if (platform) filter.platforms = platform;
     if (maxHours) filter['timeToBeat.main'] = { $lte: maxHours };
-    if (cursor) filter.slug = { $gt: cursor };
+    const after = cursor ? decodeCursor(cursor) : null;
+    if (after) {
+      filter.$or = [{ popularity: { $lt: after.popularity } }, { popularity: after.popularity, slug: { $gt: after.slug } }];
+    }
     return filter;
   }
 
   async function queryLocal(params) {
     const rows = await Game.find(buildFilter(params))
-      .sort({ slug: 1 })
+      .sort({ popularity: -1, slug: 1 })
       .limit(params.limit + 1)
       .lean();
     const page = rows.slice(0, params.limit);
-    return { items: page.map(toGameDto), nextCursor: rows.length > params.limit ? page[page.length - 1].slug : null };
+    return { items: page.map(toGameDto), nextCursor: rows.length > params.limit ? encodeCursor(page[page.length - 1]) : null };
   }
 
   return {
@@ -130,7 +174,8 @@ export function createGameService({
           logger?.warn({ err: fresh.reason }, 'igdb refresh failed; serving stale game');
         }
       }
-      return toGameDto(game);
+      const [display] = await withParentArt(Game, [game]);
+      return toGameDto(display);
     },
     async getFriendsPlaying(userId, slug) {
       const game = await Game.findOne({ slug }).lean();

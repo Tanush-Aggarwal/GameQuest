@@ -283,10 +283,7 @@ async function ensureGame(data) {
   const existing = (await Game.findOne({ 'externalIds.igdb': data.externalIds.igdb })) ?? (await Game.findOne({ slug: data.slug }));
   if (!existing) return Game.create({ ...data, source: 'igdb' });
   let changed = false;
-  if (existing.slug !== data.slug && existing.externalIds?.igdb === data.externalIds.igdb) {
-    existing.slug = data.slug;
-    changed = true;
-  }
+  // The slug of an existing game is left alone: `npm run catalog:fix` aligns slugs with IGDB's.
   if (existing.cover !== data.cover) {
     existing.cover = data.cover;
     changed = true;

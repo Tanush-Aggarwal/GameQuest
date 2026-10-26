@@ -20,11 +20,28 @@ const gameSchema = new mongoose.Schema(
       extras: { type: Number, default: null },
       full: { type: Number, default: null },
     },
+    // Art: IGDB image ids resolved to full URLs by the adapter. `backdrop` is the best wide image
+    // (artwork > screenshot) and is what hero/ambient views use.
+    artworks: { type: [String], default: [] },
+    screenshots: { type: [String], default: [] },
+    videos: { type: [String], default: [] }, // YouTube video ids from IGDB
+    backdrop: { type: String, default: null },
+    developer: { type: [String], default: [] },
+    publisher: { type: [String], default: [] },
+    themes: { type: [String], default: [] },
+    gameModes: { type: [String], default: [] },
+    storyline: { type: String, default: '' },
+    totalRating: { type: Number, default: null }, // IGDB 0-100
+    totalRatingCount: { type: Number, default: 0 },
+    popularity: { type: Number, default: 0 }, // blended importer score; catalog default sort (compound index below)
+    gameType: { type: Number, default: null }, // IGDB game_type (0 main game, 8 remake, ...)
+    // DLC / editions point at the game they belong to and are hidden from the catalog.
+    parentGameId: { type: mongoose.Schema.Types.ObjectId, ref: 'Game', default: null },
+    hidden: { type: Boolean, default: false, index: true },
     // Maintained atomically by the review service (Tier 3).
     ratingAvg: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
-    source: { type: String, enum: ['igdb', 'rawg'], default: 'igdb' },
-    // When the metadata was last fetched; older than the source TTL means "refresh on view".
+    source: { type: String, enum: ['igdb', 'rawg'], default: 'igdb' },    // When the metadata was last fetched; older than the source TTL means "refresh on view".
     cachedAt: { type: Date, default: Date.now },
   },
   { timestamps: true },
@@ -37,5 +54,7 @@ gameSchema.index({ platforms: 1, slug: 1 });
 gameSchema.index({ 'timeToBeat.main': 1, slug: 1 });
 gameSchema.index({ ratingAvg: -1, ratingCount: -1, slug: 1 });
 gameSchema.index({ releaseDate: -1, slug: 1 });
+// Default catalog order: most popular first, slug as the tiebreaker for cursor paging
+gameSchema.index({ popularity: -1, slug: 1 });
 
 export const Game = mongoose.models.Game ?? mongoose.model('Game', gameSchema);

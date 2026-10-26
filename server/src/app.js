@@ -26,8 +26,8 @@ export function createApp({
 }) {
   const app = express();
 
-  // Render sits behind a proxy; needed for secure cookies and correct client IPs.
-  app.set('trust proxy', 1);
+  // Proxies in front (Render, plus the Vercel rewrite in production); needed for correct client IPs.
+  app.set('trust proxy', config.trustProxy ?? 1);
 
   app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/api/v1/health' } }));
   app.use(helmet());

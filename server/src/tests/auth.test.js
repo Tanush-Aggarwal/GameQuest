@@ -121,8 +121,17 @@ describe('auth routes', () => {
     expect(cookies.find((c) => c.startsWith('gq_refresh='))).toMatch(/Path=\/api\/v1\/auth/);
   });
 
-  it('uses Secure + SameSite=None cookies in production', async () => {
+  it('uses Secure + SameSite=Lax cookies in production by default (API proxied through the client domain)', async () => {
     const { app } = setup({ NODE_ENV: 'production', CLIENT_ORIGIN: 'https://app.example.com' });
+    const res = await request(app).post('/api/v1/auth/register').send(creds);
+    res.headers['set-cookie'].forEach((c) => {
+      expect(c).toMatch(/Secure/i);
+      expect(c).toMatch(/SameSite=Lax/i);
+    });
+  });
+
+  it('supports SameSite=None (always Secure) for a direct cross-site deployment', async () => {
+    const { app } = setup({ NODE_ENV: 'production', CLIENT_ORIGIN: 'https://app.example.com', COOKIE_SAMESITE: 'none' });
     const res = await request(app).post('/api/v1/auth/register').send(creds);
     res.headers['set-cookie'].forEach((c) => {
       expect(c).toMatch(/Secure/i);

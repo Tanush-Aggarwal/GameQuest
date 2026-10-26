@@ -48,3 +48,9 @@ Format: date — decision — why.
 - `library.statusChanged` is emitted on an in-process event bus (`events/eventBus.js`); subscriber errors are caught and logged so they never fail a request. No subscribers yet (quests/activity come in Tier 4).
 - Removing an entry also deletes its StatusHistory. The client confirms removal inline (Remove → Confirm/Cancel) rather than offering Undo.
 - Server-test fakes: `createFakeCollection` in tests/helpers.js covers the Mongoose calls the services use; real indexes (unique pairs, sparse unique) are still not exercised against MongoDB.
+
+## 2026-10-26 — Claude (cloud session) — deployment
+- Production traffic goes browser → Vercel → (rewrite `/api/*`) → Render. The client calls `/api/v1` on its own origin, so auth cookies are first-party and use `SameSite=Lax; Secure`. Cross-site `SameSite=None` cookies are blocked in incognito/Safari, which is how evaluators open links. `COOKIE_SAMESITE=none` remains available for a direct cross-site setup.
+- `TRUST_PROXY` is configurable (Render alone = 1, Vercel rewrite + Render = 2) so rate limits key on the real client IP.
+- Real-time notifications use polling, not Socket.io: Vercel rewrites do not proxy WebSockets, and polling keeps the single-origin cookie model.
+- Vercel builds from the repository root (`vercel.json`) so the `@gamequest/shared` workspace resolves; Render runs `npm ci` + `npm start` from the root for the same reason.

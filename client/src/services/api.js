@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api/v1',
+  // Production builds call the API on their own origin (/api is rewritten to Render by vercel.json),
+  // so auth cookies are first-party. VITE_API_URL overrides this for any other setup.
+  baseURL: import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api/v1' : 'http://localhost:4000/api/v1'),
   withCredentials: true,
 });
 

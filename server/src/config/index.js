@@ -14,6 +14,18 @@ const envSchema = z.object({
   // Optional: without them the IGDB adapter reports a clear error and the catalog serves cached games only.
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
+  // Optional integrations: each feature degrades gracefully when its key is missing.
+  STEAM_API_KEY: z.string().optional(),
+  YOUTUBE_API_KEY: z.string().optional(),
+  DISCORD_CLIENT_ID: z.string().optional(),
+  DISCORD_CLIENT_SECRET: z.string().optional(),
+  // Public URL of this API (used to build OAuth callback URLs). Defaults to localhost in development.
+  PUBLIC_API_URL: z.string().url().optional(),
+  // Cookies: the client proxies /api through its own domain in production, so Lax works and
+  // survives browsers that block third-party cookies. Use "none" only for a direct cross-site setup.
+  COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+  // Number of proxy hops in front of Express (Render = 1, Vercel rewrite + Render = 2).
+  TRUST_PROXY: z.coerce.number().int().min(0).default(1),
 });
 
 export function loadConfig(env = process.env) {
@@ -40,6 +52,12 @@ export function loadConfig(env = process.env) {
       refreshTtlSeconds: 7 * 24 * 60 * 60,
       rateLimitMax: e.AUTH_RATE_LIMIT_MAX,
     },
+    cookieSameSite: e.COOKIE_SAMESITE,
+    trustProxy: e.TRUST_PROXY,
+    publicApiUrl: e.PUBLIC_API_URL ?? `http://localhost:${e.PORT}`,
+    steam: { apiKey: e.STEAM_API_KEY || null },
+    youtube: { apiKey: e.YOUTUBE_API_KEY || null },
+    discord: { clientId: e.DISCORD_CLIENT_ID || null, clientSecret: e.DISCORD_CLIENT_SECRET || null },
     twitch: {
       clientId: e.TWITCH_CLIENT_ID || null,
       clientSecret: e.TWITCH_CLIENT_SECRET || null,

@@ -1,11 +1,13 @@
 import { ACCESS_COOKIE, REFRESH_COOKIE } from '../middleware/auth.js';
 
 export function createAuthController({ authService, config }) {
-  // SameSite=None + Secure in production (client and API are on different domains).
+  // Secure in production. SameSite comes from config: Lax by default because production traffic
+  // reaches the API through the client's own domain (Vercel rewrite), so cookies are first-party.
+  const sameSite = config.cookieSameSite ?? 'lax';
   const base = {
     httpOnly: true,
-    secure: config.isProd,
-    sameSite: config.isProd ? 'none' : 'lax',
+    secure: config.isProd || sameSite === 'none',
+    sameSite,
   };
 
   function setSession(res, { accessToken, refreshToken }) {

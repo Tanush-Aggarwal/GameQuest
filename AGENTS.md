@@ -37,7 +37,7 @@ shared/
 - Identity comes only from the auth cookie. Never accept userId, role or ownerId from the request body.
 - Auth middleware chain: requireAuth → requireRole / requireOwnership / requireCollectionRole.
 - Apply the privacy filter (public / friends / private + hiddenFromFriends) in the service layer on every read of another user's data.
-- Access token 15 min, refresh token 7 days with rotation and reuse detection; HTTP-only, Secure, SameSite=None cookies in production; CORS only for the client origin with credentials.
+- Access token 15 min, refresh token 7 days with rotation and reuse detection; HTTP-only, Secure cookies in production with SameSite=Lax, because Vercel proxies `/api` to Render so cookies are first-party (see docs/DEPLOY.md); CORS only for the client origin with credentials.
 - Third-party tokens encrypted at rest (AES-256-GCM). Secrets only in env vars; keep `.env.example` updated with names, never values. Nothing secret in the Vite bundle.
 - Validate every request with the shared Zod schema. Rate-limit auth, sync, recommendations and invite validation.
 

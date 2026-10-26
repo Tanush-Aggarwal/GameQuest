@@ -12,7 +12,7 @@ A full-stack MERN web app: one unified game library across platforms, smart "wha
 | **Server** | Node.js, Express 5, Mongoose 9, Zod (validation), Pino (logging), Helmet, bcrypt, JSON Web Tokens |
 | **Database** | MongoDB Atlas |
 | **Shared** | `@gamequest/shared` — Zod schemas re-used on both client and server |
-| **Testing** | Jest + Supertest (server, 211 tests), Vitest + Testing Library (client, 105 tests) |
+| **Testing** | Jest + Supertest (server, 377 tests), Vitest + Testing Library (client, 144 tests) |
 
 ---
 
@@ -128,12 +128,21 @@ Alex's activity is created through the real services and event bus, not inserted
 ```bash
 npm run catalog:import     # ~3,000 games from IGDB; resumable, safe to re-run (add `-- --fresh` to start over)
 npm run catalog:fix        # repair games already in the database
+npm run catalog:steam-art  # Steam CDN cover/backdrop for games that have a Steam id but no art
 npm run db:indexes         # build indexes (production runs with autoIndex off)
 ```
 
 `catalog:import` fills the catalog in three steps — top PC games (~1,500, by Steam peak players and IGDB visits / want-to-play), top PS5 / PS4 / Xbox Series / Xbox One / Switch games by rating count (~1,000), and releases from the last 12 months or the next 3 (~500). Every game gets covers, artworks, screenshots, a wide `backdrop`, developer / publisher, themes, modes, ratings, time to beat and a blended `popularity` score that the catalog sorts by. Progress is kept in one `MediaCache` document, so an interrupted run continues where it stopped.
 
 Only main games, remakes, remasters, expanded games, ports and standalone expansions are catalog games, and they need a cover and no `version_parent`. DLC, bundles, mods, episodes, seasons, updates, packs and editions are never imported and never returned by live search. `catalog:fix` re-checks games already stored: DLC / bundles / editions become `hidden: true` with `parentGameId` set (library entries pointing at them keep working and show the parent game's art), missing art is filled, and seeded slugs are aligned with IGDB's.
+
+### 3c. Steam and trailers (needs `STEAM_API_KEY` / `YOUTUBE_API_KEY`; each feature switches itself off without its key)
+
+- **Link Steam** on *Profile → Steam* with a SteamID64, a `steamcommunity.com/profiles/<id>` URL or a vanity name. Steam **Game details must be Public** (Steam → Edit Profile → Privacy Settings), otherwise the sync stops with a message that says so. One Steam account links to one GameQuest user. Unlinking keeps the games already in your library.
+- **Sync now** reads your owned games (free games included) and each game's achievements, matches them to the catalog by Steam app id, and imports unknown games from IGDB with the same catalog rule (tools, soundtracks and DLC are listed as "not matched", never added). It keeps one library entry per game, adds a `Steam` ownership with playtime and an achievement snapshot, and never overwrites your manual progress or the status of a game that is already in your library. New games start as *Playing* (played in the last 2 weeks), *Completed* (100% achievements) or *Backlog*. One sync per user every 5 minutes; failed attempts do not use that up.
+- **Steam art fallback:** a game with a Steam id and no cover or backdrop gets Steam CDN art (`library_600x900_2x`, `library_hero`, `header` last). Each game is probed once and the answer is cached in `MediaCache`.
+- **Trailers** on the game page use the IGDB video first (no quota). Without one, a YouTube search ("<title> official trailer", embeddable only) runs at most once per game per 7 days and is cached; the player only loads the `youtube-nocookie.com` iframe when you click play, and the section is hidden when there is no video.
+- After pulling these changes run `npm run db:indexes` (new unique index on a user's Steam id).
 
 ### 4. Run in development
 
@@ -155,7 +164,11 @@ All routes are under `/api/v1` and (except `/health` and `/auth/*`) require the 
 | GET | `/health` | Health check |
 | POST | `/auth/register` · `/auth/login` · `/auth/refresh` · `/auth/logout` | Account and session |
 | GET | `/auth/me` | Current user |
-| GET | `/games` · `/games/:slug` | Search the catalog · game detail |
+| GET | `/games` · `/games/:slug` | Search the catalog (`q`, `genre`, `platform`, `minRating`, `minHours`, `maxHours`; most popular first) · game detail |
+| GET | `/games/:slug/trailer` | `{ trailer: { videoId, source: igdb \| youtube } \| null }`: IGDB video first, else one cached YouTube search per 7 days |
+| GET | `/steam` | Linked Steam account: persona, avatar, last sync (`{ linked: false }` when none) |
+| POST · DELETE | `/steam/link` | Link by SteamID64 / profile URL / vanity name `{ input }` (rate-limited) · unlink |
+| POST | `/sync/steam` | Sync the linked Steam library → `{ added, updated, unmatched: [{ appid, name, playtimeMin }], warnings }`. 1 per 5 min per user; a private profile answers 502 with how to fix it |
 | GET | `/library` · `/library/:id` | List entries · one entry |
 | POST | `/library` | Add a game to the library |
 | PATCH | `/library/:id/status` | Change status (state machine) |

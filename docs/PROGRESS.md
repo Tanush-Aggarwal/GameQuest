@@ -10,11 +10,11 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 - (nothing)
 
 ## Next up (do these in order, one at a time)
-15. Phase 2: Steam + YouTube (Steam library sync via the existing STEAM_API_KEY, YouTube trailers/videos from `Game.videos` and YOUTUBE_API_KEY; cache in MediaCache)
 16. Phase 3: redesign (use the new catalog data: backdrops, artworks, screenshots, developer/publisher, popularity)
 17. Phase 4: cloud deploy (Atlas + Render + Vercel, then `npm run db:indexes`; see docs/DEPLOY.md)
 
 ## Done
+- Item 15 (Phase 2: Steam + YouTube): link a Steam account (SteamID64 / profile URL / vanity, one account per user, privacy note, unlink); `POST /sync/steam` (1 per 5 min per user) reads owned games + achievements, matches by Steam id, imports unknown catalog games from IGDB, reports unmatched, merges into one entry per game without touching manual progress or existing statuses, emits `sync.completed` + one activity item; Steam badge, playtime and achievement % on library cards and the entry page; Steam CDN art fallback (`catalog:steam-art`, cached in MediaCache); trailers (IGDB video first, else one cached YouTube search per game per 7 days, click-to-load nocookie iframe); Explore shelves are popularity-ordered catalog queries (`minRating`, `minHours`). Real run on the demo user: 23 owned, 19 matched, 17 added, 2 updated, 4 not matched; a second sync added 0. 377 server + 144 client tests pass. Decisions in DECISIONS (2026-10-27 Phase 2)
 - Phase 0 review fixes + Phase 1 catalog import: friends-playing skips `private` profiles; `npm run db:indexes` (also run by the seed); `.gitattributes` LF + BOMs stripped; avatar must be https. Game model gained artworks/screenshots/videos/backdrop/developer/publisher/themes/gameModes/storyline/totalRating/popularity/gameType/parentGameId/hidden; IGDB adapter does bulk fetches (4 req/s, 500/page, 429 backoff) and applies one catalog-type rule everywhere (live search too); `npm run catalog:import` (resumable, progress in MediaCache) and `npm run catalog:fix`; browse/search sort by popularity and exclude hidden games; hidden games show their parent's art; `CoverImage` (srcset, lazy, generated fallback). Real run against Atlas: PC 1,500 + consoles 1,000 + recent 500 stored (2,892 distinct visible games, 2 hidden, 18 without a backdrop). 277 server + 118 client tests pass
 - Seed repair (see DECISIONS): 20 of the 32 seeded games had wrong IGDB ids in seed.js (e.g. Disco Elysium -> "Pacify"); the first import/fix runs overwrote or enriched them. `server/scripts/repair-seed-ids.js` restored them by title (and removed unreferenced duplicates), seed.js now has the correct ids, and `catalog:fix` refuses to touch a game whose title doesn't match its IGDB id
 - Gamer identity, favourite 4 showcase, trophy shelf & backlog velocity: PATCH /api/v1/users/me endpoint with updateProfileSchema; profileService.updateProfile & getProfile with populated favouriteGames; UserProfile (/u/:username) with hero avatar, bio, Letterboxd-style Favourite 4 showcase, and Trophies & Milestones shelf (Platinum/Gold/Silver/Bronze); Profile (/profile) with Gamer Identity editor (avatar presets, bio countdown, game search slot picker); Home (/) Backlog Health 6-month trajectory Recharts AreaChart with projected clear date; TopNav desktop links for Collections & Sessions; demo and alex seeded in Atlas; 234 server tests + 112 client tests pass (346 total tests pass)
@@ -36,17 +36,20 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 - Item 4: client shell (lazy routes, top nav + mobile tab bar, login/register using shared Zod schemas, protected/public-only routes, session restore + refresh-on-401, toasts, ui primitives; 20 client tests)
 
 ## Known issues / blockers
-- Catalog: 18 visible games have no backdrop (IGDB has no artwork or screenshot for them; they use the cover/fallback). `popularity` is a log-scaled blend (see DECISIONS) so very different games can score close together. The import's "recent" step scans at most 5,000 releases in its window before ranking.
+- Catalog: 18 visible games have no backdrop (IGDB has no artwork or screenshot for them; they use the cover/fallback). The Steam art fallback cannot help: none of the 18 has a Steam id, here or on IGDB (`npm run catalog:steam-art` reports 0 candidates). `popularity` is a log-scaled blend (see DECISIONS) so very different games can score close together. The import's "recent" step scans at most 5,000 releases in its window before ranking.
 - Catalog: some title variants exist as separate games (e.g. Resident Evil 4 has the 2023 remake, the 2005 original and a VR version). Search shows all of them; the seeded demo entry is the 2023 remake.
 - `client` routing.test.jsx can time out when server and client suites run at the same time (`npm test` at the root); it passes alone and in a full client run.
-- Explore shelves (`Explore.jsx`) still use their own sorts; only the default catalog list and search use `popularity`.
+- Steam sync runs inside the HTTP request with an in-process lock and an in-memory rate limiter: fine on one instance, but a very large first sync can hit a proxy timeout and the guarantees do not span instances. Follow-up: run it as an Agenda job (202 + poll `user.steam.lastSync`). Also no "Sync now" cooldown display; the 429 message appears after clicking.
+- Steam: a game added by hand and synced later keeps its own status, so a synced backlog game you start playing is not auto-promoted. Run `npm run db:indexes` after pulling Phase 2 (unique index on `users.steam.steamId`).
+- Trailers: an IGDB video is always preferred even when it is gameplay rather than a trailer; the thumbnail is fetched from `i.ytimg.com` when the section renders (the iframe only on click).
+- Explore shelves filter on `totalRating` / `timeToBeat.main` while walking the `popularity` index: fine at ~3,000 games, add a compound index or a short cache if the catalog grows a lot.
 - Sessions: RSVPs from someone later unfriended stay in the data (hidden from attendee lists, still counted in going). No reminder job, Discord OAuth/bot, or clash warning yet; session.updated/cancelled/rsvp events have no subscribers.
 - The seeded demo session is created for two days after the seed is run; re-run `npm run seed` to get a fresh upcoming one after it ends.
 - Jest prints "A worker process has failed to exit gracefully" when the server suite runs with workers (predates the social tests; all tests pass). Probably a leftover timer from a rate limiter/app instance; find it with --detectOpenHandles when convenient.
 - Review lists (/reviews/game/:id, /reviews/user/:userId) ignore profile privacy and blocks (reviews are treated as public content).
 - Feed/profile reads scan up to 5 batches to fill a page; a user with very many hidden items may get a short page with a cursor to continue.
 - Seed: `npm run seed` (idempotent, reads MONGODB_URI from server/.env); Atlas must allow your current IP (Network Access).
-- Library has no UI for adding ownerships/platforms (arrives with platform sync).
+- Library has no UI for adding non-Steam ownerships/platforms by hand (Steam arrives through the sync; PlayStation/Xbox/Switch sync is not built).
 - Catalog search/refresh cooldowns are in-memory per instance (reset on restart, not shared across instances).
 - Auth rate limiter uses the in-memory store (per instance, resets on restart).
 - `trust proxy` is hard-coded to 1; verify the hop count on Render during the first deploy.
@@ -57,6 +60,7 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Claude Code — Phase 2 Steam + YouTube (d2b5802 link, 382d94d sync, e312298 Steam art, 25a20fe trailers, 53f6b8e Explore shelves, docs commit); reviewer subagent before each commit; real Steam sync on the demo user; 377 server + 144 client tests pass
 - 2026-10-27 — Claude Code — Phase 0 review fixes + Phase 1 catalog import and repair (827d069, 0f4d994, c8363da, b5aa140 and the final docs/seed commit); ran import + fix + seed-id repair against Atlas; 277 server + 118 client tests pass
 - 2026-10-27 — Antigravity — gamer identity & showcase (PATCH /users/me, favourite 4 games showcase, trophy milestones shelf, profile editor with avatar presets & game picker, Recharts backlog health velocity chart, desktop collections & sessions nav); 234 server tests, 112 client tests pass clean
 - 2026-10-27 — Antigravity — item 13: UI & visual identity overhaul (Game page hub with ambient glow, reviews & friends; Library filter rail & shelf view; Explore discovery shelves); 232 server tests, 110 client tests pass clean

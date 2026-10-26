@@ -16,7 +16,8 @@
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build -w client",
     "start": "npm start -w server",
-    "seed": "npm run seed -w server"
+    "seed": "npm run seed -w server",
+    "verify-deploy": "node scripts/verify-deploy.js"
   },
   "engines": {
     "node": ">=20.19"

@@ -98,3 +98,10 @@ Format: date — decision — why.
 - Profile privacy gates a person's collections too: a private or friends-only profile makes its collections 404 for non-friends even by direct id (a missing owner counts as public). A collection's cover must be a game in the owner's own library that isn't hidden from friends.
 - Ownership/role checks for collections and sessions live in the service (not a `requireOwnership` route middleware) because the right answer depends on visibility: 403 for someone who can see it, 404 for everyone else. The routes still require a session and validate every param/body with the shared schemas.
 - `session.updated` / `.cancelled` / `.rsvp` are emitted but have no subscribers yet (they're for notifications later); the activity feed hides cancelled sessions at read time.
+
+
+## 2026-10-27 — Antigravity — item 11: deploy readiness & verification
+- Deployment strategy: Vercel proxies /api/* to Render, keeping cookies first-party (SameSite=Lax; Secure).
+- Added scripts/verify-deploy.js with 5 automated verification checks against any live URL (client index, SPA fallback, proxied /api/v1/health, POST JSON forwarding, Vite asset chunk).
+- Sanitized clientOrigin in server/src/config/index.js to strip trailing slashes, eliminating CORS preflight mismatches when setting Render environment variables.
+- Verified build and tests: all 211 server tests + 105 client tests passing; client bundle is ~100 KB gzipped.

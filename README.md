@@ -1,4 +1,4 @@
-﻿# GameQuest 🎮
+# GameQuest 🎮
 
 A full-stack MERN web app: one unified game library across platforms, smart "what to play next" decisions, and social play with friends — collections, an activity feed, and scheduled play sessions.
 
@@ -195,13 +195,24 @@ npm run lint
 
 ## Deployment
 
-See `docs/DEPLOY.md` for Vercel (client) + Render (API) + MongoDB Atlas deployment guide.
+| Service | URL |
+|---------|-----|
+| **Client** | [https://gamequest-tanush.vercel.app](https://gamequest-tanush.vercel.app) |
+| **API** | proxied through the client domain at `/api/v1` |
 
-Key production env vars to add on Render:
+See [`docs/DEPLOY.md`](docs/DEPLOY.md) for the full step-by-step Vercel + Render + Atlas setup.
+
+After deploying, verify with:
+
+```bash
+node scripts/verify-deploy.js https://gamequest-tanush.vercel.app
+```
+
+Key production env vars on Render:
 - `NODE_ENV=production`
-- `CLIENT_ORIGIN=https://your-vercel-app.vercel.app`
+- `CLIENT_ORIGIN=https://gamequest-tanush.vercel.app` (your Vercel URL, no trailing slash)
 - `COOKIE_SAMESITE=lax`
-- `PUBLIC_API_URL=https://your-api.onrender.com`
+- `TRUST_PROXY=2`
 
 ---
 

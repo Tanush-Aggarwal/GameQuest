@@ -42,7 +42,7 @@ export function loadConfig(env = process.env) {
     env: e.NODE_ENV,
     isProd: e.NODE_ENV === 'production',
     port: e.PORT,
-    clientOrigin: e.CLIENT_ORIGIN,
+    clientOrigin: e.CLIENT_ORIGIN.replace(/\/+$/, ''),
     mongoUri: e.MONGODB_URI,
     logLevel: e.LOG_LEVEL,
     auth: {

@@ -6,6 +6,7 @@ import { ProtectedRoute, PublicOnlyRoute } from './routeGuards.jsx';
 const Home = lazy(() => import('@/pages/Home.jsx'));
 const Library = lazy(() => import('@/pages/Library.jsx'));
 const Explore = lazy(() => import('@/pages/Explore.jsx'));
+const Game = lazy(() => import('@/pages/Game.jsx'));
 const Friends = lazy(() => import('@/pages/Friends.jsx'));
 const Profile = lazy(() => import('@/pages/Profile.jsx'));
 const Login = lazy(() => import('@/pages/Login.jsx'));
@@ -29,6 +30,7 @@ export const routes = [
           { path: '/', element: <Home /> },
           { path: '/library', element: <Library /> },
           { path: '/explore', element: <Explore /> },
+          { path: '/games/:slug', element: <Game /> },
           { path: '/friends', element: <Friends /> },
           { path: '/profile', element: <Profile /> },
         ],

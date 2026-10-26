@@ -11,6 +11,9 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: secret('JWT_ACCESS_SECRET'),
   JWT_REFRESH_SECRET: secret('JWT_REFRESH_SECRET'),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
+  // Optional: without them the IGDB adapter reports a clear error and the catalog serves cached games only.
+  TWITCH_CLIENT_ID: z.string().optional(),
+  TWITCH_CLIENT_SECRET: z.string().optional(),
 });
 
 export function loadConfig(env = process.env) {
@@ -36,6 +39,10 @@ export function loadConfig(env = process.env) {
       accessTtlSeconds: 15 * 60,
       refreshTtlSeconds: 7 * 24 * 60 * 60,
       rateLimitMax: e.AUTH_RATE_LIMIT_MAX,
+    },
+    twitch: {
+      clientId: e.TWITCH_CLIENT_ID || null,
+      clientSecret: e.TWITCH_CLIENT_SECRET || null,
     },
   };
 }

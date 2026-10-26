@@ -27,3 +27,13 @@ Format: date — decision — why.
 - If a DB error happens after a refresh token is claimed but before new ones are issued, the user must log in again (accepted).
 - Logout deletes the refresh family; the access token stays valid until its 15 min expiry.
 - Login does a dummy bcrypt compare for unknown emails to keep timing uniform.
+
+## 2026-10-26 — Claude Code — item 5: game catalog
+- The `Game` collection is itself the IGDB metadata cache (`cachedAt`, 30-day TTL, refreshed on view of a stale game). `MediaCache` is kept for trailers/clips/speedruns (Tier 2), not for core metadata.
+- Cache-first search: MongoDB first; IGDB is queried only when a text search returns fewer rows than `limit` on page 1. A term is not re-sent to IGDB for 10 min (in-memory, per instance); a failed lookup is not remembered, so it retries.
+- IGDB failures or missing Twitch credentials never fail `/games`: the response carries `warnings[]` (`UPSTREAM_ERROR` / `NOT_CONFIGURED`) and cached games. The adapter itself throws an `UpstreamError` naming the missing env vars.
+- Game list sorts by `slug` with the slug as cursor (stable and cheap). Text-search relevance order is traded away; revisit with a score-based cursor if search quality matters.
+- `slug` is `$setOnInsert` only, so public URLs never change when IGDB renames a game. Upserts use flat `$set` keys so other sources' `externalIds` and review counters are never overwritten.
+- `/games` requires auth and has its own rate-limit bucket (300 / 15 min), because search can fan out to IGDB.
+- Client: `useAsync` hook derives loading/error from the current load function so effects never set state synchronously (react-hooks lint rule) and stale responses are ignored. The Explore query lives in the URL (`?q=`).
+- Server `dev` script uses `--watch-path=src` so OneDrive churn in node_modules cannot restart the server.

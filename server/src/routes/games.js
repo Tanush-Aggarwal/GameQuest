@@ -15,6 +15,7 @@ export function createGamesRouter({ authService, gameService }) {
   router.use(createRequireAuth(authService));
   router.get('/', searchLimiter, validate(gameSearchQuerySchema, 'query'), controller.search);
   router.get('/:slug', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.get);
+  router.get('/:slug/friends', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.getFriends);
 
   return router;
 }

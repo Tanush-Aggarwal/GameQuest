@@ -10,3 +10,8 @@ export async function getGame(slug, { signal } = {}) {
   const { data } = await api.get(`/games/${encodeURIComponent(slug)}`, { signal });
   return data.game;
 }
+
+export async function getGameFriends(slug, { signal } = {}) {
+  const { data } = await api.get(`/games/${encodeURIComponent(slug)}/friends`, { signal });
+  return data.items ?? [];
+}

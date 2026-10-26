@@ -109,6 +109,30 @@ describe('Library page', () => {
     expect(removeFromLibrary).toHaveBeenCalledWith('1');
     expect(await screen.findByText('Your library is empty')).toBeInTheDocument();
   });
+
+  it('toggles between grid and shelf view and filters by title', async () => {
+    listLibrary.mockResolvedValue({
+      items: [
+        entry('1', 'Hades', 'playing', { manualProgress: 40 }),
+        entry('2', 'Celeste', 'backlog'),
+      ],
+      nextCursor: null,
+      counts: counts({ all: 2 }),
+    });
+    renderLibrary();
+    expect(await screen.findByRole('heading', { name: 'Hades' })).toBeInTheDocument();
+
+    // Toggle to shelf view
+    const shelfBtn = screen.getByRole('button', { name: 'Shelf list view' });
+    await userEvent.click(shelfBtn);
+    expect(screen.getByText('40%')).toBeInTheDocument();
+
+    // Filter by title
+    const searchInput = screen.getByPlaceholderText('Filter by title...');
+    await userEvent.type(searchInput, 'Celeste');
+    expect(screen.getByText('Celeste')).toBeInTheDocument();
+    expect(screen.queryByText('Hades')).not.toBeInTheDocument();
+  });
 });
 
 describe('Game page library panel', () => {

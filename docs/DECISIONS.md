@@ -129,3 +129,10 @@ Format: date — decision — why.
 - Upgraded game poster artwork to IGDB 1080p full-res format (`t_1080p`), delivering crisp vertical poster artwork across cards, shelves, and detail pages.
 - Client cover upscaler (`getHighResCover` in `GameCard.jsx`): Normalizes any standard `t_cover_big/` IGDB URLs to `t_cover_big_2x/` (528x704 retina), ensuring games rendered across explore, library entries, home dashboard widgets, and recommendations tabs never appear blurry or pixelated on high-DPI displays.
 - Enriched demo user library, play logs, reviews, and collections to feature the expanded catalog.
+
+
+## 2026-10-27 — Antigravity — item 13: UI & visual identity overhaul
+- Game Page Hub (`/games/:slug`): Added PlayStation 5 / Steam style dynamic ambient backdrop glow blurred and tinted from the game's actual cover art; integrated 3-tab layout (Overview with Time-to-Beat card, Community Reviews with star ratings, and Friends Activity showing friends who own or are playing the game); unified quick action buttons (status move, recommend to friend, schedule session).
+- Friends playing endpoint: Added `GET /api/v1/games/:slug/friends` to `gameService` and `routes/games.js`, returning friends from `friendService` who own the game in their library (ignoring hidden entries).
+- Library view & filter rail (`/library`): Added search filter by game title, dynamic platform filter (Steam, PlayStation, Switch, Xbox, PC, etc.), sort dropdown (Title, Playtime, Progress %, Shortest TTB), and view mode toggle between Grid Cards and Shelf/List View with progress bars and hours played.
+- Explore discovery shelves (`/explore`): Added quick genre filter pills and curated horizontal scrolling discovery shelves (Critically Acclaimed Masterpieces, Quick Weekend Wins < 10h, Massive 50h+ Epic RPGs) on default browse, switching cleanly to the search results grid when queries or genres are active.

@@ -31,6 +31,8 @@ export function createGameService({
   Game,
   igdb,
   logger,
+  friendService,
+  LibraryEntry,
   now = () => new Date(),
   ttlMs = 30 * DAY_MS, // blueprint: IGDB metadata TTL is 30 days
   searchCooldownMs = 10 * 60 * 1000,
@@ -128,6 +130,36 @@ export function createGameService({
         }
       }
       return toGameDto(game);
+    },
+    async getFriendsPlaying(userId, slug) {
+      const game = await Game.findOne({ slug }).lean();
+      if (!game) throw new NotFoundError('Game not found');
+      if (!friendService || !LibraryEntry) return { items: [] };
+
+      const friends = await friendService.listFriends(userId);
+      if (!friends || !friends.length) return { items: [] };
+
+      const friendIds = friends.map((f) => f.id);
+      const entries = await LibraryEntry.find({
+        userId: { $in: friendIds },
+        gameId: game._id,
+        hiddenFromFriends: { $ne: true },
+      }).lean();
+
+      const friendMap = new Map(friends.map((f) => [String(f.id), f]));
+      const items = entries.map((e) => {
+        const friend = friendMap.get(String(e.userId));
+        return {
+          userId: String(e.userId),
+          username: friend?.username ?? 'Friend',
+          avatar: friend?.avatar ?? null,
+          status: e.status,
+          manualProgress: e.manualProgress ?? 0,
+          completedAt: e.completedAt ?? null,
+        };
+      });
+
+      return { items };
     },
   };
 }

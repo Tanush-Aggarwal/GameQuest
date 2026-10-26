@@ -10,10 +10,10 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 - (nothing)
 
 ## Next up (do these in order, one at a time)
-13. UI & Visual Identity Overhaul: Game Page enrichment (Overview, Reviews, Friends Playing, ambient cover tinting), Library filter rail (platform, genre, length, shelf view), Explore curated discovery shelves
 14. Cloud deploy (postponed to end): Atlas + Render + Vercel
 
 ## Done
+- Item 13 (UI & Visual Identity Overhaul): Game Page Hub (/games/:slug with ambient cover glow, rating badge, 3-tab layout for Overview/Reviews/Friends Activity, quick action strip), GET /games/:slug/friends endpoint, Library Filter Rail & Shelf View (/library with live title search, platform filter, sort dropdown, and Grid vs Shelf List view toggle), and Explore Discovery Shelves (/explore with genre pills, curated horizontal shelves for Top Rated, Weekend Wins, and Epic RPGs); 232 server tests + 110 client tests pass (342 total tests pass)
 - Catalog expansion & high-res posters: Expanded seed catalog to 32 iconic titles with 1080p vertical posters (`t_1080p`), release dates, genres, platforms, and timeToBeat numbers; added client-side cover upscaler (`getHighResCover`) in `GameCard.jsx`, `LibraryEntry.jsx`, `RecommendationsTab.jsx`, `RecommendationWidget.jsx`, `Home.jsx`, and `CollectionCard.jsx` to eliminate pixelation; enriched demo & alex libraries, reviews, play logs, and collections; 231 server tests + 108 client tests pass
 - Database improvements: connection pooling & Atlas resilience in connectDb (maxPoolSize 20, minPoolSize 2, socketTimeoutMS 45s, autoIndex off in prod, error event listener), Game compound & weighted text indexes, MediaCache model with TTL, User profile fields (avatar, bio, favouriteGames <= 4, discord, notificationPrefs), aggregation ObjectId casting in reviewService, projection optimizations in insightsService, and dedicated db.test.js suite; 231 server tests + 108 client tests pass (339 total tests pass)
 - Item 12 (game recommendations): Recommendation model with unique (fromId, toId, gameId) index, recommendationService (friend/block verification, review snippet linkage, inbox/sent listing, outcome tracking on status/review events, pick score calculation), /recommendations endpoints (create rate-limited, respond, delete, score), RecommendationsTab in Friends hub with Pick Score banner, RecommendationModal on Game and LibraryEntry pages, RecommendationWidget on Home dashboard, seeded recommendation from alex to demo; 11 server tests + 3 client tests (330 total tests pass)
@@ -49,6 +49,7 @@ pm run seed to get a fresh upcoming one after it ends.
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Antigravity — item 13: UI & visual identity overhaul (Game page hub with ambient glow, reviews & friends; Library filter rail & shelf view; Explore discovery shelves); 232 server tests, 110 client tests pass clean
 - 2026-10-27 — Antigravity — catalog expansion (32 games in 1080p, enriched demo/alex libraries & reviews) and client high-res cover upscaler (getHighResCover); 231 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — database optimization & model enhancements (db options, Game indexes, MediaCache, User fields, reviewService aggregation cast, insights projections, db.test.js); 231 server tests, 108 client tests pass clean
 - 2026-10-27 — Antigravity — game recommendations (model, service, endpoints, Friends tab, modals, Home widget, seed); 222 server tests, 108 client tests pass clean

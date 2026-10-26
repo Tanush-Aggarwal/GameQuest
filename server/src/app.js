@@ -42,7 +42,7 @@ export function createApp({
   config,
   logger,
   authService = createAuthService({ User, RefreshToken, config }),
-  gameService = createGameService({ Game, igdb: createIgdbAdapter({ config }), logger }),
+  gameService: _gameSvc,
   libraryService: _libSvc,
   progressService: _progressSvc,
   insightsService: _insightsSvc,
@@ -60,6 +60,9 @@ export function createApp({
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
   const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, eventBus });
   const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, eventBus });
+  const gameService =
+    _gameSvc ??
+    createGameService({ Game, igdb: createIgdbAdapter({ config }), logger, friendService, LibraryEntry });
   const collectionService =
     _collectionSvc ??
     createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });

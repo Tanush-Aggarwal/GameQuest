@@ -225,7 +225,8 @@ describe('GET /api/v1/games', () => {
     const config = testConfig();
     const authService = createAuthService({ ...createFakeModels(), config, bcryptRounds: 4, reuseGraceMs: 0 });
     const catalog = setupCatalog(catalogOpts);
-    const app = createApp({ config, logger, authService, gameService: catalog.gameService });
+    const gameService = catalogOpts?.gameService ?? catalog.gameService;
+    const app = createApp({ config, logger, authService, gameService });
     return { app, catalog };
   }
   const login = async (app) => {
@@ -264,5 +265,22 @@ describe('GET /api/v1/games', () => {
     expect(one.body.game.title).toBe('Hades');
     expect((await agent.get('/api/v1/games/missing')).status).toBe(404);
     expect((await agent.get('/api/v1/games/Bad Slug!')).status).toBe(400);
+  });
+  it('returns friends playing the game', async () => {
+    const friendService = {
+      listFriends: jest.fn().mockResolvedValue([{ id: 'friend1', username: 'Alex' }]),
+    };
+    const LibraryEntry = createFakeCollection();
+    const Game = createFakeCollection();
+    const game = await Game.create({ title: 'Hades', slug: 'hades' });
+    await LibraryEntry.create({ userId: 'friend1', gameId: game._id, status: 'playing', manualProgress: 35 });
+
+    const gameService = createGameService({ Game, igdb: { isConfigured: () => false }, friendService, LibraryEntry });
+    const { app } = setupApp({ gameService });
+    const agent = await login(app);
+    const res = await agent.get('/api/v1/games/hades/friends');
+    expect(res.status).toBe(200);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0]).toMatchObject({ username: 'Alex', status: 'playing', manualProgress: 35 });
   });
 });

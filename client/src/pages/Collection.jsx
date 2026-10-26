@@ -40,7 +40,7 @@ function ItemRow({ item, index, count, canEdit, isSmart, busy, onMove, onRemove,
       className="flex items-center gap-3 rounded-card border border-border bg-surface p-2"
     >
       {canEdit && !isSmart && <GripVertical className="h-5 w-5 shrink-0 cursor-grab text-text-muted" aria-hidden="true" />}
-      <div className="w-12 shrink-0 overflow-hidden rounded-control">{game ? <GameCover game={game} /> : <div className="aspect-[3/4] bg-surface-raised" />}</div>
+      <div className="w-12 shrink-0 overflow-hidden rounded-control">{game ? <GameCover game={game} compact /> : <div className="aspect-[3/4] bg-surface-raised" />}</div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Link to={canEdit ? `/library/${item.entry.id}` : `/games/${game?.slug ?? ''}`} className="line-clamp-1 text-sm font-semibold hover:underline">
           {title}

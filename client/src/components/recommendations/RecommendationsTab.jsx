@@ -1,4 +1,4 @@
-import { getHighResCover } from '@/components/games/GameCard.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Clock, Heart, Inbox, Send, Sparkles, Star, ThumbsDown, Trophy, Trash2 } from 'lucide-react';
@@ -215,18 +215,13 @@ function RecommendationCard({ item, isInbox, onRespond, onDelete }) {
     <li className="flex flex-col sm:flex-row gap-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--surface-raised)] transition-colors">
       {/* Game Thumbnail */}
       <Link to={game ? `/games/${game.slug}` : '#'} className="shrink-0">
-        {game?.cover ? (
-          <img
-            src={getHighResCover(game.cover)}
-            alt={game.title}
-            className="h-28 w-20 rounded-[var(--radius-control)] object-cover shadow"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-28 w-20 items-center justify-center rounded-[var(--radius-control)] bg-[var(--surface-raised)] text-xs text-[var(--text-muted)]">
-            No cover
-          </div>
-        )}
+        <CoverImage
+          cover={game?.cover}
+          title={game?.title}
+          alt={game?.title}
+          compact
+          className="h-28 w-20 rounded-[var(--radius-control)] shadow"
+        />
       </Link>
 
       {/* Main Info */}

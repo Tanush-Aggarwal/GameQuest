@@ -20,7 +20,7 @@ import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ActivityList } from '@/components/feed/ActivityList.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
-import { getHighResCover } from '@/components/games/GameCard.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -193,18 +193,12 @@ function FavouriteShowcase({ games = [], isSelf }) {
               className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-all hover:border-accent hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="aspect-[3/4] w-full overflow-hidden bg-surface-raised relative">
-                {game.cover ? (
-                  <img
-                    src={getHighResCover(game.cover)}
-                    alt={game.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-text-muted">
-                    <Gamepad2 className="h-8 w-8" />
-                  </div>
-                )}
+                <CoverImage
+                  cover={game.cover}
+                  title={game.title}
+                  alt={game.title}
+                  className="h-full w-full transition-transform duration-300 group-hover:scale-105"
+                />
                 {game.ratingAvg != null && (
                   <div className="absolute top-2 right-2 rounded-full bg-black/75 px-2 py-0.5 backdrop-blur text-[11px] font-semibold text-[var(--reward)] flex items-center gap-1 shadow">
                     ★ {game.ratingAvg.toFixed(1)}

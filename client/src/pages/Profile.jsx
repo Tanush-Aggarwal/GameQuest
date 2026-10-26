@@ -15,7 +15,7 @@ import { PROFILE_PRIVACY } from '@gamequest/shared';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
-import { getHighResCover } from '@/components/games/GameCard.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
@@ -202,11 +202,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
               if (game) {
                 return (
                   <div key={game.id} className="group relative aspect-[3/4] rounded-card border border-border overflow-hidden bg-surface-raised">
-                    {game.cover ? (
-                      <img src={getHighResCover(game.cover)} alt={game.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-xs text-text-muted p-2 text-center">{game.title}</div>
-                    )}
+                    <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-full w-full" />
                     <button
                       type="button"
                       onClick={() => removeFavourite(game.id)}
@@ -257,11 +253,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
                       onClick={() => addFavourite(game)}
                       className="flex w-full items-center gap-3 rounded-control p-2 text-left hover:bg-surface text-sm transition-colors"
                     >
-                      {game.cover ? (
-                        <img src={getHighResCover(game.cover)} alt={game.title} className="h-10 w-8 rounded object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="h-10 w-8 rounded bg-border flex-shrink-0" />
-                      )}
+                      <CoverImage cover={game.cover} title={game.title} compact className="h-10 w-8 rounded flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-xs truncate">{game.title}</p>
                         {game.genres?.length > 0 && (

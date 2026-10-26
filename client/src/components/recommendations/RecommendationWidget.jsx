@@ -1,4 +1,4 @@
-import { getHighResCover } from '@/components/games/GameCard.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles } from 'lucide-react';
@@ -28,14 +28,13 @@ export function RecommendationWidget() {
       </div>
 
       <div className="flex items-center gap-3 mt-1">
-        {rec.game?.cover && (
-          <img
-            src={getHighResCover(rec.game.cover)}
-            alt={rec.game.title}
-            className="h-16 w-12 rounded-[var(--radius-control)] object-cover shadow"
-            loading="lazy"
-          />
-        )}
+        <CoverImage
+          cover={rec.game?.cover}
+          title={rec.game?.title}
+          alt={rec.game?.title}
+          compact
+          className="h-16 w-12 shrink-0 rounded-[var(--radius-control)] shadow"
+        />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold truncate">{rec.game?.title}</p>
           <p className="text-xs text-[var(--text-muted)] mt-0.5">

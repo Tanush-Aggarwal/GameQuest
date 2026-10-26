@@ -25,7 +25,7 @@ import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
-import { getHighResCover } from '@/components/games/GameCard.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -88,7 +88,7 @@ function ResumeCard({ dashboard }) {
       className="flex gap-4 p-4 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors group"
     >
       {card.cover && (
-        <img src={getHighResCover(card.cover)} alt={card.title} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" loading="lazy" />
+        <CoverImage cover={card.cover} title={card.title} alt={card.title} compact className="w-16 h-20 rounded-lg flex-shrink-0" />
       )}
       <div className="flex-1 min-w-0">
         <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">Continue playing</p>
@@ -192,7 +192,7 @@ function PlayNextCard({ item }) {
       className="flex gap-3 p-3 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors group"
     >
       {item.cover ? (
-        <img src={getHighResCover(item.cover)} alt={item.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" loading="lazy" />
+        <CoverImage cover={item.cover} title={item.title} alt={item.title} compact className="w-12 h-16 rounded-lg flex-shrink-0" />
       ) : (
         <div className="w-12 h-16 rounded-lg bg-[var(--surface-raised)] flex-shrink-0" />
       )}

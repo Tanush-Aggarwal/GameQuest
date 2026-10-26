@@ -1,4 +1,4 @@
-import { Gamepad2 } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 /**
@@ -12,14 +12,63 @@ export function getHighResCover(url) {
   return url;
 }
 
-export function GameCover({ game, className = '' }) {
-  const coverUrl = getHighResCover(game?.cover);
-  return coverUrl ? (
-    <img src={coverUrl} alt="" loading="lazy" className={`aspect-[3/4] w-full object-cover ${className}`} />
-  ) : (
-    <div className={`flex aspect-[3/4] w-full items-center justify-center bg-surface-raised ${className}`}>
-      <Gamepad2 className="h-8 w-8 text-text-muted" aria-hidden="true" />
+// IGDB covers come in two sizes (264x374 and 528x748); other URLs have a single size.
+export function coverSrcSet(url) {
+  if (typeof url !== 'string') return undefined;
+  const match = /^(.*\/upload\/)t_cover_big(?:_2x)?(\/[^/]+)$/.exec(url);
+  return match ? `${match[1]}t_cover_big${match[2]} 1x, ${match[1]}t_cover_big_2x${match[2]} 2x` : undefined;
+}
+
+const hueOf = (text) => {
+  let hash = 0;
+  for (const ch of text) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return hash % 360;
+};
+
+/**
+ * A cover that is never a blank box: lazy-loaded IGDB art with srcset, or (no art / failed load) a
+ * gradient generated from the title with the title on top. `compact` hides the title on tiny thumbnails.
+ * Size and shape come from `className`, which applies to both the image and the fallback.
+ */
+export function CoverImage({ cover, title = '', alt = '', className = '', sizes, compact = false }) {
+  const [failedUrl, setFailedUrl] = useState(null); // keyed by URL so a new cover gets a fresh try
+  if (cover && failedUrl !== cover) {
+    return (
+      <img
+        src={getHighResCover(cover)}
+        srcSet={coverSrcSet(cover)}
+        sizes={sizes}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailedUrl(cover)}
+        className={`object-cover ${className}`}
+      />
+    );
+  }
+  const hue = hueOf(title || 'game');
+  return (
+    <div
+      role={alt ? 'img' : undefined}
+      aria-label={alt || undefined}
+      aria-hidden={alt ? undefined : true}
+      style={{ backgroundImage: `linear-gradient(150deg, hsl(${hue} 55% 30%), hsl(${(hue + 50) % 360} 60% 14%))` }}
+      className={`flex items-center justify-center overflow-hidden p-1.5 text-center ${className}`}
+    >
+      {!compact && title && <span className="line-clamp-4 break-words text-xs font-semibold leading-tight text-white/90">{title}</span>}
     </div>
+  );
+}
+
+export function GameCover({ game, className = '', compact = false }) {
+  return (
+    <CoverImage
+      cover={game?.cover}
+      title={game?.title}
+      compact={compact}
+      sizes="(min-width: 768px) 200px, 45vw"
+      className={`aspect-[3/4] w-full ${className}`}
+    />
   );
 }
 

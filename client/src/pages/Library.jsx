@@ -15,7 +15,7 @@ import { LIBRARY_STATUSES } from '@gamequest/shared';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
-import { GameCardSkeleton, GameCover, getHighResCover } from '@/components/games/GameCard.jsx';
+import { CoverImage, GameCardSkeleton, GameCover } from '@/components/games/GameCard.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { MoveStatusSelect } from '@/components/library/MoveStatusSelect.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -33,7 +33,7 @@ function LibraryCard({ entry, onMove, onRemove, busy }) {
   return (
     <li className="flex flex-col overflow-hidden rounded-card border border-border bg-surface">
       <Link to={game ? `/games/${game.slug}` : '/library'} aria-label={game?.title ?? 'Unknown game'}>
-        {game ? <GameCover game={game} /> : <div className="aspect-[3/4] bg-surface-raised" />}
+        {game ? <GameCover game={game} compact /> : <div className="aspect-[3/4] bg-surface-raised" />}
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-3">
         <h3 className="line-clamp-2 text-sm font-semibold">{game?.title ?? 'Unknown game'}</h3>
@@ -79,13 +79,7 @@ function LibraryRow({ entry, onMove, onRemove, busy }) {
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3.5 rounded-card border border-border bg-surface hover:bg-surface-raised/40 transition-colors">
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         <Link to={game ? `/games/${game.slug}` : '/library'} className="w-12 h-16 rounded overflow-hidden shrink-0 border border-border bg-surface-raised shadow-sm">
-          {game?.cover ? (
-            <img src={getHighResCover(game.cover)} alt="" className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Gamepad2 className="h-5 w-5 text-text-muted" />
-            </div>
-          )}
+          <CoverImage cover={game?.cover} title={game?.title} compact className="w-full h-full" />
         </Link>
         <div className="flex flex-col gap-1 min-w-0">
           <Link to={game ? `/games/${game.slug}` : '/library'} className="font-semibold text-sm hover:text-accent truncate">

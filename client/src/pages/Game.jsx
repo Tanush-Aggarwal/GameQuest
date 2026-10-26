@@ -226,14 +226,15 @@ export default function Game() {
   return (
     <section className="relative flex flex-col gap-8 pb-12">
       {/* Ambient Cover Tint Backdrop (PS5 / Steam dynamic hero glow) */}
-      {status === 'success' && game?.cover && (
+      {status === 'success' && (game?.backdrop || game?.cover) && (
         <div
           className="pointer-events-none absolute -inset-x-8 -top-8 h-96 overflow-hidden opacity-25 select-none"
           aria-hidden="true"
         >
           <img
-            src={getHighResCover(game.cover)}
+            src={game.backdrop ?? getHighResCover(game.cover)}
             alt=""
+            loading="lazy"
             className="h-full w-full object-cover blur-3xl scale-125"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--bg)]/80 to-[var(--bg)]" />

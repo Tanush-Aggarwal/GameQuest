@@ -19,6 +19,8 @@ import { createLibraryService } from './services/libraryService.js';
 import { createProgressService } from './services/progressService.js';
 import { createInsightsService } from './services/insightsService.js';
 import { createEventBus } from './events/eventBus.js';
+import { Review } from './models/Review.js';
+import { createReviewService } from './services/reviewService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -29,11 +31,13 @@ export function createApp({
   libraryService: _libSvc,
   progressService: _progressSvc,
   insightsService: _insightsSvc,
+  reviewService: _reviewSvc,
 }) {
   const eventBus = createEventBus({ logger });
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
   const progressService = _progressSvc ?? createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger });
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
+  const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, logger });
 
   const app = express();
 
@@ -46,7 +50,7 @@ export function createApp({
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 
-  app.use('/api/v1', createRoutes({ authService, gameService, libraryService, progressService, insightsService, config }));
+  app.use('/api/v1', createRoutes({ authService, gameService, libraryService, progressService, insightsService, reviewService, LibraryEntry, config }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

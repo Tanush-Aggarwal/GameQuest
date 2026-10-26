@@ -5,9 +5,10 @@ import { createGamesRouter } from './games.js';
 import { createLibraryRouter } from './library.js';
 import { createProgressRouter } from './progress.js';
 import { createInsightsRouter } from './insights.js';
+import { createReviewsRouter } from './reviews.js';
 import { createRequireAuth } from '../middleware/auth.js';
 
-export function createRoutes({ authService, gameService, libraryService, progressService, insightsService, config }) {
+export function createRoutes({ authService, gameService, libraryService, progressService, insightsService, reviewService, LibraryEntry, config }) {
   const router = Router();
   const requireAuth = createRequireAuth(authService);
 
@@ -17,6 +18,7 @@ export function createRoutes({ authService, gameService, libraryService, progres
   router.use('/library', createLibraryRouter({ authService, libraryService }));
   router.use('/library', createProgressRouter({ requireAuth, progressService }));
   router.use('/insights', createInsightsRouter({ requireAuth, insightsService }));
+  router.use('/reviews', createReviewsRouter({ requireAuth, reviewService, LibraryEntry }));
 
   return router;
 }

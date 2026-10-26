@@ -139,6 +139,44 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       }
       return { deletedCount: n };
     },
+    async findOneAndDelete(q) {
+      const i = docs.findIndex((d) => matchesQuery(d, q));
+      if (i < 0) return null;
+      const [doc] = docs.splice(i, 1);
+      return structuredClone(doc);
+    },
+    async updateOne(q, update) {
+      const doc = docs.find((d) => matchesQuery(d, q));
+      if (!doc) return { matchedCount: 0, modifiedCount: 0 };
+      applyUpdate(doc, update);
+      doc.updatedAt = new Date();
+      return { matchedCount: 1, modifiedCount: 1 };
+    },
+    // Minimal aggregate: handles $match + $group with $avg/$sum
+    aggregate(pipeline) {
+      let rows = [...docs];
+      for (const stage of pipeline) {
+        if (stage.$match) rows = rows.filter((d) => matchesQuery(d, stage.$match));
+        if (stage.$group) {
+          const spec = stage.$group;
+          const record = { _id: null };
+          for (const [k, expr] of Object.entries(spec)) {
+            if (k === '_id') continue;
+            if (expr.$avg) {
+              const vals = rows.map((d) => getPath(d, String(expr.$avg).slice(1))).filter((v) => v != null);
+              record[k] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+            }
+            if (expr.$sum != null) {
+              record[k] = typeof expr.$sum === 'number'
+                ? rows.length * expr.$sum
+                : rows.map((d) => getPath(d, String(expr.$sum).slice(1)) ?? 0).reduce((a, b) => a + b, 0);
+            }
+          }
+          rows = rows.length ? [record] : [];
+        }
+      }
+      return Promise.resolve(rows);
+    },
   };
 }
 

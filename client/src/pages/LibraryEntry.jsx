@@ -6,6 +6,7 @@ import { useAsync } from '@/hooks/useAsync.js';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { ProgressPanel } from '@/components/progress/ProgressPanel.jsx';
+import { ReviewPanel } from '@/components/review/ReviewPanel.jsx';
 import { getLibraryEntry, changeStatus, setVisibility, removeFromLibrary } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
 
@@ -187,6 +188,9 @@ export default function LibraryEntry() {
 
       {/* Progress panel */}
       <ProgressPanel entryId={id} status={entry.status} initialProgress={entry.manualProgress ?? 0} />
+
+      {/* Reviews */}
+      <ReviewPanel gameId={entry.gameId} status={entry.status} />
 
       {/* Danger zone */}
       <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">

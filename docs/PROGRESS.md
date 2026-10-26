@@ -10,7 +10,6 @@ Tier 1 â€” Foundation
 - (nothing yet)
 
 ## Next up (do these in order, one at a time)
-2. Server foundations: config, MongoDB connection, pino logger, helmet, CORS, central error handler + typed errors, `/api/v1/health`
 3. Auth: register, login, refresh rotation, logout, `/auth/me`, rate limits, tests
 4. Client shell: router, layout with top nav + mobile tab bar, auth pages, protected routes, toasts
 5. Game catalog: IGDB adapter, Game model, cache-first search, game page skeleton
@@ -19,10 +18,12 @@ Tier 1 â€” Foundation
 
 ## Done
 - Item 1: monorepo scaffold (client/server/shared, tokens.css, .env.example, ESLint, Jest/Vitest)
+- Item 2: server foundations (config validation, Mongo connect, pino, helmet, CORS, typed errors + central handler, validate middleware, /api/v1/health, 11 tests)
 
 ## Known issues / blockers
 - docs/BLUEPRINT.md is still a placeholder; export the real blueprint when available
 
 ## Session log
 <!-- newest first: date â€” tool used â€” what changed â€” commit hash -->
+
 

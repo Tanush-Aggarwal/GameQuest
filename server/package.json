@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@gamequest/server",
   "private": true,
   "version": "0.1.0",
@@ -18,12 +18,19 @@
     ]
   },
   "dependencies": {
+    "@gamequest/shared": "^0.1.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "express": "^5.3.0",
-    "mongoose": "^9.11.4"
+    "helmet": "^8.3.0",
+    "mongoose": "^9.11.4",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "jest": "^30.5.2",
+    "pino-pretty": "^13.2.0",
     "supertest": "^7.3.1"
   }
 }
-

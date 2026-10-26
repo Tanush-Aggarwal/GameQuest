@@ -1,6 +1,6 @@
-# GameQuest 🎮
+﻿# GameQuest 🎮
 
-A full-stack MERN web application — a smart, unified game library where you can track every game you own across platforms, log play sessions, write reviews, and get personalised "what to play next" recommendations.
+A full-stack MERN web app: one unified game library across platforms, smart "what to play next" decisions, and social play with friends — collections, an activity feed, and scheduled play sessions.
 
 ---
 
@@ -12,19 +12,28 @@ A full-stack MERN web application — a smart, unified game library where you ca
 | **Server** | Node.js, Express 5, Mongoose 9, Zod (validation), Pino (logging), Helmet, bcrypt, JSON Web Tokens |
 | **Database** | MongoDB Atlas |
 | **Shared** | `@gamequest/shared` — Zod schemas re-used on both client and server |
-| **Testing** | Jest + Supertest (server, 83 tests), Vitest + Testing Library (client) |
+| **Testing** | Jest + Supertest (server, 211 tests), Vitest + Testing Library (client, 105 tests) |
 
 ---
 
 ## Features
 
-- **Auth** — Register, login, JWT access token (15 min) + refresh rotation (7 days), HTTP-only cookies
-- **Game catalog** — Search via IGDB (Twitch-backed), cache-first, cursor pagination
-- **Unified library** — One entry per game, multi-platform ownerships, status state machine (Wishlist → Backlog → Playing → Completed | Dropped), history tracking
-- **Progress tracking** — Manual progress slider, play-session logging (date / minutes / note), journal entries
-- **Dashboard** — Resume card, stat tiles, "What to play next" recommendations (genre/time/progress scoring), backlog snapshot
-- **Reviews** — Star rating (1–5), text body, community reviews per game, atomic avg refresh on Game
-- **Library entry page** — Full detail view: cover art, status transitions, progress panel, play logs, journal, reviews
+**Library and progress**
+- **Auth** — Register, login, JWT access token (15 min) + refresh rotation with reuse detection (7 days), HTTP-only cookies
+- **Game catalog** — Search via IGDB (Twitch-backed), cache-first in MongoDB, filters, cursor pagination; degrades to cached games if IGDB is unavailable
+- **Unified library** — One entry per game with multi-platform ownerships, status state machine (Wishlist → Backlog → Playing → Completed | Dropped), status history, "hide from friends" switch
+- **Progress tracking** — Manual progress, play-session logging, journal entries
+- **Dashboard** — Resume card, stat tiles, "What to play next" scoring, backlog snapshot
+- **Reviews** — 1–5 stars, community reviews, atomic average refresh on the game
+
+**Organise**
+- **Collections** — Manual collections with drag-to-reorder (keyboard up/down buttons too; fractional positions) and smart collections whose rules (a whitelist of fields and operators) are compiled on every read, with a live preview in the rule builder. Visibility: public / friends / private
+
+**Social**
+- **Friends** — Search by username, requests (send / accept / decline / cancel), unfriend, block. Friendships are mutual and stored as a sorted pair; blocks override everything
+- **Activity feed** — Friends' activity on Home (status changes, first reviews, session logs, new collections, new sessions), written only by event-bus subscribers and filtered at read time for `hiddenFromFriends` and current visibility
+- **Public profiles** — `/u/:username` with stats, recent activity and public collections; profile privacy (public / friends / private)
+- **Game sessions** — Schedule a play session (game, time, length, platform, player limit, optional Discord invite), invite friends or open it to all friends, RSVP going / maybe / can't make it with capacity enforcement, calendar file (`.ics`) download, upcoming list grouped by day in your own timezone
 
 ---
 
@@ -35,22 +44,25 @@ gamequest/
 ├── client/          # React + Vite SPA
 │   └── src/
 │       ├── app/         # Router, route guards
-│       ├── components/  # UI primitives, feature panels
+│       ├── components/  # UI primitives + feature components (library, collections, feed, sessions…)
 │       ├── features/    # Auth context
-│       ├── hooks/       # useAsync, useAuth
+│       ├── hooks/       # useAsync, useLayered, useAuth
+│       ├── lib/         # Status metadata, time helpers
 │       ├── pages/       # Route-level pages
 │       └── services/    # Axios API wrappers
 ├── server/          # Express API
+│   ├── scripts/         # seed.js
 │   └── src/
 │       ├── adapters/    # IGDB content adapter
 │       ├── config/      # Env validation (Zod)
 │       ├── controllers/ # Thin HTTP handlers
-│       ├── events/      # In-process event bus
-│       ├── middleware/  # Auth, validate, error handler
+│       ├── events/      # Event bus + subscribers (activity feed, clean-up)
+│       ├── middleware/  # Auth, validate, rate limit, error handler
 │       ├── models/      # Mongoose models
 │       ├── routes/      # Express routers
-│       ├── services/    # Business logic (DI pattern)
-│       └── tests/       # Jest unit tests
+│       ├── services/    # Business rules (dependency injection)
+│       ├── tests/       # Jest tests with in-memory fakes
+│       └── utils/       # Errors, smart-rule compiler, .ics builder
 ├── shared/          # @gamequest/shared — Zod schemas
 └── .env.example     # Copy → server/.env and fill in
 ```
@@ -61,8 +73,8 @@ gamequest/
 
 ### Prerequisites
 
-- Node.js ≥ 20
-- A MongoDB Atlas cluster (free tier works)
+- Node.js ≥ 20.19
+- A MongoDB Atlas cluster (free tier works; allow your IP under Network Access)
 - (Optional) Twitch Developer App for IGDB game search
 
 ### 1. Clone and install
@@ -101,14 +113,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### 3. Seed demo data (optional but recommended)
 
 ```bash
-cd server
-node scripts/seed.js
+npm run seed
 ```
 
-This creates:
-- Demo login: `demo@gamequest.dev` / `Demo1234!`
-- 6 games (Elden Ring, Hollow Knight, Celeste, Hades, Stardew Valley, The Witcher 3)
-- Library entries in various statuses with play logs and reviews
+The seed is idempotent. It creates:
+- **demo** — `demo@gamequest.dev` / `Demo1234!`: 8 games across every status, play logs, reviews, a public manual collection ("All-time favourites") and a smart collection ("Short backlog": status = backlog and ≤ 15 h to beat)
+- **alex** — `alex@gamequest.dev` / `Demo1234!`, friends with demo, with a library, two reviews and a public collection, so demo's activity feed has content
+- An upcoming session hosted by alex ("Hades night") with demo invited
+
+Alex's activity is created through the real services and event bus, not inserted directly.
 
 ### 4. Run in development
 
@@ -123,47 +136,59 @@ Open **http://localhost:5173** — log in with the demo account or register a ne
 
 ## API Endpoints
 
-All routes are under `/api/v1`.
+All routes are under `/api/v1` and (except `/health` and `/auth/*`) require the session cookie. Errors always look like `{ error: { code, message, details? } }`; lists use cursor pagination (`cursor`, `limit`).
 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health` | Health check |
-| POST | `/auth/register` | Create account |
-| POST | `/auth/login` | Login → sets HTTP-only cookie |
-| POST | `/auth/refresh` | Rotate refresh token |
-| POST | `/auth/logout` | Clear tokens |
+| POST | `/auth/register` · `/auth/login` · `/auth/refresh` · `/auth/logout` | Account and session |
 | GET | `/auth/me` | Current user |
-| GET | `/games` | Search game catalog |
-| GET | `/games/:slug` | Game detail |
-| GET | `/library` | List user's library |
-| GET | `/library/:id` | Single library entry |
-| POST | `/library` | Add game to library |
-| PATCH | `/library/:id/status` | Change game status |
+| GET | `/games` · `/games/:slug` | Search the catalog · game detail |
+| GET | `/library` · `/library/:id` | List entries · one entry |
+| POST | `/library` | Add a game to the library |
+| PATCH | `/library/:id/status` | Change status (state machine) |
+| PATCH | `/library/:id/visibility` | Hide / show to friends |
 | PATCH | `/library/:id/progress` | Set manual progress |
-| POST | `/library/:id/playlogs` | Log a play session |
-| GET | `/library/:id/playlogs` | List play logs |
-| DELETE | `/library/:id/playlogs/:logId` | Delete play log |
-| POST | `/library/:id/journal` | Add journal note |
-| GET | `/library/:id/journal` | List journal |
-| DELETE | `/library/:id/journal/:noteId` | Delete note |
-| GET | `/insights/dashboard` | Dashboard data |
-| GET | `/insights/play-next` | "What to play next" |
-| GET | `/insights/backlog-health` | Backlog summary |
-| PUT | `/reviews/:gameId` | Upsert review |
-| DELETE | `/reviews/:gameId` | Delete own review |
-| GET | `/reviews/mine/:gameId` | Own review for a game |
-| GET | `/reviews/game/:gameId` | All reviews for a game |
+| GET · POST · DELETE | `/library/:id/playlogs[/:logId]` | Play sessions log |
+| GET · POST · DELETE | `/library/:id/journal[/:noteId]` | Journal notes |
+| GET | `/library/:id/history` | Status history |
+| DELETE | `/library/:id` | Remove from library |
+| GET | `/insights/dashboard` · `/insights/play-next` · `/insights/backlog-health` | Dashboard data |
+| PUT · DELETE | `/reviews/:gameId` | Upsert / delete own review |
+| GET | `/reviews/mine/:gameId` · `/reviews/game/:gameId` · `/reviews/user/:userId` | Read reviews |
+| GET · POST | `/collections` | List mine · create (manual or smart) |
+| POST | `/collections/preview` | Preview unsaved smart rules |
+| GET · PATCH · DELETE | `/collections/:id` | Read (privacy-filtered) · update · delete |
+| POST | `/collections/:id/items` | Add a library entry (manual only) |
+| DELETE | `/collections/:id/items/:itemId` | Remove an item |
+| PATCH | `/collections/:id/items/:itemId/position` | Reorder: `{ afterItemId \| null }` |
+| GET | `/users/search?q=` | Find players by username prefix |
+| GET | `/users/:username` | Profile header + stats (privacy / blocks applied) |
+| GET | `/users/:username/activity` · `/users/:username/collections` | Profile sections |
+| PATCH | `/users/me/privacy` | Profile privacy: public / friends / private |
+| GET | `/friends` · `/friends/requests` | Friends · incoming and outgoing requests |
+| POST | `/friends/requests` | Send a request by username (rate-limited) |
+| POST | `/friends/requests/:id/accept` · `/decline` | Answer a request |
+| DELETE | `/friends/requests/:id` | Cancel a request you sent |
+| DELETE | `/friends/:userId` | Unfriend |
+| GET | `/blocks` | Players you blocked |
+| POST · DELETE | `/blocks/:userId` | Block / unblock |
+| GET | `/feed` | Friends' activity |
+| GET · POST | `/sessions` | Upcoming sessions (mine, invited, friends') · create |
+| GET · PATCH | `/sessions/:id` | Session detail · update (host only) |
+| POST | `/sessions/:id/cancel` | Cancel (host only) |
+| PUT | `/sessions/:id/rsvp` | RSVP: `{ response: going \| maybe \| declined }` |
+| GET | `/sessions/:id/ics` | Calendar file (`text/calendar`, UTC) |
 
 ---
 
 ## Running Tests
 
 ```bash
-# Server (Jest)
-npm test --workspace=server
-
-# Client (Vitest)
-npm test --workspace=client
+npm test -w server    # Jest — 211 tests, no database needed (in-memory fakes)
+npm test -w client    # Vitest + Testing Library — 105 tests
+npm run build -w client
+npm run lint
 ```
 
 ---
@@ -182,8 +207,11 @@ Key production env vars to add on Render:
 
 ## Architecture Notes
 
-- **Services use dependency injection** — every service factory takes `{ Model, logger, ... }` so unit tests swap in in-memory fakes without touching MongoDB.
-- **Identity comes only from the signed cookie** — never from the request body.
-- **Status is a state machine** — invalid transitions return 409 with clear `allowed` details.
-- **Event bus** — services emit domain events (`library.statusChanged`, `library.sessionLogged`, …) for decoupled side-effects.
-- **Atomic rating refresh** — reviews recalculate `ratingAvg` via `$group` aggregate after every upsert/delete.
+- **Layers** — routes → middleware → controllers → services → models/adapters. Controllers are thin; business rules live in services, which take their models by injection so tests swap in in-memory fakes.
+- **Identity comes only from the signed cookie** — never from the request body. Other people are addressed by URL.
+- **Privacy filter in the service layer** — profiles, collections, sessions and the feed all decide visibility from one definition of "friend" and "blocked"; a thing you may not see answers 404.
+- **Events** — services emit domain events (`library.statusChanged`, `review.created`, `library.sessionLogged`, `collection.created`, `session.created`, …); the activity feed and clean-up jobs subscribe in `events/subscribers.js`. Activity is written nowhere else.
+- **Status is a state machine** — invalid transitions return 409 with the allowed moves.
+- **Smart collections are safe by construction** — rules compile only from a whitelist of fields, operators and value types; nothing a user types becomes a Mongo key or operator.
+- **Times are UTC** — stored and sent as UTC, formatted in the viewer's timezone in the client.
+- **External sources fail alone** — `Promise.allSettled`; a failing IGDB lookup becomes a warning next to cached results.

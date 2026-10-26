@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+﻿import { useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Clock } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCover } from '@/components/games/GameCard.jsx';
@@ -78,6 +79,9 @@ export default function Game() {
             {game.platforms.length > 0 && <p className="text-sm text-text-muted">{game.platforms.join(' · ')}</p>}
             <p className="max-w-prose text-sm">{game.summary || 'No description available yet.'}</p>
             <GameLibraryPanel game={game} />
+            <Link to={`/sessions/new?game=${game.slug}`} className={buttonVariants({ variant: 'secondary' }) + ' w-fit'}>
+              <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Schedule a session
+            </Link>
             <div className="max-w-xs">
               <TimeToBeat timeToBeat={game.timeToBeat} />
             </div>

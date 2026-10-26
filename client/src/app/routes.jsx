@@ -15,6 +15,9 @@ const LibraryEntry = lazy(() => import('@/pages/LibraryEntry.jsx'));
 const Collections = lazy(() => import('@/pages/Collections.jsx'));
 const Collection = lazy(() => import('@/pages/Collection.jsx'));
 const UserProfile = lazy(() => import('@/pages/UserProfile.jsx'));
+const Sessions = lazy(() => import('@/pages/Sessions.jsx'));
+const SessionNew = lazy(() => import('@/pages/SessionNew.jsx'));
+const Session = lazy(() => import('@/pages/Session.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
 export const routes = [
@@ -41,6 +44,9 @@ export const routes = [
           { path: '/friends', element: <Friends /> },
           { path: '/profile', element: <Profile /> },
           { path: '/u/:username', element: <UserProfile /> },
+          { path: '/sessions', element: <Sessions /> },
+          { path: '/sessions/new', element: <SessionNew /> },
+          { path: '/sessions/:id', element: <Session /> },
         ],
       },
     ],

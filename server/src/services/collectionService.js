@@ -26,9 +26,22 @@ export function createCollectionService({
     const ownerId = String(collection.ownerId);
     if (String(viewerId) === ownerId) return true;
     if (await social.isBlocked(viewerId, ownerId)) return false;
+    // The owner's profile privacy gates everything of theirs, so a collection id can't be used to get
+    // around a private or friends-only profile (a missing owner counts as public).
+    const owner = await User.findOne({ _id: ownerId }).lean();
+    const profile = owner?.privacy ?? 'public';
+    if (profile === 'private') return false;
+    if (profile === 'friends' && !(await social.isFriend(viewerId, ownerId))) return false;
     if (collection.visibility === 'public') return true;
     if (collection.visibility === 'friends') return social.isFriend(viewerId, ownerId);
     return false;
+  }
+
+  // A cover must be a game the owner really has and has not hidden, or it could leak a hidden game's art.
+  async function assertCoverAllowed(userId, coverGameId) {
+    if (!coverGameId) return;
+    const entry = await LibraryEntry.findOne({ userId, gameId: coverGameId }).lean();
+    if (!entry || entry.hiddenFromFriends) throw new ValidationError('Pick a cover from a game in your library that is visible to friends');
   }
 
   // A collection the viewer may not see does not exist as far as they can tell.
@@ -131,6 +144,7 @@ export function createCollectionService({
     async create(userId, input) {
       if (input.type === 'smart') compileRules(input.rules); // reject bad rules before saving anything
       else if (input.rules?.length) throw new ValidationError('Only smart collections have rules');
+      await assertCoverAllowed(userId, input.coverGameId);
       const collection = await Collection.create({
         ownerId: userId,
         name: input.name,
@@ -211,7 +225,10 @@ export function createCollectionService({
       const collection = await loadOwned(userId, id);
       const $set = {};
       for (const key of ['name', 'description', 'visibility']) if (patch[key] !== undefined) $set[key] = patch[key];
-      if (patch.coverGameId !== undefined) $set.coverGameId = patch.coverGameId;
+      if (patch.coverGameId !== undefined) {
+        await assertCoverAllowed(userId, patch.coverGameId);
+        $set.coverGameId = patch.coverGameId;
+      }
       if (patch.rules !== undefined) {
         if (collection.type !== 'smart') throw new ValidationError('Only smart collections have rules');
         compileRules(patch.rules);

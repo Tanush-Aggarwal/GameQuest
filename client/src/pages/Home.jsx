@@ -7,6 +7,7 @@ import { useAsync } from '@/hooks/useAsync.js';
 import { getDashboard, getPlayNext } from '@/services/progressApi.js';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
+import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -29,6 +30,9 @@ export default function Home() {
 
       {/* Play next */}
       <PlayNextSection playNext={playNext} />
+
+      {/* Planned game nights */}
+      <UpcomingSessions />
 
       {/* What friends are up to */}
       <FriendFeed />

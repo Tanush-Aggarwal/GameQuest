@@ -3,7 +3,7 @@ const LIBRARY_TYPES = new Set(['library.statusChanged', 'library.sessionLogged']
 
 // Activity is only ever written by event-bus subscribers (events/subscribers.js call `record`).
 // Readers filter at read time because hiddenFromFriends and collection visibility can change later.
-export function createActivityService({ Activity, LibraryEntry, Game, User, Collection, social, logger, now = () => new Date() }) {
+export function createActivityService({ Activity, LibraryEntry, Game, User, Collection, GameSession, social, logger, now = () => new Date() }) {
   // ── writing (called by subscribers) ───────────────────────────────────────
 
   // Events carry different ids; make sure the activity knows its entry and game so readers can
@@ -50,6 +50,7 @@ export function createActivityService({ Activity, LibraryEntry, Game, User, Coll
       }
 
       case 'session.created':
+        if (payload.visibility === 'invite') return null; // invite-only sessions stay between the invitees
         return Activity.create({
           ...base,
           gameId: payload.gameId,
@@ -89,12 +90,15 @@ export function createActivityService({ Activity, LibraryEntry, Game, User, Coll
   async function filterVisible(rows, audience) {
     const entryIds = [...new Set(rows.filter((r) => r.entryId).map((r) => String(r.entryId)))];
     const collectionIds = [...new Set(rows.map((r) => r.data?.collectionId).filter(Boolean))];
-    const [entries, collections] = await Promise.all([
+    const sessionIds = [...new Set(rows.map((r) => r.data?.sessionId).filter(Boolean))];
+    const [entries, collections, sessions] = await Promise.all([
       entryIds.length ? LibraryEntry.find({ _id: { $in: entryIds } }).lean() : [],
       collectionIds.length ? Collection.find({ _id: { $in: collectionIds } }).lean() : [],
+      sessionIds.length && GameSession ? GameSession.find({ _id: { $in: sessionIds } }).lean() : [],
     ]);
     const entryById = new Map(entries.map((e) => [String(e._id), e]));
     const collectionById = new Map(collections.map((c) => [String(c._id), c]));
+    const sessionById = new Map(sessions.map((s) => [String(s._id), s]));
 
     return rows.filter((row) => {
       if (row.entryId) {
@@ -109,6 +113,10 @@ export function createActivityService({ Activity, LibraryEntry, Game, User, Coll
         if (collection.visibility === 'private') return false;
         if (audience === 'public' && collection.visibility !== 'public') return false;
         return true;
+      }
+      if (row.type === 'session.created' && GameSession) {
+        const session = sessionById.get(String(row.data?.sessionId));
+        if (!session || session.status === 'cancelled' || session.visibility === 'invite') return false; // cancelled or made private
       }
       if (audience === 'public' && row.level !== 'public') return false;
       return true;

@@ -1,4 +1,4 @@
-import request from 'supertest';
+﻿import request from 'supertest';
 import { jest } from '@jest/globals';
 import { createApp } from '../app.js';
 import { createAuthService } from '../services/authService.js';
@@ -334,6 +334,44 @@ describe('collectionService — smart collections', () => {
   });
 });
 
+describe('collectionService — profile privacy and covers', () => {
+  async function ownerWith(privacy, friends = []) {
+    const ctx = setupService({ friends });
+    const owner = await ctx.User.create({ username: 'owner', usernameLower: 'owner', privacy });
+    return { ...ctx, ownerId: owner._id };
+  }
+
+  it('a private profile hides even its public collections from direct links', async () => {
+    const ctx = await ownerWith('private');
+    const c = await ctx.service.create(ctx.ownerId, manual({ visibility: 'public' }));
+    await expect(ctx.service.get('stranger', c.id)).rejects.toMatchObject({ status: 404 });
+    expect((await ctx.service.get(ctx.ownerId, c.id)).collection.isOwner).toBe(true);
+  });
+
+  it('a friends-only profile shows its public collections to friends only', async () => {
+    const ctx = await ownerWith('friends', [['__owner__', 'pal']]);
+    const c = await ctx.service.create(ctx.ownerId, manual({ visibility: 'public' }));
+    await expect(ctx.service.get('stranger', c.id)).rejects.toMatchObject({ status: 404 });
+    const withFriend = setupService({ friends: [[ctx.ownerId, 'pal']] });
+    const owner = await withFriend.User.create({ username: 'owner', usernameLower: 'owner', privacy: 'friends' });
+    const pub = await withFriend.service.create(owner._id, manual({ visibility: 'public' }));
+    expect((await withFriend.service.get('pal', pub.id)).collection.name).toBe('Favourites');
+    await expect(withFriend.service.get('stranger', pub.id)).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('only accepts a cover from a visible game in the owner’s own library', async () => {
+    const ctx = setupService();
+    const shown = await ctx.addEntry('u1', 'Shown');
+    const hidden = await ctx.addEntry('u1', 'Hidden', 'backlog', { hiddenFromFriends: true });
+    const foreign = await ctx.addEntry('u2', 'Theirs');
+    await expect(ctx.service.create('u1', manual({ coverGameId: hidden.gameId }))).rejects.toMatchObject({ status: 400 });
+    await expect(ctx.service.create('u1', manual({ coverGameId: foreign.gameId }))).rejects.toMatchObject({ status: 400 });
+    const c = await ctx.service.create('u1', manual({ coverGameId: shown.gameId }));
+    expect(c.covers).toEqual(['Shown.jpg']);
+    await expect(ctx.service.update('u1', c.id, { coverGameId: hidden.gameId })).rejects.toMatchObject({ status: 400 });
+    expect((await ctx.service.update('u1', c.id, { coverGameId: null })).coverGameId).toBeNull();
+  });
+});
 describe('/api/v1/collections', () => {
   function setupApp() {
     const config = testConfig();

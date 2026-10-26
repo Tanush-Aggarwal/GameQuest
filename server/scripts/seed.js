@@ -27,6 +27,11 @@ import { createLibraryService } from '../src/services/libraryService.js';
 import { createReviewService } from '../src/services/reviewService.js';
 import { createCollectionService } from '../src/services/collectionService.js';
 import { createActivityService } from '../src/services/activityService.js';
+import { GameSession } from '../src/models/GameSession.js';
+import { Rsvp } from '../src/models/Rsvp.js';
+import { Block } from '../src/models/Block.js';
+import { createFriendService } from '../src/services/friendService.js';
+import { createSessionService } from '../src/services/sessionService.js';
 
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
@@ -263,6 +268,32 @@ async function seed() {
     await new Promise((resolve) => setTimeout(resolve, 800)); // let the async subscribers finish writing
   }
   console.log('Alex activity ready');
+
+  // ── an upcoming session hosted by alex with demo invited (created through the real service) ──
+  const upcoming = await GameSession.findOne({ hostId: alex._id, status: 'scheduled', endsAt: { $gt: new Date() } });
+  if (!upcoming) {
+    const eventBus = createEventBus();
+    const friendService = createFriendService({ Friendship, Block, User, eventBus });
+    const activityService = createActivityService({ Activity, LibraryEntry, Game, User, Collection, GameSession, social: friendService });
+    registerSubscribers({ eventBus, activityService });
+    const sessionService = createSessionService({ GameSession, Rsvp, Game, User, social: friendService, eventBus });
+    const startsAt = new Date();
+    startsAt.setUTCDate(startsAt.getUTCDate() + 2);
+    startsAt.setUTCHours(15, 0, 0, 0); // 15:00 UTC, an evening slot for most of the demo audience
+    await sessionService.create(alex._id, {
+      gameId: games['hades--1']._id,
+      title: 'Hades night',
+      startsAt: startsAt.toISOString(),
+      durationMin: 120,
+      platform: 'PC',
+      discordInviteUrl: 'https://discord.gg/gamequest-demo',
+      maxPlayers: 4,
+      visibility: 'friends',
+      inviteeIds: [String(user._id)],
+    });
+    await new Promise((resolve) => setTimeout(resolve, 800)); // let the async subscribers finish writing
+  }
+  console.log('Session ready');
 
   console.log(`\nSeed complete. Log in with ${DEMO_EMAIL} / ${DEMO_PASSWORD}\n`);
 }

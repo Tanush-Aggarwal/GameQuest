@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Check, Search, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
+import { CalendarDays, Check, Search, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button.jsx';
+import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
@@ -241,7 +241,12 @@ export default function Friends() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Friends</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Friends</h1>
+        <Link to="/sessions" className={buttonVariants({ variant: 'secondary' })}>
+          <CalendarDays className="h-4 w-4" aria-hidden="true" /> Sessions
+        </Link>
+      </div>
       <nav aria-label="Friends sections" className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map(([key, label]) => (
           <button

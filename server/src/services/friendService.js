@@ -79,6 +79,12 @@ export function createFriendService({ Friendship, Block, User, eventBus, now = (
       return [...rel.friends.keys()];
     },
 
+    // Everyone the user has blocked or who has blocked the user (both directions hide people from each other).
+    async blockedIds(userId) {
+      const rel = await loadRelations(userId);
+      return [...new Set([...rel.blockedByMe, ...rel.blockedMe])];
+    },
+
     async relation(viewerId, otherId) {
       if (String(viewerId) === String(otherId)) return 'self';
       return relationOf(await loadRelations(viewerId), String(otherId));

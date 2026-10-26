@@ -24,20 +24,24 @@ function setPath(doc, path, value) {
 
 const OPS = {
   $in: (a, v) => (Array.isArray(a) ? a.some((x) => v.includes(x)) : v.includes(a)),
-  $eq: (a, v) => (Array.isArray(a) ? a.includes(v) : a === v),
-  $ne: (a, v) => (Array.isArray(a) ? !a.includes(v) : a !== v),
+  $eq: (a, v) => (Array.isArray(a) ? a.some((x) => sameValue(x, v)) : sameValue(a, v)),
+  $ne: (a, v) => (Array.isArray(a) ? !a.some((x) => sameValue(x, v)) : !sameValue(a, v)),
   $nin: (a, v) => (Array.isArray(a) ? !a.some((x) => v.includes(x)) : !v.includes(a)),
   $gt: (a, v) => a != null && a > v,
   $gte: (a, v) => a != null && a >= v,
   $lt: (a, v) => a != null && a < v,
   $lte: (a, v) => a != null && a <= v,
+  $exists: (a, v) => (a !== undefined) === v,
   $regex: (a, v) => typeof a === 'string' && new RegExp(v).test(a),
 };
 
+const isDate = (v) => v != null && typeof v === 'object' && typeof v.getTime === 'function'; // duck-typed: structuredClone yields cross-realm Dates
+const sameValue = (a, b) => (isDate(a) && isDate(b) ? a.getTime() === b.getTime() : a === b);
+
 function matchValue(actual, cond) {
-  const isOps = cond && typeof cond === 'object' && !(cond instanceof Date) && Object.keys(cond).every((k) => k.startsWith('$'));
+  const isOps = cond && typeof cond === 'object' && !isDate(cond) && Object.keys(cond).every((k) => k.startsWith('$'));
   if (isOps) return Object.entries(cond).every(([op, v]) => OPS[op](actual, v));
-  return Array.isArray(actual) ? actual.includes(cond) : actual === cond;
+  return Array.isArray(actual) ? actual.some((x) => sameValue(x, cond)) : sameValue(actual, cond);
 }
 
 function matchesQuery(doc, q) {
@@ -60,8 +64,16 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
     let rows = list;
     const q = {
       sort(spec) {
-        const [[key, dir]] = Object.entries(spec);
-        rows = [...rows].sort((a, b) => (getPath(a, key) > getPath(b, key) ? dir : -dir));
+        const keys = Object.entries(spec);
+        rows = [...rows].sort((a, b) => {
+          for (const [key, dir] of keys) {
+            const x = getPath(a, key);
+            const y = getPath(b, key);
+            if (x > y) return dir;
+            if (x < y) return -dir;
+          }
+          return 0;
+        });
         return q;
       },
       limit(n) {

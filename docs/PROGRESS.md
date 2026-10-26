@@ -4,16 +4,16 @@ Every AI tool reads this at the start of a session and updates it at the end.
 Keep it short: newest first, one line per item.
 
 ## Current tier
-Tier 2 — In Progress (Progress tracking, Reviews complete)
+Tier 4 — Social: collections, friends + activity feed and game sessions are built; first deploy is postponed (last item in Next up)
 
 ## In progress
 - (nothing)
 
 ## Next up (do these in order, one at a time)
-10. Game sessions (invite, RSVP, .ics)
 11. First deploy: Vercel + Render + Atlas, verify cookies/CORS on live URLs (postponed)
 
 ## Done
+- Item 10 (game sessions): GameSession + Rsvp models, sessionService (friends/invite visibility, blocks, host-only update/cancel, RSVP with capacity, upcoming list with composite cursor, .ics), /sessions routes (create rate-limited), Sessions page grouped by local day, schedule form (game search or ?game=, invitees, Discord pattern check, UTC conversion), session detail (optimistic RSVP with rollback, attendees, Add to calendar, Join Discord, host edit/cancel), Home upcoming widget, seeded Hades night; 35 server + 19 client tests, hardened after review: atomic seat counter, friend-gated access, privacy-aware attendee lists
 - Item 9 (friends + activity feed): Friendship/Block/Activity models, friendService (sorted-pair mutual friendships, crossed-request auto-accept, blocks override everything, username search), activityService (subscriber-written activity, read-time visibility incl. hiddenFromFriends, cursor feed), profileService + User.privacy, /friends /blocks /users /feed routes with request rate limit, Friends page (friends / requests / find, optimistic with rollback), /u/:username profile, Home friends feed, own Profile (privacy + blocked list), seeded user alex (friends with demo) with feed content; 34 server + 26 client tests
 - Item 8b (collections): Collection + CollectionItem models, collectionService (manual fractional-position reorder, smart whitelist rules compiled on read, privacy filter, ownership), /collections routes + preview, collection.created / library.entryRemoved events, Collections + Collection detail pages (drag + up/down reorder with rollback, rule builder with live preview), Add-to-collection on the library entry page, seeded demo collections; 48 server + 21 client tests
 - Item 8 (reviews): Review model, reviewService (upsert with aggregate avg refresh, delete, list), 6 new tests; ReviewPanel client component (StarPicker, own review, community list); /reviews routes; wired into LibraryEntry page; 83 server tests pass
@@ -26,6 +26,9 @@ Tier 2 — In Progress (Progress tracking, Reviews complete)
 - Item 4: client shell (lazy routes, top nav + mobile tab bar, login/register using shared Zod schemas, protected/public-only routes, session restore + refresh-on-401, toasts, ui primitives; 20 client tests)
 
 ## Known issues / blockers
+- Sessions: RSVPs from someone later unfriended stay in the data (hidden from attendee lists, still counted in going). No reminder job, Discord OAuth/bot, or clash warning yet; session.updated/cancelled/rsvp events have no subscribers.
+- The seeded demo session is created for two days after the seed is run; re-run 
+pm run seed to get a fresh upcoming one after it ends.
 - Jest prints "A worker process has failed to exit gracefully" when the server suite runs with workers (predates the social tests; all tests pass). Probably a leftover timer from a rate limiter/app instance; find it with --detectOpenHandles when convenient.
 - Review lists (/reviews/game/:id, /reviews/user/:userId) ignore profile privacy and blocks (reviews are treated as public content).
 - Feed/profile reads scan up to 5 batches to fill a page; a user with very many hidden items may get a short page with a cursor to continue.
@@ -41,6 +44,7 @@ Tier 2 — In Progress (Progress tracking, Reviews complete)
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Claude Code — collections (3e292b5), friends + activity feed (797dd90), game sessions + README; server 211 tests, client 105; demo + alex seeded
 - 2026-10-27 — Claude Code — applied bundle ce99c9c, approved install scripts, `npm run seed` + `npm run dev` verified against Atlas and real IGDB (Celeste/Hades search OK, no upstream errors); fixed seed giving Hades the wrong slug (IGDB: `hades--1`), which made IGDB's own `hades` fail to cache with E11000.
 - 2026-10-26 — Claude Code — reviews + seed script + README; 83 server tests — 349fdc2
 - 2026-10-26 — Claude Code — progress/insights/LibraryEntry page; 77→83 tests — 556e9fb

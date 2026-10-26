@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+coverage/
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# AI tool local state (keep shared config, ignore personal settings)
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

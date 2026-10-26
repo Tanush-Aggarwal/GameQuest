@@ -18,6 +18,7 @@ export function createLibraryRouter({ authService, libraryService }) {
 
   router.use(createRequireAuth(authService));
   router.get('/', validate(libraryListQuerySchema, 'query'), controller.list);
+  router.get('/:id', idParams, controller.getEntry);
   router.post('/', validate(addToLibrarySchema), controller.add);
   router.patch('/:id/status', idParams, validate(changeStatusSchema), controller.changeStatus);
   router.patch('/:id/visibility', idParams, validate(visibilitySchema), controller.setVisibility);

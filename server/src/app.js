@@ -13,7 +13,11 @@ import { createIgdbAdapter } from './adapters/content/igdb.js';
 import { createGameService } from './services/gameService.js';
 import { LibraryEntry } from './models/LibraryEntry.js';
 import { StatusHistory } from './models/StatusHistory.js';
+import { PlayLog } from './models/PlayLog.js';
+import { JournalEntry } from './models/JournalEntry.js';
 import { createLibraryService } from './services/libraryService.js';
+import { createProgressService } from './services/progressService.js';
+import { createInsightsService } from './services/insightsService.js';
 import { createEventBus } from './events/eventBus.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
@@ -22,8 +26,15 @@ export function createApp({
   logger,
   authService = createAuthService({ User, RefreshToken, config }),
   gameService = createGameService({ Game, igdb: createIgdbAdapter({ config }), logger }),
-  libraryService = createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus: createEventBus({ logger }), logger }),
+  libraryService: _libSvc,
+  progressService: _progressSvc,
+  insightsService: _insightsSvc,
 }) {
+  const eventBus = createEventBus({ logger });
+  const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
+  const progressService = _progressSvc ?? createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger });
+  const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
+
   const app = express();
 
   // Proxies in front (Render, plus the Vercel rewrite in production); needed for correct client IPs.
@@ -35,7 +46,7 @@ export function createApp({
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 
-  app.use('/api/v1', createRoutes({ authService, gameService, libraryService, config }));
+  app.use('/api/v1', createRoutes({ authService, gameService, libraryService, progressService, insightsService, config }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

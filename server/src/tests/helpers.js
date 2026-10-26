@@ -81,6 +81,11 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
 
   const applyUpdate = (doc, update) => {
     for (const [k, v] of Object.entries(update.$set ?? {})) setPath(doc, k, v);
+    for (const [k, v] of Object.entries(update.$inc ?? {})) setPath(doc, k, (getPath(doc, k) ?? 0) + v);
+    for (const [k, v] of Object.entries(update.$max ?? {})) {
+      const cur = getPath(doc, k);
+      if (cur == null || v > cur) setPath(doc, k, v);
+    }
   };
 
   return {

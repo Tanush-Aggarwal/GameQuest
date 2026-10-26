@@ -134,6 +134,12 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
       await StatusHistory.deleteMany({ entryId });
     },
 
+    async getEntry(userId, entryId) {
+      const entry = await findOwned(userId, entryId);
+      const game = await Game.findOne({ _id: entry.gameId }).lean();
+      return toEntryDto(entry, game);
+    },
+
     async history(userId, entryId) {
       await findOwned(userId, entryId);
       const rows = await StatusHistory.find({ entryId }).sort({ at: -1 }).limit(100).lean();

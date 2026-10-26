@@ -5,6 +5,10 @@ export function createLibraryController({ libraryService }) {
       res.json(await libraryService.list(req.auth.userId, req.query));
     },
 
+    async getEntry(req, res) {
+      res.json({ entry: await libraryService.getEntry(req.auth.userId, req.params.id) });
+    },
+
     async add(req, res) {
       res.status(201).json({ entry: await libraryService.add(req.auth.userId, req.body) });
     },

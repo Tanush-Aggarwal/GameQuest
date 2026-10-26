@@ -16,6 +16,21 @@ export async function changeStatus(entryId, status) {
   return data.entry;
 }
 
+export async function setVisibility(entryId, hiddenFromFriends) {
+  const { data } = await api.patch(`/library/${entryId}/visibility`, { hiddenFromFriends });
+  return data.entry;
+}
+
 export async function removeFromLibrary(entryId) {
   await api.delete(`/library/${entryId}`);
+}
+
+export async function getLibraryEntry(entryId, { signal } = {}) {
+  const { data } = await api.get(`/library/${entryId}`, { signal });
+  return data.entry;
+}
+
+export async function getStatusHistory(entryId, { signal } = {}) {
+  const { data } = await api.get(`/library/${entryId}/history`, { signal });
+  return data.history;
 }

@@ -20,6 +20,15 @@ const libraryEntrySchema = new mongoose.Schema(
     manualProgress: { type: Number, default: 0, min: 0, max: 100 },
     // One entry per user per game; owning it on several platforms adds rows here, not entries.
     ownerships: { type: [ownershipSchema], default: [] },
+    // Sum of hand-logged play sessions; synced playtime lives on ownerships[].playtimeMin.
+    loggedMinutes: { type: Number, default: 0, min: 0 },
+    lastPlayedAt: { type: Date, default: null },
+    // Latest achievement snapshot from a platform sync (null until a sync supplies one).
+    achievements: {
+      unlocked: { type: Number, default: null },
+      total: { type: Number, default: null },
+      fetchedAt: { type: Date, default: null },
+    },
     completedAt: { type: Date, default: null },
     hiddenFromFriends: { type: Boolean, default: false },
   },

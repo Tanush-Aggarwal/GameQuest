@@ -5,6 +5,10 @@ export const gameSearchQuerySchema = z.object({
   genre: z.string().trim().min(1).max(50).optional(),
   platform: z.string().trim().min(1).max(50).optional(),
   maxHours: z.coerce.number().positive().max(1000).optional(),
+  // At least this many hours to beat (main story); with maxHours it makes a range.
+  minHours: z.coerce.number().positive().max(1000).optional(),
+  // IGDB total rating, 0-100.
+  minRating: z.coerce.number().min(0).max(100).optional(),
   cursor: z.string().min(1).max(200).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

@@ -115,13 +115,16 @@ export function createGameService({
     return { failed: null };
   }
 
-  function buildFilter({ q, genre, platform, maxHours, cursor }) {
+  function buildFilter({ q, genre, platform, maxHours, minHours, minRating, cursor }) {
     // DLC, bundles and editions are hidden from every catalog read.
     const filter = { hidden: { $ne: true } };
     if (q) filter.$text = { $search: q };
     if (genre) filter.genres = genre;
     if (platform) filter.platforms = platform;
-    if (maxHours) filter['timeToBeat.main'] = { $lte: maxHours };
+    if (maxHours || minHours) {
+      filter['timeToBeat.main'] = { ...(minHours && { $gte: minHours }), ...(maxHours && { $lte: maxHours }) };
+    }
+    if (minRating) filter.totalRating = { $gte: minRating };
     const after = cursor ? decodeCursor(cursor) : null;
     if (after) {
       filter.$or = [{ popularity: { $lt: after.popularity } }, { popularity: after.popularity, slug: { $gt: after.slug } }];

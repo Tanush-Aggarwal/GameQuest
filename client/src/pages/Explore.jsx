@@ -1,21 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Clock,
-  Compass,
-  Flame,
-  Gamepad2,
-  Search,
-  Sparkles,
-  Star,
-  Swords,
-  Trophy,
-} from 'lucide-react';
+import { Clock, Compass, Gamepad2, Search, Star, Swords } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCard, GameCardSkeleton } from '@/components/games/GameCard.jsx';
+import { DiscoveryShelf } from '@/components/games/DiscoveryShelf.jsx';
 import { getErrorInfo } from '@/services/api.js';
 import { searchGames } from '@/services/gamesApi.js';
 
@@ -33,27 +24,32 @@ const GENRES = [
   { id: 'Strategy', label: 'Strategy' },
 ];
 
-function CuratedShelf({ title, subtitle, icon: Icon, games }) {
-  if (!games || !games.length) return null;
-  return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-4 w-4 text-accent" aria-hidden="true" />}
-          <h2 className="font-heading text-base font-bold text-text">{title}</h2>
-        </div>
-        {subtitle && <span className="text-xs text-text-muted">{subtitle}</span>}
-      </div>
-      <div className="flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x">
-        {games.map((game) => (
-          <div key={game.id} className="w-36 sm:w-44 shrink-0 snap-start">
-            <GameCard game={game} />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+// Curated shelves. Each is its own catalog query, so it is filled from the whole catalog and ordered by
+// popularity (the API's default order), not picked from whatever the main list happened to load.
+// The `params` objects are module constants so a shelf only reloads when it is retried.
+const SHELVES = [
+  {
+    id: 'acclaimed',
+    title: 'Critically Acclaimed Masterpieces',
+    subtitle: 'Rated 80+ by critics and players',
+    icon: Star,
+    params: { minRating: 80 },
+  },
+  {
+    id: 'quick-wins',
+    title: 'Quick Weekend Wins',
+    subtitle: 'Under 10 hours to beat',
+    icon: Clock,
+    params: { maxHours: 10 },
+  },
+  {
+    id: 'epic-rpgs',
+    title: 'Massive 40h+ Epic RPGs',
+    subtitle: 'Vast worlds to get lost in',
+    icon: Swords,
+    params: { genre: 'Role-playing (RPG)', minHours: 40 },
+  },
+];
 
 export default function Explore() {
   const [params, setParams] = useSearchParams();
@@ -134,32 +130,6 @@ export default function Explore() {
     setParams(next);
   }
 
-  // Curated shelf calculations from current catalog
-  const topRated = useMemo(
-    () =>
-      state.items
-        .filter((g) => g.ratingAvg >= 4.0)
-        .sort((a, b) => b.ratingAvg - a.ratingAvg)
-        .slice(0, 6),
-    [state.items],
-  );
-
-  const quickWins = useMemo(
-    () =>
-      state.items
-        .filter((g) => g.timeToBeat?.main != null && g.timeToBeat.main <= 10)
-        .slice(0, 6),
-    [state.items],
-  );
-
-  const epicRPGs = useMemo(
-    () =>
-      state.items
-        .filter((g) => (g.genres ?? []).includes('Role-playing (RPG)') && (g.timeToBeat?.main ?? 0) >= 40)
-        .slice(0, 6),
-    [state.items],
-  );
-
   const isDefaultBrowse = !q && selectedGenre === 'all';
 
   return (
@@ -210,6 +180,16 @@ export default function Explore() {
         })}
       </div>
 
+      {/* Curated shelves (default browse only). They load in parallel with the main list and
+          independently of it, so neither one waits for, or is hidden by, the other. */}
+      {isDefaultBrowse && (
+        <div className="flex flex-col gap-6">
+          {SHELVES.map(({ id, ...shelf }) => (
+            <DiscoveryShelf key={id} {...shelf} />
+          ))}
+        </div>
+      )}
+
       {/* Loading Skeleton */}
       {state.status === 'loading' && (
         <div
@@ -251,36 +231,6 @@ export default function Explore() {
             />
           ) : (
             <div className="flex flex-col gap-8">
-              {/* Curated Shelves (shown on default browse) */}
-              {isDefaultBrowse && (
-                <div className="flex flex-col gap-6">
-                  {topRated.length > 0 && (
-                    <CuratedShelf
-                      title="Critically Acclaimed Masterpieces"
-                      subtitle="Community highest rated"
-                      icon={Star}
-                      games={topRated}
-                    />
-                  )}
-                  {quickWins.length > 0 && (
-                    <CuratedShelf
-                      title="Quick Weekend Wins"
-                      subtitle="Under 10 hours to beat"
-                      icon={Clock}
-                      games={quickWins}
-                    />
-                  )}
-                  {epicRPGs.length > 0 && (
-                    <CuratedShelf
-                      title="Massive 50h+ Epic RPGs"
-                      subtitle="Vast worlds to get lost in"
-                      icon={Swords}
-                      games={epicRPGs}
-                    />
-                  )}
-                </div>
-              )}
-
               {/* Main Games Grid */}
               <div className="flex flex-col gap-4">
                 {isDefaultBrowse && (

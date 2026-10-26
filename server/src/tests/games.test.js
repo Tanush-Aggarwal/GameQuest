@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { jest } from '@jest/globals';
+import { gameSearchQuerySchema } from '@gamequest/shared';
 import { createApp } from '../app.js';
 import { createAuthService } from '../services/authService.js';
 import { createGameService } from '../services/gameService.js';
@@ -197,6 +198,43 @@ describe('gameService.search (cache-first)', () => {
     const p2 = await s.search({ limit: 2, cursor: p1.nextCursor });
     expect(p2.items.map((g) => g.slug)).toEqual(['delta', 'gamma']);
     expect(p2.nextCursor).toBeNull();
+  });
+
+  it('minRating and minHours filter, and every filtered list stays in popularity order', async () => {
+    const ctx = setupCatalog({
+      seed: [
+        stored('Cult Classic', { popularity: 10, totalRating: 92, genres: ['RPG'], timeToBeat: { main: 60 } }),
+        stored('Mega Hit', { popularity: 95, totalRating: 88, genres: ['RPG'], timeToBeat: { main: 45 } }),
+        stored('Solid', { popularity: 50, totalRating: 81, genres: ['RPG'], timeToBeat: { main: 12 } }),
+        stored('Mediocre', { popularity: 99, totalRating: 60, genres: ['RPG'], timeToBeat: { main: 50 } }),
+        stored('Unrated', { popularity: 70, genres: ['RPG'], timeToBeat: { main: 5 } }),
+        stored('Hidden Gem', { popularity: 80, totalRating: 95, hidden: true, timeToBeat: { main: 50 } }),
+      ],
+    });
+    await ctx.seed;
+    const slugs = async (params) => (await ctx.gameService.search({ limit: 20, ...params })).items.map((g) => g.slug);
+
+    // most popular first, not highest rated first (Cult Classic has the best rating but low popularity)
+    expect(await slugs({ minRating: 80 })).toEqual(['mega-hit', 'solid', 'cult-classic']);
+    expect(await slugs({ minRating: 90 })).toEqual(['cult-classic']);
+    expect(await slugs({ minHours: 40 })).toEqual(['mediocre', 'mega-hit', 'cult-classic']); // hidden games never appear
+    expect(await slugs({ genre: 'RPG', minHours: 40, minRating: 85 })).toEqual(['mega-hit', 'cult-classic']);
+    expect(await slugs({ minHours: 10, maxHours: 20 })).toEqual(['solid']); // a range
+    expect(await slugs({ maxHours: 10 })).toEqual(['unrated']);
+
+    const p1 = await ctx.gameService.search({ limit: 2, minRating: 80 });
+    expect(p1.items.map((g) => g.slug)).toEqual(['mega-hit', 'solid']);
+    const p2 = await ctx.gameService.search({ limit: 2, minRating: 80, cursor: p1.nextCursor });
+    expect(p2.items.map((g) => g.slug)).toEqual(['cult-classic']);
+  });
+});
+
+describe('game search query schema', () => {
+  it('accepts minHours / minRating as numbers and rejects out-of-range values', () => {
+    expect(gameSearchQuerySchema.parse({ minHours: '40', minRating: '85' })).toMatchObject({ minHours: 40, minRating: 85, limit: 20 });
+    expect(gameSearchQuerySchema.safeParse({ minRating: '101' }).success).toBe(false);
+    expect(gameSearchQuerySchema.safeParse({ minHours: '-1' }).success).toBe(false);
+    expect(gameSearchQuerySchema.safeParse({ minRating: 'abc' }).success).toBe(false);
   });
 });
 

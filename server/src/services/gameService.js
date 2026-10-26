@@ -1,4 +1,4 @@
-﻿import { NotFoundError } from '../utils/errors.js';
+import { NotFoundError } from '../utils/errors.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

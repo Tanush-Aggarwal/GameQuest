@@ -1,4 +1,4 @@
-﻿import { lazy } from 'react';
+import { lazy } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
 import { ProtectedRoute, PublicOnlyRoute } from './routeGuards.jsx';
 

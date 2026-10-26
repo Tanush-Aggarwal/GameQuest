@@ -1,4 +1,4 @@
-﻿const SCAN_BATCHES = 5; // pages scanned per request while filtering out hidden items
+const SCAN_BATCHES = 5; // pages scanned per request while filtering out hidden items
 const LIBRARY_TYPES = new Set(['library.statusChanged', 'library.sessionLogged']);
 
 // Activity is only ever written by event-bus subscribers (events/subscribers.js call `record`).

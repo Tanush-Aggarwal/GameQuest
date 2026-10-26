@@ -1,4 +1,4 @@
-﻿import request from 'supertest';
+import request from 'supertest';
 import { jest } from '@jest/globals';
 import { updateProfileSchema } from '@gamequest/shared';
 import { createApp } from '../app.js';

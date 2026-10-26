@@ -1,4 +1,4 @@
-﻿import { jest } from '@jest/globals';
+import { jest } from '@jest/globals';
 import { createProgressService } from '../services/progressService.js';
 import { createLibraryService } from '../services/libraryService.js';
 import { scorePlayNext } from '../services/insightsService.js';

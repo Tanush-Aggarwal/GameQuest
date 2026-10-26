@@ -1,4 +1,4 @@
-﻿import request from 'supertest';
+import request from 'supertest';
 import express from 'express';
 import { z } from 'zod';
 import { createApp } from '../app.js';

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Insights service — dashboard stats, play-next recommendations.
  *
  * Uses plain aggregation helpers injected for testability; no direct Mongoose imports.

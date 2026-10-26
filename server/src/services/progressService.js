@@ -1,4 +1,4 @@
-﻿import { ValidationError, NotFoundError, ConflictError } from '../utils/errors.js';
+import { ValidationError, NotFoundError, ConflictError } from '../utils/errors.js';
 
 /**
  * Progress service — manual 0–100 progress, play-log sessions, journal entries.

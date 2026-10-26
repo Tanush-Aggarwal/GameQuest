@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 import { timeRange } from '@/lib/sessionTime.js';
 import { ResponseBadge } from './responses.jsx';

@@ -1,4 +1,4 @@
-﻿import { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SESSION_DURATIONS, createSessionSchema, updateSessionSchema } from '@gamequest/shared';
 import { Button } from '@/components/ui/button.jsx';

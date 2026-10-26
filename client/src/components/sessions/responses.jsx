@@ -1,4 +1,4 @@
-﻿import { Check, CircleHelp, Crown, Mail, X } from 'lucide-react';
+import { Check, CircleHelp, Crown, Mail, X } from 'lucide-react';
 
 // Every RSVP state has an icon and a label; colour never carries the meaning alone.
 export const RESPONSE_META = {

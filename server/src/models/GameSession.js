@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { SESSION_VISIBILITIES } from '@gamequest/shared';
 
 // A planned play session. All times are UTC; the client formats them in the viewer's timezone.

@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Plus, Trash2, BookOpen, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';

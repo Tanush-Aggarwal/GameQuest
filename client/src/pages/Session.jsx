@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, CalendarDays, CalendarPlus, Check, CircleHelp, Gamepad2, Globe, Lock, Pencil, Users, X } from 'lucide-react';
 import { toast } from 'sonner';

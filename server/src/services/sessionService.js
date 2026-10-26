@@ -1,4 +1,4 @@
-﻿import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
 import { buildIcs } from '../utils/ics.js';
 
 const MIN_MS = 60_000;

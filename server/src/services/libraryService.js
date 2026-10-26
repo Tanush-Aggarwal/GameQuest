@@ -1,4 +1,4 @@
-﻿import { LIBRARY_STATUSES, LIBRARY_TRANSITIONS } from '@gamequest/shared';
+import { LIBRARY_STATUSES, LIBRARY_TRANSITIONS } from '@gamequest/shared';
 import { ConflictError, NotFoundError, ValidationError } from '../utils/errors.js';
 import { toGameDto } from './gameService.js';
 

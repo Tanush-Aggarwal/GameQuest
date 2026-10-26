@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button.jsx';
+import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
@@ -65,6 +66,12 @@ export function GameLibraryPanel({ game }) {
         <>
           <StatusBadge status={entry.status} />
           <MoveStatusSelect entry={{ ...entry, game }} onMove={move} disabled={busy} />
+          <Link
+            to={`/library/${entry.id}`}
+            className={buttonVariants({ variant: 'secondary' }) + ' mt-1 w-full justify-center text-xs'}
+          >
+            Track Progress & Play Logs
+          </Link>
         </>
       ) : (
         <div className="flex flex-col gap-2">

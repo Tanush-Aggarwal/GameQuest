@@ -19,6 +19,12 @@ export const friendRequestSchema = z.object({ username: usernameSchema });
 
 export const privacySchema = z.object({ privacy: z.enum(PROFILE_PRIVACY) });
 
+export const updateProfileSchema = z.object({
+  bio: z.string().trim().max(300, 'Bio must be 300 characters or less').optional(),
+  avatar: z.string().trim().url('Must be a valid URL').max(500).or(z.literal('')).nullable().optional(),
+  favouriteGames: z.array(objectId).max(4, 'You can pick up to 4 favourite games').optional(),
+});
+
 export const pageQuerySchema = z.object({
   cursor: objectId.optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),

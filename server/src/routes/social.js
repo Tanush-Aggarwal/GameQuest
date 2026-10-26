@@ -4,6 +4,7 @@ import {
   friendshipIdParamsSchema,
   pageQuerySchema,
   privacySchema,
+  updateProfileSchema,
   userIdParamsSchema,
   userSearchQuerySchema,
   usernameParamsSchema,
@@ -43,6 +44,7 @@ export function createSocialRouters({ authService, friendService, profileService
   const users = Router();
   users.use(requireAuth);
   users.get('/search', searchLimiter, validate(userSearchQuerySchema, 'query'), controller.searchUsers);
+  users.patch('/me', validate(updateProfileSchema), controller.updateProfile);
   users.patch('/me/privacy', validate(privacySchema), controller.setPrivacy);
   const username = validate(usernameParamsSchema, 'params');
   users.get('/:username', username, controller.getProfile);

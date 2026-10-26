@@ -63,6 +63,11 @@ export async function setPrivacy(privacy) {
   return data.privacy;
 }
 
+export async function updateProfile(payload) {
+  const { data } = await api.patch('/users/me', payload);
+  return data.user;
+}
+
 // ── feed ─────────────────────────────────────────────────────────────────────
 
 // Resolves to { items, nextCursor, friendCount }.

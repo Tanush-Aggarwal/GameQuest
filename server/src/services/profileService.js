@@ -2,7 +2,7 @@ import { ForbiddenError, NotFoundError } from '../utils/errors.js';
 
 // Public profile pages (/u/:username). Every read of another person's data goes through the
 // privacy check here: blocks hide the profile entirely, the owner's privacy setting decides the rest.
-export function createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService }) {
+export function createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService, Game }) {
   async function loadVisibleUser(viewerId, username) {
     const user = await User.findOne({ usernameLower: username.toLowerCase() }).lean();
     if (!user) throw new NotFoundError('No player with that username');
@@ -17,6 +17,24 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
     const loaded = await loadVisibleUser(viewerId, username);
     if (!loaded.allowed) throw new ForbiddenError('This profile is private');
     return loaded;
+  }
+
+  async function populateFavourites(gameIds) {
+    if (!gameIds?.length || !Game) return [];
+    const found = await Game.find({ _id: { $in: gameIds } }).select('title slug cover ratingAvg releaseDate genres').lean();
+    const byId = new Map(found.map((g) => [String(g._id), g]));
+    return gameIds
+      .map((id) => byId.get(String(id)))
+      .filter(Boolean)
+      .map((g) => ({
+        id: String(g._id),
+        title: g.title,
+        slug: g.slug,
+        cover: g.cover,
+        ratingAvg: g.ratingAvg,
+        releaseDate: g.releaseDate,
+        genres: g.genres ?? [],
+      }));
   }
 
   async function statsFor(user, self) {
@@ -41,13 +59,14 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
   return {
     async getProfile(viewerId, username) {
       const { user, self, relation, allowed } = await loadVisibleUser(viewerId, username);
+      const favouriteGames = allowed ? await populateFavourites(user.favouriteGames ?? []) : [];
       return {
         user: {
           id: String(user._id),
           username: user.username,
           avatar: user.avatar ?? null,
           bio: user.bio ?? '',
-          favouriteGames: user.favouriteGames ?? [],
+          favouriteGames,
           memberSince: user.createdAt,
           ...(self && {
             privacy: user.privacy ?? 'public',
@@ -58,6 +77,30 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
         relation,
         restricted: !allowed,
         stats: allowed ? await statsFor(user, self) : null,
+      };
+    },
+
+    async updateProfile(userId, { bio, avatar, favouriteGames }) {
+      const setFields = {};
+      if (bio !== undefined) setFields.bio = bio;
+      if (avatar !== undefined) setFields.avatar = avatar ? avatar.trim() : null;
+      if (favouriteGames !== undefined) {
+        const unique = [...new Set(favouriteGames.map(String))].slice(0, 4);
+        setFields.favouriteGames = unique;
+      }
+      const updated = await User.findOneAndUpdate({ _id: userId }, { $set: setFields }, { returnDocument: 'after' });
+      if (!updated) throw new NotFoundError('User not found');
+
+      const populated = await populateFavourites(updated.favouriteGames ?? []);
+      return {
+        user: {
+          id: String(updated._id),
+          username: updated.username,
+          avatar: updated.avatar ?? null,
+          bio: updated.bio ?? '',
+          favouriteGames: populated,
+          privacy: updated.privacy ?? 'public',
+        },
       };
     },
 

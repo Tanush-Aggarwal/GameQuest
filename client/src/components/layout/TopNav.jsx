@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth.js';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
-import { NAV_ITEMS } from './navItems.js';
+import { DESKTOP_NAV_ITEMS } from './navItems.js';
 
 export function TopNav() {
   const { user, logout } = useAuth();
@@ -26,7 +26,7 @@ export function TopNav() {
         </Link>
 
         <nav aria-label="Main" className="hidden flex-1 items-center gap-1 md:flex">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {DESKTOP_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

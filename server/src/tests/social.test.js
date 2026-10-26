@@ -31,7 +31,7 @@ function setup({ subscribe = true } = {}) {
   const friendService = createFriendService({ Friendship, Block, User, eventBus });
   const collectionService = createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });
   const activityService = createActivityService({ Activity, LibraryEntry, Game, User, Collection, social: friendService, logger });
-  const profileService = createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService });
+  const profileService = createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService, Game });
   const libraryService = createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
   const reviewService = createReviewService({ Review, Game, User, eventBus });
   if (subscribe) registerSubscribers({ eventBus, collectionService, activityService }); // createApp registers its own
@@ -386,6 +386,28 @@ describe('profileService', () => {
     expect(await names(ctx.alex.id)).toEqual(['friends', 'private', 'public']);
     expect(await ctx.profileService.setPrivacy(ctx.alex.id, 'friends')).toEqual({ privacy: 'friends' });
   });
+
+  it('updates profile bio, avatar, and favourite games with populated details', async () => {
+    const ctx = await world();
+    const [g1, g2] = [await ctx.mkGame('Hades'), await ctx.mkGame('Celeste')];
+    const updated = await ctx.profileService.updateProfile(ctx.demo.id, {
+      bio: 'Lifelong gamer & indie enthusiast',
+      avatar: 'https://images.igdb.com/avatar.jpg',
+      favouriteGames: [g1._id, g2._id],
+    });
+    expect(updated.user).toMatchObject({
+      bio: 'Lifelong gamer & indie enthusiast',
+      avatar: 'https://images.igdb.com/avatar.jpg',
+      favouriteGames: expect.arrayContaining([
+        expect.objectContaining({ title: 'Hades', slug: 'hades' }),
+        expect.objectContaining({ title: 'Celeste', slug: 'celeste' }),
+      ]),
+    });
+
+    const viewed = await ctx.profileService.getProfile(ctx.alex.id, 'demo');
+    expect(viewed.user.bio).toBe('Lifelong gamer & indie enthusiast');
+    expect(viewed.user.favouriteGames).toHaveLength(2);
+  });
 });
 
 describe('social routes', () => {
@@ -504,5 +526,23 @@ describe('social routes', () => {
     expect((await demo.agent.get('/api/v1/users/alex/activity')).status).toBe(403);
     expect((await demo.agent.get('/api/v1/users/alex/collections')).status).toBe(403);
     expect((await alex.agent.get('/api/v1/users/alex')).body.user.privacy).toBe('private');
+  });
+  it('PATCH /api/v1/users/me updates profile and rejects >4 favourite games', async () => {
+    const ctx = setupApp();
+    const demo = await login(ctx.app, 'demo');
+    const [g1, g2] = [await ctx.mkGame('Hades'), await ctx.mkGame('Celeste')];
+
+    const patchRes = await demo.agent.patch('/api/v1/users/me').send({
+      bio: 'Exploring vast worlds',
+      favouriteGames: [g1._id, g2._id],
+    });
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.user.bio).toBe('Exploring vast worlds');
+    expect(patchRes.body.user.favouriteGames).toHaveLength(2);
+
+    // Rejects more than 4 games
+    const tooMany = [g1._id, g2._id, '000000000000000000000003', '000000000000000000000004', '000000000000000000000005'];
+    const badRes = await demo.agent.patch('/api/v1/users/me').send({ favouriteGames: tooMany });
+    expect(badRes.status).toBe(400);
   });
 });

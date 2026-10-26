@@ -1,4 +1,4 @@
-﻿import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
@@ -22,6 +22,7 @@ vi.mock('@/services/socialApi.js', () => ({
   getProfileActivity: vi.fn(),
   getProfileCollections: vi.fn(),
   setPrivacy: vi.fn(),
+  updateProfile: vi.fn(),
   getFeed: vi.fn(),
 }));
 
@@ -281,6 +282,30 @@ describe('UserProfile', () => {
     renderAt('/u/demo');
     expect(await screen.findByRole('link', { name: 'Edit my profile' })).toHaveAttribute('href', '/profile');
   });
+
+  it('renders favourite games showcase and trophy milestones for a user', async () => {
+    api.getProfile.mockResolvedValue(
+      profile({
+        user: {
+          id: 'a1',
+          username: 'alex',
+          memberSince: '2026-01-01T00:00:00Z',
+          bio: 'Indie & deckbuilder enthusiast',
+          favouriteGames: [
+            { id: 'g1', title: 'Celeste', slug: 'celeste', cover: 'celeste.jpg', ratingAvg: 4.8 },
+          ],
+        },
+        stats: { games: 12, playing: 2, completed: 6, hours: 60, reviews: 3 },
+      }),
+    );
+    renderAt('/u/alex');
+    expect(await screen.findByText('Favourite 4 Showcase')).toBeInTheDocument();
+    expect(screen.getByText('Celeste')).toBeInTheDocument();
+    expect(screen.getByText('★ 4.8')).toBeInTheDocument();
+    expect(screen.getByText(/Indie & deckbuilder enthusiast/)).toBeInTheDocument();
+    expect(screen.getByText('Trophies & Milestones')).toBeInTheDocument();
+    expect(screen.getByText('Veteran Collector')).toBeInTheDocument();
+  });
 });
 
 describe('FriendFeed', () => {
@@ -367,5 +392,19 @@ describe('Profile page — privacy and blocked players', () => {
   it('links to the public profile', async () => {
     renderAt('/profile');
     expect(await screen.findByRole('link', { name: 'View my public profile' })).toHaveAttribute('href', '/u/demo');
+  });
+
+  it('edits and saves bio via profile editor', async () => {
+    api.getProfile.mockResolvedValue(profile({ relation: 'self' }));
+    api.updateProfile.mockResolvedValue({ user: { id: 'me1', username: 'demo', bio: 'New bio' } });
+    renderAt('/profile');
+    const bioInput = await screen.findByPlaceholderText(/Tell your friends about your gaming tastes/);
+    await userEvent.clear(bioInput);
+    await userEvent.type(bioInput, 'Speedrunner at heart');
+    await userEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+    expect(api.updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ bio: 'Speedrunner at heart' }),
+    );
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Profile updated successfully'));
   });
 });

@@ -55,6 +55,9 @@ export function createSocialController({ friendService, profileService, activity
     async getProfileCollections(req, res) {
       res.json(await profileService.getCollections(req.auth.userId, req.params.username));
     },
+    async updateProfile(req, res) {
+      res.json(await profileService.updateProfile(req.auth.userId, req.body));
+    },
     async setPrivacy(req, res) {
       res.json(await profileService.setPrivacy(req.auth.userId, req.body.privacy));
     },

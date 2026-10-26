@@ -1,28 +1,54 @@
-import { getHighResCover } from '@/components/games/GameCard.jsx';
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Gamepad2, Clock, Trophy, Layers, ChevronRight, TrendingUp } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import {
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
+  ChevronRight,
+  Clock,
+  Compass,
+  Gamepad2,
+  Hourglass,
+  Layers,
+  TrendingUp,
+  Trophy,
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
-import { getDashboard, getPlayNext } from '@/services/progressApi.js';
+import { getBacklogHealth, getDashboard, getPlayNext } from '@/services/progressApi.js';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
+import { getHighResCover } from '@/components/games/GameCard.jsx';
 
 export default function Home() {
   const { user } = useAuth();
 
   const loadDashboard = useCallback((signal) => getDashboard({ signal }), []);
   const loadPlayNext = useCallback((signal) => getPlayNext({}, { signal }), []);
+  const loadBacklogHealth = useCallback((signal) => getBacklogHealth({ signal }), []);
 
   const dashboard = useAsync(loadDashboard);
   const playNext = useAsync(loadPlayNext);
+  const backlogHealth = useAsync(loadBacklogHealth);
 
   return (
     <section className="flex flex-col gap-6 pb-12">
-      <h1 className="text-2xl font-bold font-heading">Welcome back, {user?.username}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold font-heading">Welcome back, {user?.username}</h1>
+        <Link
+          to="/explore"
+          className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
+        >
+          <Compass className="h-3.5 w-3.5" /> Discover new games
+        </Link>
+      </div>
 
       {/* Resume card */}
       <ResumeCard dashboard={dashboard} />
@@ -42,8 +68,8 @@ export default function Home() {
       {/* What friends are up to */}
       <FriendFeed />
 
-      {/* Backlog health */}
-      <BacklogHealth dashboard={dashboard} />
+      {/* Backlog health with Recharts */}
+      <BacklogHealth dashboard={dashboard} backlogHealth={backlogHealth} />
     </section>
   );
 }
@@ -185,35 +211,75 @@ function PlayNextCard({ item }) {
 
 // ── Backlog health ──────────────────────────────────────────────────────────
 
-function BacklogHealth({ dashboard }) {
+function CustomTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    const formattedMonth = label ? new Date(`${label}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : label;
+    return (
+      <div className="rounded-card border border-border bg-surface p-2.5 shadow-xl text-xs space-y-1">
+        <p className="font-semibold text-text mb-1">{formattedMonth}</p>
+        {payload.map((entry) => (
+          <p key={entry.name} className="flex items-center gap-2 font-medium" style={{ color: entry.color }}>
+            <span className="capitalize">{entry.name}:</span>
+            <span className="tabular-nums font-bold">{entry.value}</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
+function BacklogHealth({ dashboard, backlogHealth }) {
   const d = dashboard.data;
-  if (!d?.backlogHours && !d?.completedThisYear) return null;
+  const h = backlogHealth.data;
+
+  if (!d?.backlogHours && !d?.completedThisYear && !h?.data?.length) return null;
+
+  const chartData = (h?.data ?? []).map((item) => ({
+    ...item,
+    formattedMonth: new Date(`${item.month}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short' }),
+  }));
 
   return (
-    <div className="p-4 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)]">
-      <h3 className="font-semibold mb-3 flex items-center gap-2">
-        <Layers size={16} className="text-[var(--text-muted)]" />
-        Backlog snapshot
-      </h3>
-      <div className="flex gap-6 flex-wrap text-sm">
-        {d.completedThisYear > 0 && (
+    <div className="p-5 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-semibold flex items-center gap-2 font-heading">
+          <Layers size={18} className="text-[var(--accent)]" />
+          Backlog Health & Velocity
+        </h3>
+        {h?.projectedClearMonths != null && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
+            <Hourglass className="h-3.5 w-3.5" />
+            Clear backlog in ~{h.projectedClearMonths} months
+          </span>
+        )}
+      </div>
+
+      <div className="flex gap-6 flex-wrap text-sm border-b border-border/50 pb-4">
+        {d?.completedThisYear > 0 && (
           <div>
             <p className="text-2xl font-bold tabular-nums font-heading text-[var(--status-completed)]">{d.completedThisYear}</p>
             <p className="text-[var(--text-muted)] text-xs">completed this year</p>
           </div>
         )}
-        {d.backlogHours > 0 && (
+        {d?.backlogHours > 0 && (
           <div>
             <p className="text-2xl font-bold tabular-nums font-heading text-[var(--warning)]">{Math.round(d.backlogHours)}h</p>
             <p className="text-[var(--text-muted)] text-xs">in backlog</p>
           </div>
         )}
-        {d.topGenres?.length > 0 && (
+        {h?.backlogCount > 0 && (
+          <div>
+            <p className="text-2xl font-bold tabular-nums font-heading text-text">{h.backlogCount}</p>
+            <p className="text-[var(--text-muted)] text-xs">backlog titles</p>
+          </div>
+        )}
+        {d?.topGenres?.length > 0 && (
           <div className="flex-1 min-w-[140px]">
-            <p className="text-xs text-[var(--text-muted)] mb-1">Top genres</p>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Top genres played</p>
             <div className="flex flex-wrap gap-1">
               {d.topGenres.slice(0, 4).map((g) => (
-                <span key={g.name} className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-raised)] text-[var(--text-muted)]">
+                <span key={g.name} className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-raised)] text-[var(--text-muted)] font-medium">
                   {g.name}
                 </span>
               ))}
@@ -221,6 +287,59 @@ function BacklogHealth({ dashboard }) {
           </div>
         )}
       </div>
+
+      {/* Velocity Trend Chart */}
+      {chartData.length >= 2 && (
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex items-center justify-between text-xs text-text-muted">
+            <span>6-Month Trajectory: Added vs Completed</span>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-accent" /> Added
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--status-completed)]" /> Completed
+              </span>
+            </div>
+          </div>
+
+          <div className="h-44 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--status-completed)" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="var(--status-completed)" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="formattedMonth" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="added"
+                  stroke="var(--accent)"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorAdded)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="completed"
+                  stroke="var(--status-completed)"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorCompleted)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

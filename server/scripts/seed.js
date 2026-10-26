@@ -318,6 +318,18 @@ async function seed() {
   for (const g of GAMES) games[g.slug] = await ensureGame(g);
   console.log(`${GAMES.length} games ready (all in 1080p high quality)`);
 
+  // Enrich demo user with avatar and favourite games
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        bio: 'Lifelong gamer, completionist, and indie game enthusiast.',
+        avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=256&h=256&q=80',
+        favouriteGames: [games['elden-ring']?._id, games['hades--1']?._id, games['hollow-knight']?._id, games['baldurs-gate-3']?._id].filter(Boolean),
+      },
+    }
+  );
+
   async function ensureEntry(slug, status, extra = {}) {
     const game = games[slug];
     if (!game) return null;
@@ -523,6 +535,17 @@ async function seed() {
     }
     await new Promise((resolve) => setTimeout(resolve, 800));
   }
+  // Enrich alex with avatar and favourite games
+  await User.updateOne(
+    { _id: alex._id },
+    {
+      $set: {
+        bio: 'Cozy game connoisseur, roguelike fanatic, and deckbuilding addict.',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80',
+        favouriteGames: [games['celeste']?._id, games['balatro']?._id, games['outer-wilds']?._id, games['sea-of-stars']?._id].filter(Boolean),
+      },
+    }
+  );
   console.log('Alex activity ready');
 
   // ── an upcoming session hosted by alex with demo invited ──

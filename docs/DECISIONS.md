@@ -136,3 +136,13 @@ Format: date — decision — why.
 - Friends playing endpoint: Added `GET /api/v1/games/:slug/friends` to `gameService` and `routes/games.js`, returning friends from `friendService` who own the game in their library (ignoring hidden entries).
 - Library view & filter rail (`/library`): Added search filter by game title, dynamic platform filter (Steam, PlayStation, Switch, Xbox, PC, etc.), sort dropdown (Title, Playtime, Progress %, Shortest TTB), and view mode toggle between Grid Cards and Shelf/List View with progress bars and hours played.
 - Explore discovery shelves (`/explore`): Added quick genre filter pills and curated horizontal scrolling discovery shelves (Critically Acclaimed Masterpieces, Quick Weekend Wins < 10h, Massive 50h+ Epic RPGs) on default browse, switching cleanly to the search results grid when queries or genres are active.
+
+
+## 2026-10-27 — Antigravity — Gamer identity, favourite 4 showcase, trophy shelf & backlog velocity
+- `PATCH /api/v1/users/me` endpoint added with `updateProfileSchema` validating `bio` (<= 300 chars), `avatar` (valid URL or null), and `favouriteGames` (<= 4 ObjectIds).
+- `profileService.updateProfile` and `profileService.getProfile`: Injected `Game` model to populate `favouriteGames` with title, slug, cover, ratingAvg, and genres for public and friend profiles (respecting privacy and block boundaries).
+- User Profile (`/u/:username`): Added ambient gamer header with avatar (image with letter fallback), bio quote block, Letterboxd / Backloggd style "Favourite 4 Showcase" poster grid with ratings and direct links, and "Trophies & Milestones" shelf computed from user stats (Collector, Finisher, Veteran, Reviewer) styled with exact token colors (`#B9F2FF`, `#FFC14D`, `#C0C7D1`, `#CD7F32`).
+- Profile Management (`/profile`): Added interactive Gamer Identity editor allowing avatar URL input with instant gaming presets, bio with live char count, and interactive catalog game search to assign and manage the 4 showcase slots.
+- Backlog Health & Velocity (`Home.jsx`): Wired `getBacklogHealth` and rendered a responsive 6-month trajectory Recharts `AreaChart` with gradient violet (`#7C5CFF`) for added games and emerald green (`#34D399`) for completed games, dark-mode tooltip, and "Clear backlog in ~X months" velocity badge.
+- Desktop Navigation: Added direct top-level links for `Collections` and `Sessions` in `TopNav.jsx` on desktop (`DESKTOP_NAV_ITEMS`), while preserving the 5 core mobile bottom tabs (`MOBILE_NAV_ITEMS`) per AGENTS.md.
+- Demo Account Seeding: Enriched both `demo` and `alex` users in Atlas with avatars, bios, and 4 iconic favourite games each.

@@ -69,7 +69,7 @@ export function createApp({
   const activityService =
     _activitySvc ?? createActivityService({ Activity, LibraryEntry, Game, User, Collection, GameSession, social: friendService, logger });
   const profileService =
-    _profileSvc ?? createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService });
+    _profileSvc ?? createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService, Game });
   const sessionService =
     _sessionSvc ?? createSessionService({ GameSession, Rsvp, Game, User, social: friendService, eventBus });
   const recommendationService =

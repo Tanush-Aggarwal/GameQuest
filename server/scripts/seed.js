@@ -1,5 +1,5 @@
 ﻿/**
- * Demo seed — creates a demo account plus six games with library entries,
+ * Demo seed — creates a demo account plus eight games with library entries,
  * status history, play logs and reviews so graders can log in and see the app.
  *
  * Usage (from repo root):  npm run seed
@@ -17,6 +17,8 @@ import { LibraryEntry } from '../src/models/LibraryEntry.js';
 import { StatusHistory } from '../src/models/StatusHistory.js';
 import { PlayLog } from '../src/models/PlayLog.js';
 import { Review } from '../src/models/Review.js';
+import { Collection } from '../src/models/Collection.js';
+import { CollectionItem } from '../src/models/CollectionItem.js';
 
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
@@ -73,6 +75,20 @@ const GAMES = [
     cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg',
     releaseDate: new Date('2015-05-19'), genres: ['Role-playing (RPG)', 'Adventure'],
     platforms: ['PC (Microsoft Windows)', 'PlayStation 4', 'Xbox One'], timeToBeat: { main: 51 },
+  },
+  {
+    title: 'A Short Hike', slug: 'a-short-hike', externalIds: { igdb: 116753 },
+    summary: 'A Short Hike is an exploration adventure game set in Hawk Peak Provincial Park. Climb, glide and fly to the summit.',
+    cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co6e83.jpg',
+    releaseDate: new Date('2019-07-30'), genres: ['Adventure', 'Indie'],
+    platforms: ['PC (Microsoft Windows)', 'Nintendo Switch'], timeToBeat: { main: 2.5 },
+  },
+  {
+    title: 'Undertale', slug: 'undertale', externalIds: { igdb: 12517 },
+    summary: 'A small child falls into the Underground, where monsters have long been banished by humans.',
+    cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/cob1t2.jpg',
+    releaseDate: new Date('2015-09-15'), genres: ['Puzzle', 'Role-playing (RPG)', 'Adventure', 'Indie'],
+    platforms: ['PC (Microsoft Windows)', 'Nintendo Switch'], timeToBeat: { main: 8.3 },
   },
 ];
 
@@ -135,6 +151,8 @@ async function seed() {
   const witcher = await ensureEntry('the-witcher-3-wild-hunt', 'dropped', {
     manualProgress: 20, ownerships: [{ platform: 'GOG', playtimeMin: 720 }],
   });
+  await ensureEntry('a-short-hike', 'backlog', { ownerships: [{ platform: 'PC', playtimeMin: 0 }] });
+  await ensureEntry('undertale', 'backlog', { ownerships: [{ platform: 'PC', playtimeMin: 0 }] });
   console.log('Library entries ready');
 
   const sessions = [
@@ -167,6 +185,26 @@ async function seed() {
     await Game.updateOne({ _id: gameId }, { $set: { ratingAvg: Math.round((agg?.avg ?? 0) * 10) / 10, ratingCount: agg?.count ?? 0 } });
   }
   console.log('Reviews ready');
+
+  async function ensureCollection(data) {
+    return (await Collection.findOne({ ownerId: user._id, name: data.name })) ?? Collection.create({ ownerId: user._id, ...data });
+  }
+  const favourites = await ensureCollection({
+    name: 'All-time favourites', description: 'The games I keep coming back to.', visibility: 'public', type: 'manual',
+  });
+  for (const [i, entry] of [hollow, hades, elden].entries()) {
+    if (!(await CollectionItem.findOne({ collectionId: favourites._id, entryId: entry._id }))) {
+      await CollectionItem.create({ collectionId: favourites._id, entryId: entry._id, position: i + 1 });
+    }
+  }
+  await ensureCollection({
+    name: 'Short backlog', description: 'Backlog games I can finish in a weekend.', visibility: 'public', type: 'smart',
+    rules: [
+      { field: 'status', op: 'eq', value: 'backlog' },
+      { field: 'timeToBeat.main', op: 'lte', value: 15 },
+    ],
+  });
+  console.log('Collections ready');
 
   console.log(`\nSeed complete. Log in with ${DEMO_EMAIL} / ${DEMO_PASSWORD}\n`);
 }

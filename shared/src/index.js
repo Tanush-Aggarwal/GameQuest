@@ -4,3 +4,4 @@ export * from './game.js';
 export * from './library.js';
 export * from './progress.js';
 export * from './review.js';
+export * from './collection.js';

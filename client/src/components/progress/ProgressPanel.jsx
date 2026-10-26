@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Plus, Trash2, BookOpen, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
@@ -90,8 +90,6 @@ function ProgressTab({ entryId, status, initialProgress }) {
 
 function SessionsTab({ entryId, status }) {
   const [showForm, setShowForm] = useState(false);
-  const loadLogs = useCallback((signal) => listLogs(entryId, {}, { signal }), [entryId]);
-  const { status: loadStatus, data, retry } = useAsync(loadLogs);
   const [refreshKey, setRefreshKey] = useState(0);
   const reload = useCallback((signal) => listLogs(entryId, {}, { signal }), [entryId, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const { status: ls, data: logsData, retry: logsRetry } = useAsync(reload);
@@ -132,7 +130,7 @@ function SessionsTab({ entryId, status }) {
           <Clock size={14} className="text-[var(--text-muted)] mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <p className="font-medium tabular-nums">{log.date} · <span className="text-[var(--accent)]">{log.minutes} min</span></p>
-            {log.note && <p className="text-[var(--text-muted)] text-xs mt-0.5 italic">"{log.note}"</p>}
+            {log.note && <p className="text-[var(--text-muted)] text-xs mt-0.5 italic">&ldquo;{log.note}&rdquo;</p>}
           </div>
           <button onClick={() => handleDelete(log.id)} className="text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors p-1" aria-label="Delete session">
             <Trash2 size={14} />

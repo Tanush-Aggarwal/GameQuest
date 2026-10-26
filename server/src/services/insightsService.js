@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Insights service — dashboard stats, play-next recommendations.
  *
  * Uses plain aggregation helpers injected for testability; no direct Mongoose imports.
  * scorePlayNext is a pure function so it's fast to unit-test without any DB.
  */
-export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger }) {
+export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game }) {
   // ── helpers ──────────────────────────────────────────────────────────────
 
   function startOfYear() {
@@ -24,7 +24,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
   // ── dashboard ─────────────────────────────────────────────────────────────
 
   async function getDashboard(userId) {
-    const [entries, lastLog, lastJournal] = await Promise.allSettled([
+    const [entries, lastLog] = await Promise.allSettled([
       LibraryEntry.find({ userId }).lean(),
       PlayLog.find({ userId }).sort({ date: -1 }).limit(1).lean(),
       // JournalEntry is not injected; skip if absent.

@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Library as LibraryIcon } from 'lucide-react';
+import { Layers, Library as LibraryIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { LIBRARY_STATUSES } from '@gamequest/shared';
-import { Button } from '@/components/ui/button.jsx';
+import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCardSkeleton, GameCover } from '@/components/games/GameCard.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
@@ -135,7 +135,12 @@ export default function Library() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Library</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Library</h1>
+        <Link to="/collections" className={buttonVariants({ variant: 'secondary' })}>
+          <Layers className="h-4 w-4" aria-hidden="true" /> Collections
+        </Link>
+      </div>
 
       <nav aria-label="Library status" className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map((t) => {

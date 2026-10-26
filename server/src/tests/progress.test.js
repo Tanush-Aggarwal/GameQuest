@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+﻿import { jest } from '@jest/globals';
 import { createProgressService } from '../services/progressService.js';
 import { createLibraryService } from '../services/libraryService.js';
 import { scorePlayNext } from '../services/insightsService.js';
@@ -103,7 +103,7 @@ describe('progressService.journal', () => {
     const ctx = setup();
     const game = await makeGame(ctx);
     const entry = await ctx.libraryService.add('u1', { gameId: game._id, status: 'playing' });
-    const note = await ctx.progressService.addJournalEntry('u1', entry.id, { body: 'Keep it' });
+    await ctx.progressService.addJournalEntry('u1', entry.id, { body: 'Keep it' });
     const gone = await ctx.progressService.addJournalEntry('u1', entry.id, { body: 'Delete me' });
     await ctx.progressService.deleteJournalEntry('u1', entry.id, gone.id);
     const { items } = await ctx.progressService.listJournalEntries('u1', entry.id);

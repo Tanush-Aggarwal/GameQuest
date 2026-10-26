@@ -25,7 +25,9 @@ function setPath(doc, path, value) {
 
 const OPS = {
   $in: (a, v) => (Array.isArray(a) ? a.some((x) => v.includes(x)) : v.includes(a)),
-  $ne: (a, v) => a !== v,
+  $eq: (a, v) => (Array.isArray(a) ? a.includes(v) : a === v),
+  $ne: (a, v) => (Array.isArray(a) ? !a.includes(v) : a !== v),
+  $nin: (a, v) => (Array.isArray(a) ? !a.some((x) => v.includes(x)) : !v.includes(a)),
   $gt: (a, v) => a != null && a > v,
   $gte: (a, v) => a != null && a >= v,
   $lt: (a, v) => a != null && a < v,
@@ -41,6 +43,7 @@ function matchValue(actual, cond) {
 function matchesQuery(doc, q) {
   return Object.entries(q).every(([k, v]) => {
     if (k === '$or') return v.some((sub) => matchesQuery(doc, sub));
+    if (k === '$and') return v.every((sub) => matchesQuery(doc, sub));
     // Stand-in for a text index: every search word must appear in the title.
     if (k === '$text') return v.$search.toLowerCase().split(/\s+/).every((w) => doc.title?.toLowerCase().includes(w));
     return matchValue(getPath(doc, k), v);

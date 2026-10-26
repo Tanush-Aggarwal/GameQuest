@@ -1,4 +1,4 @@
-import { ValidationError, NotFoundError, ConflictError } from '../utils/errors.js';
+﻿import { ValidationError, NotFoundError, ConflictError } from '../utils/errors.js';
 
 /**
  * Progress service — manual 0–100 progress, play-log sessions, journal entries.
@@ -9,7 +9,7 @@ import { ValidationError, NotFoundError, ConflictError } from '../utils/errors.j
  *  - Logging a play session on a Backlog entry auto-promotes it to Playing.
  *  - Effective playtime = max(sum of ownerships[].playtimeMin, loggedMinutes).
  */
-export function createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger }) {
+export function createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus }) {
   // ── manual progress ──────────────────────────────────────────────────────
 
   async function setProgress(userId, entryId, manualProgress) {

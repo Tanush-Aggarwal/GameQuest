@@ -1,7 +1,4 @@
-import { validate } from '../middleware/validate.js';
-import { manualProgressSchema, playLogSchema, journalEntrySchema } from '@gamequest/shared';
-
-export function createProgressController({ progressService }) {
+﻿export function createProgressController({ progressService }) {
   // PATCH /library/:id/progress
   async function setProgress(req, res) {
     const entry = await progressService.setProgress(req.auth.userId, req.params.id, req.body.manualProgress);

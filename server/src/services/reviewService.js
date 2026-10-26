@@ -1,4 +1,4 @@
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
+﻿import { ForbiddenError, NotFoundError } from '../utils/errors.js';
 
 // DTOs
 export const toReviewDto = (r, user) => ({
@@ -24,7 +24,7 @@ async function refreshGameRating(Game, Review, gameId) {
   await Game.updateOne({ _id: gameId }, { $set: { ratingAvg: avg, ratingCount: count } });
 }
 
-export function createReviewService({ Review, Game, User, logger }) {
+export function createReviewService({ Review, Game, User }) {
   return {
     // Upsert — create or replace the user's review of a game.
     // Only allowed for games the user has in their library past wishlist.

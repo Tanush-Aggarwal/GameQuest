@@ -1,12 +1,14 @@
-import { useCallback, useState, useEffect } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { LIBRARY_TRANSITIONS } from '@gamequest/shared';
 import { useAsync } from '@/hooks/useAsync.js';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { ProgressPanel } from '@/components/progress/ProgressPanel.jsx';
 import { ReviewPanel } from '@/components/review/ReviewPanel.jsx';
+import { AddToCollection } from '@/components/collections/AddToCollection.jsx';
 import { getLibraryEntry, changeStatus, setVisibility, removeFromLibrary } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
 
@@ -26,14 +28,6 @@ const STATUS_LABELS = {
   dropped: 'Dropped',
 };
 
-const TRANSITIONS = {
-  wishlist: ['backlog', 'playing'],
-  backlog: ['playing', 'dropped'],
-  playing: ['completed', 'dropped', 'backlog'],
-  completed: ['playing'],
-  dropped: ['backlog', 'playing'],
-};
-
 export default function LibraryEntry() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,9 +35,10 @@ export default function LibraryEntry() {
   const load = useCallback((signal) => getLibraryEntry(id, { signal }), [id]);
   const { status, data: fetched, retry } = useAsync(load);
 
-  // Local copy so status/visibility changes update instantly without a refetch
-  const [entry, setEntry] = useState(null);
-  useEffect(() => { if (fetched) setEntry(fetched); }, [fetched]);
+  // Local edits (status, visibility) layer over the fetched entry and are dropped when it reloads.
+  const [override, setOverride] = useState({ source: null, entry: null });
+  const entry = override.source === fetched && fetched ? override.entry : fetched;
+  const setEntry = (next) => setOverride({ source: fetched, entry: next });
 
   async function handleStatusChange(to) {
     try {
@@ -78,11 +73,11 @@ export default function LibraryEntry() {
   }
 
   if (status === 'loading') return <LoadingSkeleton />;
-  if (status === 'error') return <ErrorState title="Couldn't load entry" retry={retry} />;
+  if (status === 'error') return <ErrorState message="Couldn't load this library entry." onRetry={retry} />;
   if (!entry) return null;
 
   const game = entry.game ?? {};
-  const nextStatuses = TRANSITIONS[entry.status] ?? [];
+  const nextStatuses = LIBRARY_TRANSITIONS[entry.status] ?? [];
   const totalPlaytimeMin = Math.max(
     entry.loggedMinutes ?? 0,
     (entry.ownerships ?? []).reduce((s, o) => s + (o.playtimeMin ?? 0), 0),
@@ -185,6 +180,8 @@ export default function LibraryEntry() {
           ))}
         </div>
       )}
+
+      <AddToCollection entryId={id} />
 
       {/* Progress panel */}
       <ProgressPanel entryId={id} status={entry.status} initialProgress={entry.manualProgress ?? 0} />

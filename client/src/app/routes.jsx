@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+﻿import { lazy } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
 import { ProtectedRoute, PublicOnlyRoute } from './routeGuards.jsx';
 
@@ -12,6 +12,8 @@ const Profile = lazy(() => import('@/pages/Profile.jsx'));
 const Login = lazy(() => import('@/pages/Login.jsx'));
 const Register = lazy(() => import('@/pages/Register.jsx'));
 const LibraryEntry = lazy(() => import('@/pages/LibraryEntry.jsx'));
+const Collections = lazy(() => import('@/pages/Collections.jsx'));
+const Collection = lazy(() => import('@/pages/Collection.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
 export const routes = [
@@ -31,6 +33,8 @@ export const routes = [
           { path: '/', element: <Home /> },
           { path: '/library', element: <Library /> },
           { path: '/library/:id', element: <LibraryEntry /> },
+          { path: '/collections', element: <Collections /> },
+          { path: '/collections/:id', element: <Collection /> },
           { path: '/explore', element: <Explore /> },
           { path: '/games/:slug', element: <Game /> },
           { path: '/friends', element: <Friends /> },

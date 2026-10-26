@@ -132,6 +132,7 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
       const { deletedCount } = await LibraryEntry.deleteOne({ _id: entryId, userId });
       if (!deletedCount) throw new NotFoundError('Library entry not found');
       await StatusHistory.deleteMany({ entryId });
+      eventBus?.emit('library.entryRemoved', { userId: String(userId), entryId: String(entryId) });
     },
 
     async getEntry(userId, entryId) {

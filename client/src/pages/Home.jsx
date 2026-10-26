@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+﻿import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Gamepad2, Clock, Trophy, Layers, ChevronRight, TrendingUp } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
@@ -65,7 +65,7 @@ function ResumeCard({ dashboard }) {
           <span className="text-xs text-[var(--text-muted)] tabular-nums">{card.manualProgress}%</span>
         </div>
 
-        {card.note && <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-1 italic">"{card.note}"</p>}
+        {card.note && <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-1 italic">&ldquo;{card.note}&rdquo;</p>}
       </div>
       <ChevronRight size={18} className="text-[var(--text-muted)] self-center group-hover:text-[var(--accent)] transition-colors flex-shrink-0" />
     </Link>

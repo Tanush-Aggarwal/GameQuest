@@ -10,12 +10,12 @@ Tier 2 — In Progress (Progress tracking, Reviews complete)
 - (nothing)
 
 ## Next up (do these in order, one at a time)
-7. First deploy: Vercel + Render + Atlas, verify cookies/CORS on live URLs
-8. Collections (manual, smart rules) — model + service + routes + client
 9. Friends + activity feed
 10. Game sessions (invite, RSVP, .ics)
+11. First deploy: Vercel + Render + Atlas, verify cookies/CORS on live URLs (postponed)
 
 ## Done
+- Item 8b (collections): Collection + CollectionItem models, collectionService (manual fractional-position reorder, smart whitelist rules compiled on read, privacy filter, ownership), /collections routes + preview, collection.created / library.entryRemoved events, Collections + Collection detail pages (drag + up/down reorder with rollback, rule builder with live preview), Add-to-collection on the library entry page, seeded demo collections; 48 server + 21 client tests
 - Item 8 (reviews): Review model, reviewService (upsert with aggregate avg refresh, delete, list), 6 new tests; ReviewPanel client component (StarPicker, own review, community list); /reviews routes; wired into LibraryEntry page; 83 server tests pass
 - Item 7 (progress & insights): progressService (setProgress, logSession, journal CRUD, auto-promote backlog→playing), insightsService (getDashboard, getPlayNext, scorePlayNext, backlogHealth), PlayLog/JournalEntry models, /library/:id progress+journal routes, /insights routes, Home page rewrite (ResumeCard, StatTiles, PlayNext, BacklogHealth), LibraryEntry page (hero, status transitions, ProgressPanel, ReviewPanel), all 77→83 server tests pass, client builds clean
 - Item 6: unified library (LibraryEntry with ownerships[], status state machine + StatusHistory, library.statusChanged event, /library endpoints, Library page with status tabs + optimistic moves, library panel on the game page; 15 new server tests, 11 new client tests)

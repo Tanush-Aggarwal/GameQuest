@@ -19,6 +19,9 @@ export const gameSearchQuerySchema = z.object({
 }).refine((q) => !(q.cursor && q.sort !== 'popularity'), { message: 'Only the popularity order can be paged', path: ['cursor'] })
   .refine((q) => !(q.releasedAfter && q.releasedBefore && q.releasedAfter > q.releasedBefore), { message: 'releasedAfter must not be later than releasedBefore', path: ['releasedAfter'] });
 
+// The sign-in pages' cover collage: a handful of popular covers, no account needed.
+export const publicCoversQuerySchema = z.object({ limit: z.coerce.number().int().min(1).max(40).default(24) });
+
 export const gameSlugParamsSchema = z.object({
   slug: z
     .string()

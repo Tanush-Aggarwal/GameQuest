@@ -38,6 +38,15 @@ export default {
     extend: {
       colors: Object.fromEntries(names.map((name) => [name, token(name)])),
       borderRadius: { card: '12px', control: '8px' },
+      // The sign-in collage: a column of covers, repeated twice, slides by exactly one copy and starts over unseen.
+      keyframes: {
+        'drift-up': { from: { transform: 'translateY(0)' }, to: { transform: 'translateY(-50%)' } },
+        'drift-down': { from: { transform: 'translateY(-50%)' }, to: { transform: 'translateY(0)' } },
+      },
+      animation: {
+        'drift-up': 'drift-up 90s linear infinite',
+        'drift-down': 'drift-down 110s linear infinite',
+      },
       fontFamily: {
         heading: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],

@@ -384,3 +384,102 @@ describe('GET /api/v1/games', () => {
     expect(items.map((i) => i.username)).toEqual(['open']);
   });
 });
+
+describe('GET /api/v1/public/covers (the sign-in collage)', () => {
+  function setup(seed) {
+    const ctx = setupCatalog({ seed });
+    const models = createFakeModels();
+    const config = testConfig();
+    const authService = createAuthService({ ...models, config, bcryptRounds: 4, reuseGraceMs: 0 });
+    const app = createApp({ config, logger, authService, gameService: ctx.gameService });
+    return { ...ctx, app };
+  }
+  const games = (n) => Array.from({ length: n }, (_, i) => stored(`Game ${i + 1}`, { popularity: 100 - i, cover: `https://img/c${i + 1}.jpg` }));
+
+  it('needs no account, returns only cover URLs, most popular first, and is cacheable for an hour', async () => {
+    const { app, seed } = setup([...games(5), stored('Hidden DLC', { popularity: 999, hidden: true, cover: 'https://img/hidden.jpg' }), stored('No Cover', { popularity: 500 })]);
+    await seed;
+    const res = await request(app).get('/api/v1/public/covers?limit=3');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ items: [{ cover: 'https://img/c1.jpg' }, { cover: 'https://img/c2.jpg' }, { cover: 'https://img/c3.jpg' }] }); // hidden and cover-less games never appear
+    expect(res.headers['cache-control']).toBe('public, max-age=3600');
+    expect(JSON.stringify(res.body)).not.toMatch(/slug|title|id|popularity|hidden/i);
+  });
+
+  it('defaults to 24 and rejects an out-of-range or non-numeric limit', async () => {
+    const { app, seed } = setup(games(30));
+    await seed;
+    expect((await request(app).get('/api/v1/public/covers')).body.items).toHaveLength(24);
+    for (const bad of ['0', '41', 'abc', '-1']) {
+      const res = await request(app).get(`/api/v1/public/covers?limit=${bad}`);
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    }
+  });
+
+  it('keeps the answer for an hour instead of asking the database again', async () => {
+    const ctx = setup(games(3));
+    await ctx.seed;
+    const find = jest.spyOn(ctx.Game, 'find');
+    await request(ctx.app).get('/api/v1/public/covers');
+    await request(ctx.app).get('/api/v1/public/covers?limit=2');
+    expect(find).toHaveBeenCalledTimes(1);
+    ctx.setClock(new Date('2026-10-26T01:00:01Z')); // an hour and a second later
+    await request(ctx.app).get('/api/v1/public/covers');
+    expect(find).toHaveBeenCalledTimes(2);
+  });
+
+  it('is rate limited per client, and the limit does not touch the signed-in catalog routes', async () => {
+    const { app, seed } = setup(games(2));
+    await seed;
+    let last;
+    for (let i = 0; i < 61; i += 1) last = await request(app).get('/api/v1/public/covers');
+    expect(last.status).toBe(429);
+    expect(last.body.error.code).toBe('RATE_LIMITED');
+    expect((await request(app).get('/api/v1/games?q=x')).status).toBe(401); // everything else still needs an account
+  });
+
+  it('a burst of cold requests shares one query, and a bigger limit needs no second one', async () => {
+    const ctx = setup(games(30));
+    await ctx.seed;
+    const find = jest.spyOn(ctx.Game, 'find');
+    const answers = await Promise.all([1, 2, 3, 4].map(() => request(ctx.app).get('/api/v1/public/covers?limit=10')));
+    expect(answers.every((a) => a.status === 200 && a.body.items.length === 10)).toBe(true);
+    expect(find).toHaveBeenCalledTimes(1);
+    expect((await request(ctx.app).get('/api/v1/public/covers?limit=40')).body.items).toHaveLength(30); // the pool is the top 40
+    expect(find).toHaveBeenCalledTimes(1);
+  });
+
+  it('never remembers an empty answer (a fresh deployment fills up later), and does not let a cache keep it', async () => {
+    const ctx = setup([]);
+    const first = await request(ctx.app).get('/api/v1/public/covers');
+    expect(first.body).toEqual({ items: [] });
+    expect(first.headers['cache-control']).toBe('no-store');
+    await ctx.Game.create(stored('Late Arrival', { popularity: 5, cover: 'https://img/late.jpg' }));
+    const second = await request(ctx.app).get('/api/v1/public/covers'); // no hour of waiting
+    expect(second.body.items).toEqual([{ cover: 'https://img/late.jpg' }]);
+    expect(second.headers['cache-control']).toBe('public, max-age=3600');
+  });
+
+  it('a failure is a 500 in the usual error shape that no cache may keep', async () => {
+    const ctx = setup([]);
+    jest.spyOn(ctx.Game, 'find').mockImplementation(() => {
+      throw new Error('mongo down');
+    });
+    const res = await request(ctx.app).get('/api/v1/public/covers');
+    expect(res.status).toBe(500);
+    expect(res.body.error).toEqual(expect.objectContaining({ code: expect.any(String), message: expect.any(String) }));
+    expect(res.headers['cache-control'] ?? '').not.toMatch(/public|max-age/);
+    // and it recovers once the database does
+    ctx.Game.find.mockRestore();
+    await ctx.Game.create(stored('Back Again', { popularity: 5, cover: 'https://img/back.jpg' }));
+    expect((await request(ctx.app).get('/api/v1/public/covers')).status).toBe(200);
+  });
+
+  it('every other catalog route still requires authentication', async () => {
+    const { app } = setup([]);
+    for (const path of ['/api/v1/games', '/api/v1/games/hades', '/api/v1/games/hades/trailer', '/api/v1/library']) {
+      expect((await request(app).get(path)).status).toBe(401);
+    }
+  });
+});

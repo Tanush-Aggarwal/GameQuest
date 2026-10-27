@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { getErrorInfo } from '@/services/api.js';
 import { Button } from '@/components/ui/button.jsx';
 import { FormField } from '@/components/ui/form-field.jsx';
+import { CoverCollage } from '@/components/auth/CoverCollage.jsx';
 
 function fieldErrorsFromZod(issues) {
   const out = {};
@@ -51,11 +52,12 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer 
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4 py-10">
+      <CoverCollage />
       <div className="flex items-center gap-2 font-heading text-2xl font-bold">
         <Gamepad2 className="h-7 w-7 text-accent" aria-hidden="true" />
         GameQuest
       </div>
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-card border border-border bg-surface p-6">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-card border border-border bg-surface/95 p-6 shadow-2xl supports-[backdrop-filter]:bg-surface/70 supports-[backdrop-filter]:backdrop-blur-md">
         <h1 className="text-xl font-semibold">{title}</h1>
         {fields.map((f) => (
           <FormField
@@ -79,7 +81,7 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer 
           {pending ? 'Please wait…' : submitLabel}
         </Button>
       </form>
-      <p className="text-center text-sm text-text-muted">{footer}</p>
+      <p className="rounded-card bg-bg/70 px-3 py-2 text-center text-sm text-text-muted">{footer}</p>
     </div>
   );
 }

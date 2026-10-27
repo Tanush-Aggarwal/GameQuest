@@ -60,6 +60,16 @@ describe('design tokens in Tailwind', () => {
     expect(css).toMatch(/\.bg-gradient-to-t\s*\{[^}]*linear-gradient/);
   });
 
+  it('the sign-in collage drifts (and stops for reduced motion), and the glass card has a solid fallback', async () => {
+    const css = await compile('animate-drift-up animate-drift-down motion-reduce:animate-none bg-surface/95 supports-[backdrop-filter]:bg-surface/70 supports-[backdrop-filter]:backdrop-blur-md -rotate-12');
+    expect(css).toMatch(/@keyframes drift-up[\s\S]*?translateY\(-50%\)/);
+    expect(css).toMatch(/@keyframes drift-down/);
+    expect(css).toMatch(/\.animate-drift-up\s*\{[^}]*drift-up 90s linear infinite/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.motion-reduce\\:animate-none/);
+    expect(css).toMatch(/\.bg-surface\\\/95\s*\{[^}]*color-mix\(in srgb, var\(--surface\) calc\(0\.95 \* 100%\)/);
+    expect(css).toMatch(/@supports \(backdrop-filter: var\(--tw\)\)\s*\{\s*\.supports-\\\[backdrop-filter\\\]\\:bg-surface\\\/70/);
+  });
+
   it('every colour the UI uses is a token, and none is a raw palette value', () => {
     const colors = config.theme.extend.colors;
     expect(Object.keys(colors)).toEqual(expect.arrayContaining(['bg', 'surface', 'surface-raised', 'border', 'text', 'text-muted', 'accent', 'reward']));

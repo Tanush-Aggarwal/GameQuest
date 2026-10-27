@@ -68,6 +68,9 @@ function decodeCursor(cursor) {
   return at > 0 && Number.isFinite(popularity) ? { popularity, slug: cursor.slice(at + 1) } : null;
 }
 
+const COVERS_TTL_MS = 60 * 60 * 1000;
+const COVERS_POOL = 40; // the most popular covers kept for the collage (the schema's largest limit)
+
 // Cache-first catalog: MongoDB answers first; IGDB is only asked when local results run short.
 export function createGameService({
   Game,
@@ -85,6 +88,9 @@ export function createGameService({
   const recentRemote = new Map();
   // Same idea for stale-game refreshes, keyed by slug.
   const recentRefresh = new Map();
+  // The public cover collage answer, kept for an hour so the (unauthenticated) endpoint costs the database almost nothing.
+  let coversCache = { at: 0, items: [] };
+  let coversLoading = null; // the query in flight, shared by concurrent requests
 
   async function upsertAll(games) {
     const at = now();
@@ -166,6 +172,27 @@ export function createGameService({
       return { ...result, warnings };
     },
 
+    // Covers of the most popular catalog games, for the sign-in collage. Public art only: no ids, titles or slugs.
+    // Always the same top COVERS_POOL, kept in memory for an hour (per process); a burst of cold requests shares one
+    // query, and an empty answer is never kept (a fresh deployment fills up after its first search).
+    async publicCovers({ limit }) {
+      const stale = now().getTime() - coversCache.at >= COVERS_TTL_MS;
+      if (stale && !coversLoading) {
+        coversLoading = Game.find({ hidden: { $ne: true }, cover: { $ne: null } })
+          .sort({ popularity: -1, slug: 1 })
+          .limit(COVERS_POOL)
+          .lean()
+          .then((rows) => {
+            const items = rows.map((g) => g.cover).filter(Boolean);
+            coversCache = { at: items.length ? now().getTime() : 0, items };
+          })
+          .finally(() => {
+            coversLoading = null;
+          });
+      }
+      if (stale || !coversCache.items.length) await coversLoading;
+      return { items: coversCache.items.slice(0, limit).map((cover) => ({ cover })) };
+    },
     async getBySlug(slug) {
       let game = await Game.findOne({ slug }).lean();
       if (!game) throw new NotFoundError('Game not found');

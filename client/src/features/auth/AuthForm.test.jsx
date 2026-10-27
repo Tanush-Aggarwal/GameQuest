@@ -6,6 +6,9 @@ import Login from '@/pages/Login.jsx';
 import Register from '@/pages/Register.jsx';
 import { AuthContext } from './AuthContext.jsx';
 
+// the collage behind the form; its own tests are in CoverCollage.test.jsx
+vi.mock('@/services/publicApi.js', () => ({ getPublicCovers: vi.fn().mockResolvedValue([]) }));
+
 function renderPage(Page, auth = {}) {
   const value = { login: vi.fn(), register: vi.fn(), ...auth };
   render(

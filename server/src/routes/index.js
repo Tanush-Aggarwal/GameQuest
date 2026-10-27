@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { health } from '../controllers/healthController.js';
 import { createAuthRouter } from './auth.js';
 import { createGamesRouter } from './games.js';
+import { createPublicRouter } from './public.js';
 import { createLibraryRouter } from './library.js';
 import { createProgressRouter } from './progress.js';
 import { createInsightsRouter } from './insights.js';
@@ -39,6 +40,7 @@ export function createRoutes({
 
   router.get('/health', health);
   router.use('/auth', createAuthRouter({ authService, config }));
+  router.use('/public', createPublicRouter({ gameService }));
   router.use('/games', createGamesRouter({ authService, gameService, trailerService }));
   router.use('/library', createLibraryRouter({ authService, libraryService }));
   router.use('/library', createProgressRouter({ requireAuth, progressService }));

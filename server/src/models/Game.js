@@ -28,6 +28,11 @@ const gameSchema = new mongoose.Schema(
     // The same videos with IGDB's names ("Trailer", "Gameplay video"); only a hint for trailer picking.
     videoMeta: { type: [new mongoose.Schema({ id: String, name: String }, { _id: false })], default: [] },
     backdrop: { type: String, default: null },
+    // Specialized image roles with fallback to cover/backdrop/artworks
+    heroImage: { type: String, default: null },
+    bannerImage: { type: String, default: null },
+    coverImage: { type: String, default: null },
+    cardImage: { type: String, default: null },
     developer: { type: [String], default: [] },
     publisher: { type: [String], default: [] },
     themes: { type: [String], default: [] },

@@ -13,6 +13,12 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 17. Phase 4: cloud deploy (Atlas + Render + Vercel, then `npm run db:indexes`; see docs/DEPLOY.md)
 
 ## Done
+- Data, Artwork, Recommendation & Trailer Modal Fix:
+  1. Dynamic Trailer Modal & Stacking Context Fix: Fixed trailer opening Palworld regardless of intended game; bound dynamically to active preview, resume, or featured game slug. Solved modal overlap bug (where game cards overlapped modal dialog) by rendering via `createPortal(..., document.body)` with `fixed inset-0 z-[9999]`, locking `document.body.style.overflow = 'hidden'`, backdrop click dismiss, Escape key dismiss, and focus restoration to trigger element. Added unit tests in `TrailerModal.test.jsx`.
+  2. Dynamic Home Recommendation: Replaced hardcoded Genshin card in `AdventureCard` with dynamic recommendation logic checking pending friend recommendations (`listInbox`), top genre affinity from `getDashboard`, or top-rated catalogue fallback.
+  3. Catalog Ingestion for Genshin Impact: Added Genshin Impact (`6ae09b55c1bbdc88e920d907`, IGDB `119277`) to MongoDB and `seed.js` with 1080p cover, backdrop, 17 artworks, 11 screenshots, and official YouTube trailers in `MediaCache`.
+  4. Clean Artwork Roles & Single Source of Truth: Removed fake metadata objects (`ARTWORK_LOOKUP`, `TRENDING_META`); resolved games via authentic MongoDB slugs (`hades-ii`); added `heroImage`, `bannerImage`, `coverImage`, `cardImage` to Game model and DTO.
+  5. Test Suite & Build Verification: All 381 client tests and 563 server tests pass (944 total tests pass). 0 lint errors/warnings across all workspaces. Client production build compiles cleanly.
 - Pixel-accurate visual fidelity recreation & trailer fix (reference image):
   1. Pure Scenery Hero Artwork: Cleaned `/assets/hero-fantasy.jpg` to remove all captured UI artifacts (duplicate notification bell, avatar, search bar, carousel indicators). Hero background is now 100% pure scenery artwork with smooth ivory left-to-right fade, while functional avatar, bell, search bar, and command palette are rendered by React components in the top navigation.
   2. Fixed "Watch Trailer" Action: Created `TrailerModal.jsx` which binds dynamically to the featured game (e.g. Hades, Elden Ring, or active hover preview) using `TrailerPlayer` playback logic. Includes backdrop dismiss, Escape key dismiss, and an unavailable state if no verified trailer exists. Added unit test in `HomeHero.test.jsx`.

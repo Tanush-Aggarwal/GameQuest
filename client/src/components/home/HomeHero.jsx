@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Play, Trophy } from 'lucide-react';
 import { useAmbient } from '@/components/art/ambientContext.js';
@@ -9,12 +9,6 @@ function getGameSlug(game) {
   if (!game) return '';
   if (game.slug) return game.slug;
   const title = (game.title || '').trim().toLowerCase();
-  if (title === 'elden ring') return 'elden-ring';
-  if (title === 'hades') return 'hades';
-  if (title === 'balatro') return 'balatro';
-  if (title === 'celeste') return 'celeste';
-  if (title === 'cyberpunk 2077') return 'cyberpunk-2077';
-  if (title === 'palworld') return 'palworld';
   return title.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
@@ -64,6 +58,7 @@ export function HomeHero({ username, dashboard, playNext }) {
 function HeroBody({ dashboard, playNext }) {
   const { preview, setBase, clearBase } = useAmbient();
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const triggerBtnRef = useRef(null);
   const resume = dashboard.data?.resumeCard ?? null;
   const first = playNext.data?.items?.[0] ?? null;
   const base = resume ?? first;
@@ -150,6 +145,7 @@ function HeroBody({ dashboard, playNext }) {
 
           {game ? (
             <button
+              ref={triggerBtnRef}
               type="button"
               tabIndex={-1}
               onClick={() => setTrailerOpen(true)}
@@ -224,6 +220,7 @@ function HeroBody({ dashboard, playNext }) {
           title={game.title}
           isOpen={trailerOpen}
           onClose={() => setTrailerOpen(false)}
+          triggerRef={triggerBtnRef}
         />
       )}
     </div>

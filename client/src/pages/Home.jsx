@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getBacklogHealth, getDashboard, getPlayNext } from '@/services/progressApi.js';
+import { listInbox } from '@/services/recommendationsApi.js';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { SectionBoundary } from '@/components/ui/SectionBoundary.jsx';
@@ -33,7 +34,7 @@ export default function Home() {
   const loadBacklogHealth = useCallback((signal) => getBacklogHealth({ signal }), []);
   const loadTrending = useCallback(async (signal) => {
     try {
-      const featuredSlugs = ['hollow-knight-silksong', 'elden-ring', 'clair-obscur-expedition-33', 'hades', 'zenless-zone-zero'];
+      const featuredSlugs = ['hollow-knight-silksong', 'elden-ring', 'clair-obscur-expedition-33', 'hades-ii', 'zenless-zone-zero'];
       const results = await Promise.allSettled(
         featuredSlugs.map((slug) => getGame(slug, { signal }))
       );
@@ -44,8 +45,8 @@ export default function Home() {
     } catch {
       // fallback to search
     }
-    const data = await searchGames({ limit: 5 }, { signal });
-    return data.items ?? [];
+    const data = await searchGames({ limit: 5 }, { signal }).catch(() => null);
+    return data?.items ?? [];
   }, []);
 
   const dashboard = useAsync(loadDashboard);
@@ -86,7 +87,7 @@ export default function Home() {
 
         {/* Right: Recommendation + Community */}
         <div className="flex flex-col gap-4">
-          <AdventureCard />
+          <AdventureCard dashboard={dashboard} />
           <CommunityCard />
         </div>
       </div>
@@ -171,20 +172,13 @@ function TrendingRow({ trending }) {
   );
 }
 
-const TRENDING_META = {
-  'hollow-knight-silksong': { title: 'Hollow Knight Silksong', rating: '9.6', artwork: '/assets/trending-hollow-knight.jpg' },
-  'elden-ring': { title: 'Elden Ring Nightreign', rating: '9.3', artwork: '/assets/trending-elden-ring.jpg' },
-  'clair-obscur-expedition-33': { title: 'Clair Obscur Expedition 33', rating: '9.1', artwork: '/assets/trending-clair-obscur.jpg' },
-  'hades': { title: 'Hades II', rating: '9.0', artwork: '/assets/trending-hades-2.jpg' },
-  'zenless-zone-zero': { title: 'Zenless Zone Zero', rating: '8.8', artwork: '/assets/trending-zenless.jpg' },
-};
-
 // Individual trending card matching reference: full bleed image with dark overlay, white text anchored at bottom-left, rating at bottom-right
 function TrendingCard({ game }) {
-  const meta = TRENDING_META[game.slug];
-  const displayTitle = meta?.title || game.title;
-  const ratingValue = meta?.rating || (game.ratingAvg > 0 ? game.ratingAvg.toFixed(1) : (game.totalRating ? (game.totalRating / 10).toFixed(1) : null));
-  const artwork = meta?.artwork || getGameArtwork(game) || game.cover;
+  const displayTitle = game.title;
+  const ratingValue = game.ratingAvg > 0
+    ? game.ratingAvg.toFixed(1)
+    : (game.totalRating ? (game.totalRating / 10).toFixed(1) : null);
+  const artwork = getGameArtwork(game) || game.cover;
 
   return (
     <Link
@@ -229,24 +223,85 @@ function TrendingCard({ game }) {
   );
 }
 
-// "Your Next Adventure" recommendation card
-function AdventureCard() {
-  const title = 'Genshin Impact';
-  const genres = ['Open World', 'RPG', 'Anime'];
-  const summary = 'Explore a vast world of wonders and uncover its hidden secrets.';
-  const artwork = '/assets/rec-genshin.jpg';
-  const link = '/games/genshin-impact';
+// "Your Next Adventure" recommendation card: dynamically selects an eligible game from the catalogue
+function AdventureCard({ dashboard }) {
+  const topGenre = dashboard?.data?.topGenres?.[0]?.name;
+
+  const loadRec = useCallback(async (signal) => {
+    // 1. Check if user has a pending friend recommendation
+    try {
+      const inbox = await listInbox({ status: 'pending', limit: 1 }, { signal });
+      if (inbox?.items?.[0]?.game) {
+        return inbox.items[0].game;
+      }
+    } catch {
+      // Proceed to catalogue recommendation
+    }
+
+    // 2. Discover an eligible catalogue game matching user's top genre or top rated
+    try {
+      const res = await searchGames(
+        topGenre ? { genre: topGenre, limit: 10 } : { sort: 'rating', limit: 10 },
+        { signal },
+      );
+      const candidates = (res?.items ?? []).filter((g) => g && g.slug);
+      if (candidates.length) {
+        return candidates[0];
+      }
+    } catch {
+      // Proceed to fallback
+    }
+
+    // 3. Documented catalogue fallback
+    try {
+      const fallback = await searchGames({ limit: 5 }, { signal });
+      if (fallback?.items?.[0]) return fallback.items[0];
+    } catch {
+      // fallback
+    }
+
+    // 4. Default catalogue reference game (Genshin Impact) if network unavailable
+    return {
+      title: 'Genshin Impact',
+      slug: 'genshin-impact',
+      genres: ['Role-playing (RPG)', 'Adventure'],
+      summary: 'Explore a vast world of wonders and uncover its hidden secrets across the realm of Teyvat.',
+      heroImage: 'https://images.igdb.com/igdb/image/upload/t_1080p/ar2ht4.jpg',
+      backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p/ar2ht4.jpg',
+      cover: 'https://images.igdb.com/igdb/image/upload/t_1080p/coa9dy.jpg',
+    };
+  }, [topGenre]);
+
+  const { status, data: game } = useAsync(loadRec);
+
+  if (status === 'loading') {
+    return (
+      <div role="status" aria-label="Loading recommendation" className="aspect-[16/9] sm:min-h-[200px] w-full">
+        <Skeleton className="h-full w-full rounded-[10px] bg-white/5" />
+      </div>
+    );
+  }
+
+  if (!game) return null;
+
+  const title = game.title;
+  const genres = game.genres?.length ? game.genres.slice(0, 3) : ['RPG', 'Adventure'];
+  const summary = game.summary || game.storyline || 'Explore a vast world of wonders and uncover its hidden secrets.';
+  const artwork = game.heroImage || game.backdrop || game.artworks?.[0] || game.cover;
+  const link = `/games/${game.slug}`;
 
   return (
     <div className="relative flex flex-col justify-between overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[200px]">
       {/* Background artwork on the right */}
       <div className="absolute inset-0 -z-0">
-        <img
-          src={artwork}
-          alt={title}
-          className="absolute right-0 top-0 h-full w-[55%] object-cover object-right"
-          loading="lazy"
-        />
+        {artwork && (
+          <img
+            src={artwork}
+            alt={title}
+            className="absolute right-0 top-0 h-full w-[55%] object-cover object-right"
+            loading="lazy"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-[#161816] via-[#161816]/90 via-55% to-transparent" />
       </div>
 
@@ -257,7 +312,7 @@ function AdventureCard() {
         </div>
 
         <div>
-          <h4 className="text-base font-bold text-white leading-tight">{title}</h4>
+          <h4 className="text-base font-bold text-white leading-tight line-clamp-1">{title}</h4>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
             {genres.map((g) => (
               <span key={g} className="rounded-full border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-gray-300">

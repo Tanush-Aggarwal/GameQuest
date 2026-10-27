@@ -87,26 +87,13 @@ export function SharedCover({ slug, className = '', children }) {
   );
 }
 
-export const ARTWORK_LOOKUP = {
-  'hollow-knight-silksong': '/assets/trending-hollow-knight.jpg',
-  'elden-ring': '/assets/trending-elden-ring.jpg',
-  'clair-obscur-expedition-33': '/assets/trending-clair-obscur.jpg',
-  'hades': '/assets/trending-hades-2.jpg',
-  'zenless-zone-zero': '/assets/trending-zenless.jpg',
-  'genshin-impact': '/assets/rec-genshin.jpg',
-};
-
+/**
+ * Resolves the appropriate card artwork from the game model.
+ * Prioritizes cardImage -> coverImage -> cover -> backdrop.
+ */
 export function getGameArtwork(game) {
   if (!game) return null;
-  if (game.slug && ARTWORK_LOOKUP[game.slug]) return ARTWORK_LOOKUP[game.slug];
-  const lowerTitle = (game.title || '').toLowerCase();
-  if (lowerTitle.includes('silksong')) return '/assets/trending-hollow-knight.jpg';
-  if (lowerTitle.includes('elden ring')) return '/assets/trending-elden-ring.jpg';
-  if (lowerTitle.includes('clair obscur') || lowerTitle.includes('expedition 33')) return '/assets/trending-clair-obscur.jpg';
-  if (lowerTitle.includes('hades')) return '/assets/trending-hades-2.jpg';
-  if (lowerTitle.includes('zenless')) return '/assets/trending-zenless.jpg';
-  if (lowerTitle.includes('genshin')) return '/assets/rec-genshin.jpg';
-  return null;
+  return game.cardImage || game.coverImage || game.cover || game.backdrop || null;
 }
 
 export function GameCard({ game, shared = true }) {

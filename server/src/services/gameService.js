@@ -14,32 +14,44 @@ export function toUpsertUpdate(game, at) {
   return { $set, $setOnInsert: { slug } };
 }
 
-export const toGameDto = (g) => ({
-  id: String(g._id),
-  title: g.title,
-  slug: g.slug,
-  summary: g.summary ?? '',
-  cover: g.cover ?? null,
-  backdrop: g.backdrop ?? null,
-  artworks: g.artworks ?? [],
-  screenshots: g.screenshots ?? [],
-  videos: g.videos ?? [],
-  developer: g.developer ?? [],
-  publisher: g.publisher ?? [],
-  genres: g.genres ?? [],
-  themes: g.themes ?? [],
-  gameModes: g.gameModes ?? [],
-  platforms: g.platforms ?? [],
-  storyline: g.storyline ?? '',
-  releaseDate: g.releaseDate ?? null,
-  timeToBeat: { main: g.timeToBeat?.main ?? null, extras: g.timeToBeat?.extras ?? null, full: g.timeToBeat?.full ?? null },
-  totalRating: g.totalRating ?? null,
-  totalRatingCount: g.totalRatingCount ?? 0,
-  popularity: g.popularity ?? 0,
-  gameType: g.gameType ?? null,
-  ratingAvg: g.ratingAvg ?? 0,
-  ratingCount: g.ratingCount ?? 0,
-});
+export const toGameDto = (g) => {
+  const coverImage = g.coverImage ?? g.cover ?? null;
+  const heroImage = g.heroImage ?? g.backdrop ?? g.artworks?.[0] ?? null;
+  const bannerImage = g.bannerImage ?? g.backdrop ?? g.screenshots?.[0] ?? g.artworks?.[0] ?? null;
+  const cardImage = g.cardImage ?? g.coverImage ?? g.cover ?? g.backdrop ?? null;
+
+  return {
+    id: String(g._id),
+    title: g.title,
+    slug: g.slug,
+    summary: g.summary ?? '',
+    cover: coverImage,
+    backdrop: heroImage,
+    heroImage,
+    bannerImage,
+    coverImage,
+    cardImage,
+    artworks: g.artworks ?? [],
+    screenshots: g.screenshots ?? [],
+    videos: g.videos ?? [],
+    videoMeta: g.videoMeta ?? [],
+    developer: g.developer ?? [],
+    publisher: g.publisher ?? [],
+    genres: g.genres ?? [],
+    themes: g.themes ?? [],
+    gameModes: g.gameModes ?? [],
+    platforms: g.platforms ?? [],
+    storyline: g.storyline ?? '',
+    releaseDate: g.releaseDate ?? null,
+    timeToBeat: { main: g.timeToBeat?.main ?? null, extras: g.timeToBeat?.extras ?? null, full: g.timeToBeat?.full ?? null },
+    totalRating: g.totalRating ?? null,
+    totalRatingCount: g.totalRatingCount ?? 0,
+    popularity: g.popularity ?? 0,
+    gameType: g.gameType ?? null,
+    ratingAvg: g.ratingAvg ?? 0,
+    ratingCount: g.ratingCount ?? 0,
+  };
+};
 
 // A hidden game (DLC, bundle, edition) that someone still has in their library shows its parent's art.
 // Returns the same games with cover/backdrop/artworks/screenshots swapped in where a parent exists.

@@ -9,9 +9,15 @@ export const gameSearchQuerySchema = z.object({
   minHours: z.coerce.number().positive().max(1000).optional(),
   // IGDB total rating, 0-100.
   minRating: z.coerce.number().min(0).max(100).optional(),
+  // Release window (UTC dates, e.g. 2026-10-27): "new and upcoming" is releasedAfter a month or two ago.
+  releasedAfter: z.coerce.date().optional(),
+  releasedBefore: z.coerce.date().optional(),
+  // Default order is popularity. "rating" is best rated first and has no further pages (shelves, not infinite lists).
+  sort: z.enum(['popularity', 'rating']).default('popularity'),
   cursor: z.string().min(1).max(200).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
-});
+}).refine((q) => !(q.cursor && q.sort !== 'popularity'), { message: 'Only the popularity order can be paged', path: ['cursor'] })
+  .refine((q) => !(q.releasedAfter && q.releasedBefore && q.releasedAfter > q.releasedBefore), { message: 'releasedAfter must not be later than releasedBefore', path: ['releasedAfter'] });
 
 export const gameSlugParamsSchema = z.object({
   slug: z

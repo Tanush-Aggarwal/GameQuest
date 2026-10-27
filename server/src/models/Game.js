@@ -58,5 +58,6 @@ gameSchema.index({ ratingAvg: -1, ratingCount: -1, slug: 1 });
 gameSchema.index({ releaseDate: -1, slug: 1 });
 // Default catalog order: most popular first, slug as the tiebreaker for cursor paging
 gameSchema.index({ popularity: -1, slug: 1 });
+gameSchema.index({ totalRating: -1, slug: 1 }); // the rating sort (Explore "Top rated")
 
 export const Game = mongoose.models.Game ?? mongoose.model('Game', gameSchema);

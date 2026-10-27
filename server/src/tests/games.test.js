@@ -229,6 +229,46 @@ describe('gameService.search (cache-first)', () => {
   });
 });
 
+describe('catalog shelves: release window and rating order', () => {
+  const day = (n) => new Date(Date.UTC(2026, 9, 27) + n * 86_400_000);
+  it('filters by release window and sorts by rating, leaving out unrated games', async () => {
+    const ctx = setupCatalog({
+      seed: [
+        stored('Old Classic', { popularity: 90, totalRating: 95, releaseDate: day(-2000) }),
+        stored('Fresh Hit', { popularity: 60, totalRating: 84, releaseDate: day(-20) }),
+        stored('Fresh Meh', { popularity: 70, totalRating: 61, releaseDate: day(-10) }),
+        stored('Coming Soon', { popularity: 40, releaseDate: day(30) }),
+        stored('Undated', { popularity: 99, totalRating: 99 }),
+      ],
+    });
+    await ctx.seed;
+    const slugs = async (params) => (await ctx.gameService.search({ limit: 20, ...params })).items.map((g) => g.slug);
+
+    // new and upcoming: a window from 45 days ago on, most popular first
+    expect(await slugs({ releasedAfter: day(-45) })).toEqual(['fresh-meh', 'fresh-hit', 'coming-soon']);
+    expect(await slugs({ releasedAfter: day(-45), releasedBefore: day(0) })).toEqual(['fresh-meh', 'fresh-hit']);
+    expect(await slugs({ releasedBefore: day(-1000) })).toEqual(['old-classic']);
+    // top rated: best rating first, unrated and undated-but-rated rules: only games with a rating appear
+    expect(await slugs({ sort: 'rating' })).toEqual(['undated', 'old-classic', 'fresh-hit', 'fresh-meh']);
+    expect(await slugs({ sort: 'rating', minRating: 80 })).toEqual(['undated', 'old-classic', 'fresh-hit']);
+    expect(await slugs({ sort: 'rating', releasedAfter: day(-45) })).toEqual(['fresh-hit', 'fresh-meh']);
+    expect((await ctx.gameService.search({ limit: 2, sort: 'rating' })).nextCursor).toBeNull(); // shelves do not page
+  });
+
+  it('the rating order cannot be paged, and dates must be dates', () => {
+    expect(gameSearchQuerySchema.safeParse({ sort: 'rating', cursor: '5~x' }).success).toBe(false);
+    expect(gameSearchQuerySchema.safeParse({ sort: 'popularity', cursor: '5~x' }).success).toBe(true);
+    expect(gameSearchQuerySchema.safeParse({ sort: 'price' }).success).toBe(false);
+    expect(gameSearchQuerySchema.safeParse({ releasedAfter: 'soon' }).success).toBe(false);
+    expect(gameSearchQuerySchema.safeParse({ releasedAfter: '2026-10-27', releasedBefore: '2026-10-01' }).success).toBe(false);
+    expect(gameSearchQuerySchema.safeParse({ releasedAfter: '2026-10-01', releasedBefore: '2026-10-27' }).success).toBe(true);
+    const parsed = gameSearchQuerySchema.parse({ releasedAfter: '2026-10-27', sort: 'rating' });
+    expect(parsed.releasedAfter).toBeInstanceOf(Date);
+    expect(parsed.sort).toBe('rating');
+    expect(gameSearchQuerySchema.parse({}).sort).toBe('popularity');
+  });
+});
+
 describe('game search query schema', () => {
   it('accepts minHours / minRating as numbers and rejects out-of-range values', () => {
     expect(gameSearchQuerySchema.parse({ minHours: '40', minRating: '85' })).toMatchObject({ minHours: 40, minRating: 85, limit: 20 });

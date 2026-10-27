@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Clock, Compass, Gamepad2, Search, Star, Swords } from 'lucide-react';
+import { Clock, Compass, Flame, Gamepad2, Monitor, Search, Sparkles, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCard, GameCardSkeleton } from '@/components/games/GameCard.jsx';
 import { DiscoveryShelf } from '@/components/games/DiscoveryShelf.jsx';
+import { HeroCarousel } from '@/components/explore/HeroCarousel.jsx';
 import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { getErrorInfo } from '@/services/api.js';
 import { searchGames } from '@/services/gamesApi.js';
 
 const PAGE_SIZE = 24;
 const DEBOUNCE_MS = 300;
+const DAY_MS = 86_400_000;
+const SELECT = 'h-11 rounded-control border border-border bg-surface-raised px-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent';
 
 const GENRES = [
   { id: 'all', label: 'All Games' },
@@ -25,37 +28,53 @@ const GENRES = [
   { id: 'Strategy', label: 'Strategy' },
 ];
 
-// Curated shelves. Each is its own catalog query, so it is filled from the whole catalog and ordered by
-// popularity (the API's default order), not picked from whatever the main list happened to load.
-// The `params` objects are module constants so a shelf only reloads when it is retried.
-const SHELVES = [
-  {
-    id: 'acclaimed',
-    title: 'Critically Acclaimed Masterpieces',
-    subtitle: 'Rated 80+ by critics and players',
-    icon: Star,
-    params: { minRating: 80 },
-  },
-  {
-    id: 'quick-wins',
-    title: 'Quick Weekend Wins',
-    subtitle: 'Under 10 hours to beat',
-    icon: Clock,
-    params: { maxHours: 10 },
-  },
-  {
-    id: 'epic-rpgs',
-    title: 'Massive 40h+ Epic RPGs',
-    subtitle: 'Vast worlds to get lost in',
-    icon: Swords,
-    params: { genre: 'Role-playing (RPG)', minHours: 40 },
-  },
+// Catalog platform names as IGDB spells them (what the `platform` filter matches).
+const PLATFORMS = ['PC (Microsoft Windows)', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X|S', 'Xbox One', 'Nintendo Switch'];
+const platformLabel = (p) => p.replace(/\s*\(.*\)\s*$/, '');
+
+// How long a game takes (main story) and how well it is rated: both map onto catalog filters.
+const LENGTHS = {
+  short: { label: 'Under 10 hours', params: { maxHours: 10 } },
+  medium: { label: '10 to 20 hours', params: { minHours: 10, maxHours: 20 } },
+  long: { label: '40+ hours', params: { minHours: 40 } },
+};
+const RATINGS = { 70: '70+', 80: '80+', 90: '90+' };
+
+const isoDaysAgo = (days, from = Date.now()) => new Date(from - days * DAY_MS).toISOString().slice(0, 10);
+
+// The rails of the default view. Each is its own catalog query, ordered by popularity unless it says otherwise, and
+// starts loading only when it nears the screen. The `params` objects are module constants so a rail only reloads
+// when it is retried.
+// A function, not a constant: "new" is relative to today, so the cutoff is worked out when the page is shown.
+const buildRails = (today) => [
+  { id: 'pc', title: 'Popular on PC', subtitle: 'What PC players are into', icon: Monitor, params: { platform: PLATFORMS[0] } },
+  { id: 'top', title: 'Top rated', subtitle: 'Best rated by critics and players', icon: Star, params: { sort: 'rating', minRating: 80 } },
+  { id: 'new', title: 'New & upcoming', subtitle: 'Out in the last two months or on the way', icon: Sparkles, params: { releasedAfter: isoDaysAgo(60, today) } },
+  { id: 'short', title: 'Under 10 hours', subtitle: 'Quick weekend wins', icon: Clock, params: { maxHours: 10 } },
+  ...GENRES.filter((g) => g.id !== 'all').map((g) => ({ id: `genre-${g.id}`, title: g.label, subtitle: 'Popular in this genre', icon: Flame, params: { genre: g.id } })),
 ];
+
+// The catalog query behind the main list for the current URL.
+function listParams(params) {
+  const genre = params.get('genre');
+  const length = LENGTHS[params.get('length')];
+  const rating = RATINGS[params.get('rating')] ? Number(params.get('rating')) : undefined;
+  return {
+    q: params.get('q') || undefined,
+    genre: genre && genre !== 'all' ? genre : undefined,
+    platform: PLATFORMS.includes(params.get('platform')) ? params.get('platform') : undefined,
+    ...length?.params,
+    minRating: rating,
+  };
+}
 
 export default function Explore() {
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const selectedGenre = params.get('genre') ?? 'all';
+  const platform = PLATFORMS.includes(params.get('platform')) ? params.get('platform') : '';
+  const length = LENGTHS[params.get('length')] ? params.get('length') : '';
+  const rating = RATINGS[params.get('rating')] ? params.get('rating') : '';
 
   const [text, setText] = useState(q);
   // When the URL's query changes from outside (back/forward, a link), show it in the box. The box's own
@@ -88,21 +107,17 @@ export default function Explore() {
     return () => clearTimeout(timer);
   }, [text, q, params, setParams]);
 
+  const query = params.toString(); // every filter lives in the URL, so one string is the dependency
   const load = useCallback(async () => {
     const id = (requestId.current += 1);
     setState((s) => ({ ...s, status: 'loading', error: null }));
     try {
-      const data = await searchGames({
-        q: q || undefined,
-        genre: selectedGenre !== 'all' ? selectedGenre : undefined,
-        limit: PAGE_SIZE,
-      });
+      const data = await searchGames({ ...listParams(new URLSearchParams(query)), limit: PAGE_SIZE });
       if (id === requestId.current) setState({ status: 'success', ...data, error: null });
     } catch (err) {
-      if (id === requestId.current)
-        setState((s) => ({ ...s, status: 'error', error: getErrorInfo(err).message }));
+      if (id === requestId.current) setState((s) => ({ ...s, status: 'error', error: getErrorInfo(err).message }));
     }
-  }, [q, selectedGenre]);
+  }, [query]);
 
   useEffect(() => {
     load();
@@ -115,12 +130,7 @@ export default function Explore() {
     const id = requestId.current;
     setLoadingMore(true);
     try {
-      const data = await searchGames({
-        q: q || undefined,
-        genre: selectedGenre !== 'all' ? selectedGenre : undefined,
-        limit: PAGE_SIZE,
-        cursor: state.nextCursor,
-      });
+      const data = await searchGames({ ...listParams(params), limit: PAGE_SIZE, cursor: state.nextCursor });
       if (id === requestId.current) {
         setState((s) => ({ ...s, items: [...s.items, ...data.items], nextCursor: data.nextCursor }));
       }
@@ -131,41 +141,75 @@ export default function Explore() {
     }
   }
 
-  function handleGenreChange(genreId) {
+  function setFilter(name, value) {
     const next = new URLSearchParams(params);
-    if (genreId === 'all') next.delete('genre');
-    else next.set('genre', genreId);
+    if (!value || value === 'all') next.delete(name);
+    else next.set(name, value);
     setParams(next);
   }
 
-  const isDefaultBrowse = !q && selectedGenre === 'all';
+  const day = isoDaysAgo(0);
+  const rails = useMemo(() => buildRails(Date.parse(day)), [day]);
+  const filtered = Boolean(selectedGenre !== 'all' || platform || length || rating);
+  const isDefaultBrowse = !q && !filtered;
 
   return (
     <section className="flex flex-col gap-6 pb-12">
-      <ArtHeader
-        title="Explore Catalog"
-        subtitle="Discover new releases, legendary classics, and find your next game."
-        seed="explore"
-      />
+      {isDefaultBrowse ? (
+        <>
+          <h1 className="font-heading text-2xl font-bold">Explore Catalog</h1>
+          <HeroCarousel />
+        </>
+      ) : (
+        <ArtHeader title="Explore Catalog" subtitle="Discover new releases, legendary classics, and find your next game." seed="explore" />
+      )}
 
-      {/* Search Input */}
-      <div className="relative max-w-xl">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
-          aria-hidden="true"
-        />
-        <Input
-          type="search"
-          aria-label="Search games"
-          placeholder="Search for a game"
-          className="pl-9"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
+      {/* Search, and the filters for the list below (all of them live in the URL) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-52 max-w-xl flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+          <Input
+            type="search"
+            aria-label="Search games"
+            placeholder="Search for a game"
+            className="h-11 pl-9"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </div>
+        <select aria-label="Filter by platform" value={platform} onChange={(e) => setFilter('platform', e.target.value)} className={SELECT}>
+          <option value="">All platforms</option>
+          {PLATFORMS.map((p) => (
+            <option key={p} value={p}>
+              {platformLabel(p)}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Filter by length" value={length} onChange={(e) => setFilter('length', e.target.value)} className={SELECT}>
+          <option value="">Any length</option>
+          {Object.entries(LENGTHS).map(([id, l]) => (
+            <option key={id} value={id}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Filter by rating" value={rating} onChange={(e) => setFilter('rating', e.target.value)} className={SELECT}>
+          <option value="">Any rating</option>
+          {Object.entries(RATINGS).map(([id, label]) => (
+            <option key={id} value={id}>
+              Rated {label}
+            </option>
+          ))}
+        </select>
+        {filtered && (
+          <Button variant="ghost" onClick={() => setParams(q ? { q } : {})}>
+            Clear filters
+          </Button>
+        )}
       </div>
 
-      {/* Genre Filter Pills */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {/* Genre pills */}
+      <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
         {GENRES.map((g) => {
           const active = selectedGenre === g.id;
           return (
@@ -173,11 +217,9 @@ export default function Explore() {
               key={g.id}
               type="button"
               aria-pressed={active}
-              onClick={() => handleGenreChange(g.id)}
-              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors ${
-                active
-                  ? 'border-accent bg-accent text-white shadow-sm'
-                  : 'border-border bg-surface text-text-muted hover:text-text hover:bg-surface-raised'
+              onClick={() => setFilter('genre', g.id)}
+              className={`inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+                active ? 'border-accent bg-accent text-accent-fg shadow-sm' : 'border-border bg-surface text-text-muted hover:bg-surface-raised hover:text-text'
               }`}
             >
               {g.label}
@@ -186,23 +228,18 @@ export default function Explore() {
         })}
       </div>
 
-      {/* Curated shelves (default browse only). They load in parallel with the main list and
-          independently of it, so neither one waits for, or is hidden by, the other. */}
+      {/* Rails (default browse only). Each loads on its own as it nears the screen, so none waits for, or hides, another. */}
       {isDefaultBrowse && (
-        <div className="flex flex-col gap-6">
-          {SHELVES.map(({ id, ...shelf }) => (
-            <DiscoveryShelf key={id} {...shelf} />
+        <div className="flex flex-col gap-8">
+          {rails.map(({ id, ...rail }) => (
+            <DiscoveryShelf key={id} {...rail} />
           ))}
         </div>
       )}
 
       {/* Loading Skeleton */}
       {state.status === 'loading' && (
-        <div
-          className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
-          role="status"
-          aria-label="Loading games"
-        >
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5" role="status" aria-label="Loading games">
           {Array.from({ length: 10 }, (_, i) => (
             <GameCardSkeleton key={i} />
           ))}
@@ -216,11 +253,7 @@ export default function Explore() {
       {state.status === 'success' && (
         <>
           {state.warnings.map((w) => (
-            <p
-              key={w.code}
-              role="status"
-              className="rounded-control border border-border bg-surface px-3 py-2 text-sm text-text-muted"
-            >
+            <p key={w.code} role="status" className="rounded-control border border-border bg-surface px-3 py-2 text-sm text-text-muted">
               {w.message}
             </p>
           ))}
@@ -228,24 +261,23 @@ export default function Explore() {
           {state.items.length === 0 ? (
             <EmptyState
               icon={Compass}
-              title={q ? `No games found for "${q}"` : 'No games yet'}
+              title={q ? `No games found for "${q}"` : filtered ? 'No games match these filters' : 'No games yet'}
               description={
                 q
-                  ? 'Try a different spelling or a shorter search.'
-                  : 'Search for a game by name to add it to the catalog.'
+                  ? 'Try a different spelling, a shorter search, or fewer filters.'
+                  : filtered
+                    ? 'Loosen a filter, or clear them all.'
+                    : 'Search for a game by name to add it to the catalog.'
               }
               suggestions
             />
           ) : (
             <div className="flex flex-col gap-8">
-              {/* Main Games Grid */}
               <div className="flex flex-col gap-4">
-                {isDefaultBrowse && (
-                  <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Gamepad2 className="h-4 w-4 text-accent" />
-                    <h2 className="font-heading text-base font-bold text-text">All Games</h2>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 border-t border-border pt-4">
+                  <Gamepad2 className="h-4 w-4 text-accent" aria-hidden="true" />
+                  <h2 className="font-heading text-lg font-bold text-text">{isDefaultBrowse ? 'All Games' : 'Results'}</h2>
+                </div>
                 <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                   {state.items.map((game) => (
                     <li key={game.id}>
@@ -256,12 +288,7 @@ export default function Explore() {
               </div>
 
               {state.nextCursor && (
-                <Button
-                  variant="secondary"
-                  className="self-center"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                >
+                <Button variant="secondary" className="self-center" onClick={loadMore} disabled={loadingMore}>
                   {loadingMore ? 'Loading…' : 'Load more'}
                 </Button>
               )}

@@ -86,14 +86,14 @@ export function SharedCover({ slug, className = '', children }) {
   );
 }
 
-export function GameCard({ game }) {
+export function GameCard({ game, shared = true }) {
   const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
   return (
     <Link
       to={`/games/${game.slug}`}
       className="group flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:bg-surface-raised"
     >
-      <SharedCover slug={game.slug}>
+      <SharedCover slug={shared ? game.slug : null}>
         <GameCover game={game} />
       </SharedCover>
       <div className="flex flex-col gap-1 p-3">

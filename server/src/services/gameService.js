@@ -115,7 +115,7 @@ export function createGameService({
     return { failed: null };
   }
 
-  function buildFilter({ q, genre, platform, maxHours, minHours, minRating, cursor }) {
+  function buildFilter({ q, genre, platform, maxHours, minHours, minRating, releasedAfter, releasedBefore, sort, cursor }) {
     // DLC, bundles and editions are hidden from every catalog read.
     const filter = { hidden: { $ne: true } };
     if (q) filter.$text = { $search: q };
@@ -124,7 +124,10 @@ export function createGameService({
     if (maxHours || minHours) {
       filter['timeToBeat.main'] = { ...(minHours && { $gte: minHours }), ...(maxHours && { $lte: maxHours }) };
     }
-    if (minRating) filter.totalRating = { $gte: minRating };
+    if (minRating || sort === 'rating') filter.totalRating = { $gte: minRating ?? 1 }; // a rating sort leaves out unrated games
+    if (releasedAfter || releasedBefore) {
+      filter.releaseDate = { ...(releasedAfter && { $gte: releasedAfter }), ...(releasedBefore && { $lte: releasedBefore }) };
+    }
     const after = cursor ? decodeCursor(cursor) : null;
     if (after) {
       filter.$or = [{ popularity: { $lt: after.popularity } }, { popularity: after.popularity, slug: { $gt: after.slug } }];
@@ -133,12 +136,14 @@ export function createGameService({
   }
 
   async function queryLocal(params) {
+    const byRating = params.sort === 'rating';
     const rows = await Game.find(buildFilter(params))
-      .sort({ popularity: -1, slug: 1 })
+      .sort(byRating ? { totalRating: -1, slug: 1 } : { popularity: -1, slug: 1 })
       .limit(params.limit + 1)
       .lean();
     const page = rows.slice(0, params.limit);
-    return { items: page.map(toGameDto), nextCursor: rows.length > params.limit ? encodeCursor(page[page.length - 1]) : null };
+    // the rating order is for shelves: no cursor, so no paging (the schema refuses a cursor with it)
+    return { items: page.map(toGameDto), nextCursor: !byRating && rows.length > params.limit ? encodeCursor(page[page.length - 1]) : null };
   }
 
   return {

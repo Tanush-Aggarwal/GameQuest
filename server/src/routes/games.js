@@ -11,6 +11,10 @@ export function createGamesRouter({ authService, gameService, trailerService }) 
 
   // Search and stale-game refreshes can fan out to IGDB, so they share their own bucket (client debounces typing).
   const searchLimiter = createRateLimiter({ max: 300 });
+  // Browsing (Explore's carousel and rails, no search text) only reads the local catalog and never reaches IGDB, and one page
+  // visit makes about a dozen such reads, so it has a roomier bucket of its own, per account.
+  const browseLimiter = createRateLimiter({ max: 1500, keyGenerator: (req) => `games-browse:${req.auth.userId}` });
+  const listLimiter = (req, res, next) => (req.query.q ? searchLimiter : browseLimiter)(req, res, next);
   // "Wrong trailer?" drops a video for everyone, so each account only gets a few an hour.
   const reportLimiter = createRateLimiter({
     max: 20,
@@ -20,7 +24,7 @@ export function createGamesRouter({ authService, gameService, trailerService }) 
   });
 
   router.use(createRequireAuth(authService));
-  router.get('/', searchLimiter, validate(gameSearchQuerySchema, 'query'), controller.search);
+  router.get('/', listLimiter, validate(gameSearchQuerySchema, 'query'), controller.search);
   router.get('/:slug', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.get);
   router.get('/:slug/trailer', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.getTrailers);
   router.post(

@@ -71,14 +71,8 @@ export function GameLibraryPanel({ game, state }) {
         </>
       ) : (
         <>
-          <Button onClick={() => add('backlog')} disabled={busy}>
-            <Plus className="h-4 w-4" aria-hidden="true" /> Add to backlog
-          </Button>
-          <Button variant="secondary" onClick={() => add('wishlist')} disabled={busy}>
-            Wishlist
-          </Button>
-          <Button variant="secondary" onClick={() => add('playing')} disabled={busy}>
-            Start playing
+          <Button onClick={() => add('backlog')} disabled={busy} className="bg-[#C8F135] text-[#080A08] hover:brightness-110">
+            <Plus className="h-4 w-4" aria-hidden="true" /> Add to library
           </Button>
         </>
       )}

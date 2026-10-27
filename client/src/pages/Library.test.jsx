@@ -7,11 +7,15 @@ const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
 vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn(), addToLibrary: vi.fn(), changeStatus: vi.fn(), removeFromLibrary: vi.fn() }));
 vi.mock('@/services/steamApi.js', () => ({ getSteamStatus: vi.fn(), syncSteam: vi.fn() }));
-vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getTrailers: vi.fn().mockResolvedValue([]) }));
+vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getTrailers: vi.fn().mockResolvedValue([]), getGameRequirements: vi.fn().mockResolvedValue({ available: false, reason: 'Not available' }) }));
+vi.mock('@/services/socialApi.js', () => ({ listFriends: vi.fn().mockResolvedValue({ friends: [] }) }));
+vi.mock('@/services/progressApi.js', () => ({ listLogs: vi.fn().mockResolvedValue({ items: [] }), listJournalEntries: vi.fn().mockResolvedValue({ items: [] }) }));
+vi.mock('@/services/recommendationsApi.js', () => ({ sendRecommendation: vi.fn() }));
 
 const { listLibrary, addToLibrary, changeStatus, removeFromLibrary } = await import('@/services/libraryApi.js');
 const { getGame, getTrailers } = await import('@/services/gamesApi.js');
 const { getSteamStatus, syncSteam } = await import('@/services/steamApi.js');
+const { listFriends } = await import('@/services/socialApi.js');
 const { ArtContext } = await import('@/components/art/artContext.js');
 const { default: Library } = await import('./Library.jsx');
 const { default: Game } = await import('./Game.jsx');
@@ -40,6 +44,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   getTrailers.mockResolvedValue([]); // the game page asks for a trailer; none here
   getSteamStatus.mockResolvedValue({ linked: false });
+  listFriends.mockResolvedValue({ friends: [] });
 });
 
 describe('Library page', () => {
@@ -367,10 +372,11 @@ describe('Game page library panel', () => {
     listLibrary.mockResolvedValue({ items: [] });
     addToLibrary.mockResolvedValue(entry('1', 'Hades', 'backlog'));
     renderLibrary('/games/hades');
-    await userEvent.click(await screen.findByRole('button', { name: 'Add to backlog' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to library' }));
     expect(addToLibrary).toHaveBeenCalledWith({ gameId: 'g-hades', status: 'backlog' });
-    expect(await screen.findByRole('combobox', { name: /Move Hades/ })).toBeInTheDocument();
-    expect(screen.getByText('Backlog')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Backlog' }));
+    expect(await screen.findByRole('menuitem', { name: 'Open in library' })).toBeInTheDocument();
+    expect(screen.getAllByText('Backlog').length).toBeGreaterThan(0);
   });
 
   it('shows the current status when the game is already in the library', async () => {

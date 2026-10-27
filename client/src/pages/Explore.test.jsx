@@ -5,7 +5,10 @@ import { vi } from 'vitest';
 
 const reducedMotion = vi.hoisted(() => ({ value: false }));
 vi.mock('framer-motion', async (importOriginal) => ({ ...(await importOriginal()), useReducedMotion: () => reducedMotion.value }));
-vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getGameFriends: vi.fn().mockResolvedValue([]), getTrailers: vi.fn().mockResolvedValue([]) }));
+vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getGameFriends: vi.fn().mockResolvedValue([]), getTrailers: vi.fn().mockResolvedValue([]), getGameRequirements: vi.fn().mockResolvedValue({ available: false, reason: 'Not available' }) }));
+vi.mock('@/services/socialApi.js', () => ({ listFriends: vi.fn().mockResolvedValue({ friends: [] }) }));
+vi.mock('@/services/progressApi.js', () => ({ listLogs: vi.fn().mockResolvedValue({ items: [] }), listJournalEntries: vi.fn().mockResolvedValue({ items: [] }) }));
+vi.mock('@/services/recommendationsApi.js', () => ({ sendRecommendation: vi.fn() }));
 vi.mock('@/services/reviewApi.js', () => ({ listReviewsForGame: vi.fn().mockResolvedValue({ items: [] }) }));
 vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn(), addToLibrary: vi.fn(), changeStatus: vi.fn(), removeFromLibrary: vi.fn() }));
 
@@ -42,6 +45,8 @@ const renderAtWithContainer = renderAt;
 const { listLibrary } = await import('@/services/libraryApi.js');
 const { listReviewsForGame } = await import('@/services/reviewApi.js');
 const { getGameFriends, getTrailers } = await import('@/services/gamesApi.js');
+const { getGameRequirements } = await import('@/services/gamesApi.js');
+const { listFriends } = await import('@/services/socialApi.js');
 
 // The main grid asks for 24 games, the carousel for 8 and every rail for 12 with its own filter.
 const kindOf = (p) => (p.limit === 12 ? 'rail' : p.limit === 8 ? 'carousel' : 'main');
@@ -69,6 +74,8 @@ beforeEach(() => {
   listReviewsForGame.mockResolvedValue({ items: [] });
   getGameFriends.mockResolvedValue([]);
   getTrailers.mockResolvedValue([]);
+  getGameRequirements.mockResolvedValue({ available: false, reason: 'Not available' });
+  listFriends.mockResolvedValue({ friends: [] });
 });
 
 describe('Explore', () => {
@@ -389,9 +396,9 @@ describe('Explore trending carousel', () => {
     expect(within(region).getByRole('link', { name: 'View game: Trending 1' })).toHaveAttribute('href', '/games/t1');
     expect(within(region).getByRole('group', { name: '1 of 5' })).toBeInTheDocument();
     const dots = within(within(region).getByRole('group', { name: 'Choose a slide' })).getAllByRole('button');
-    expect(dots.map((d) => d.getAttribute('aria-label'))).toEqual(['Show Trending 1', 'Show Trending 2', 'Show Trending 3', 'Show Trending 4', 'Show Trending 5']);
-    expect(dots[0]).toHaveAttribute('aria-current', 'true');
-    expect(dots[0].className).toMatch(/h-11/); // 44 px hit area
+    expect(dots.map((d) => d.getAttribute('aria-label'))).toEqual(['Slide 1: Trending 1', 'Slide 2: Trending 2', 'Slide 3: Trending 3', 'Slide 4: Trending 4', 'Slide 5: Trending 5']);
+    expect(dots[0]).toHaveAttribute('aria-pressed', 'true');
+    expect(dots[0].className).toMatch(/h-2\.5/);
     expect(calls('carousel')[0]).toEqual({ limit: 8 });
   });
 
@@ -404,7 +411,7 @@ describe('Explore trending carousel', () => {
     await userEvent.click(within(region).getByRole('button', { name: 'Previous slide' }));
     await userEvent.click(within(region).getByRole('button', { name: 'Previous slide' })); // wraps to the last
     expect(within(region).getByRole('heading', { level: 2 })).toHaveTextContent('Trending 5');
-    await userEvent.click(within(region).getByRole('button', { name: 'Show Trending 3' }));
+    await userEvent.click(within(region).getByRole('button', { name: 'Slide 3: Trending 3' }));
     expect(within(region).getByRole('heading', { level: 2 })).toHaveTextContent('Trending 3');
   });
 
@@ -425,11 +432,11 @@ describe('Explore trending carousel', () => {
     await act(async () => vi.advanceTimersByTime(ADVANCE));
     expect(title()).toBe('Trending 3');
 
-    fireEvent.click(within(region).getByRole('button', { name: 'Pause slideshow' }));
+    fireEvent.click(within(region).getByRole('button', { name: 'Pause auto-advance' }));
     await act(async () => vi.advanceTimersByTime(ADVANCE * 3));
     expect(title()).toBe('Trending 3');
-    expect(within(region).getByRole('button', { name: 'Play slideshow' })).toBeInTheDocument();
-    fireEvent.click(within(region).getByRole('button', { name: 'Play slideshow' }));
+    expect(within(region).getByRole('button', { name: 'Resume auto-advance' })).toBeInTheDocument();
+    fireEvent.click(within(region).getByRole('button', { name: 'Resume auto-advance' }));
     await act(async () => vi.advanceTimersByTime(ADVANCE));
     expect(title()).toBe('Trending 4');
   });
@@ -455,7 +462,7 @@ describe('Explore trending carousel', () => {
     expect(within(region).getByRole('heading', { level: 2 })).toHaveTextContent('Trending 2');
     expect(within(region).getByRole('button', { name: 'Next slide' })).toBe(next); // the same element, not a new one
     expect(next).toHaveFocus();
-    const dot = within(region).getByRole('button', { name: 'Show Trending 4' });
+    const dot = within(region).getByRole('button', { name: 'Slide 4: Trending 4' });
     dot.focus();
     await userEvent.keyboard('{Enter}');
     expect(dot).toHaveFocus();
@@ -524,7 +531,7 @@ describe('Game page', () => {
     getGame.mockResolvedValue(game('hades', 'Hades'));
     renderAt('/games/hades');
     expect(await screen.findByRole('heading', { name: 'Hades' })).toBeInTheDocument();
-    expect(screen.getByText('20 h')).toBeInTheDocument();
+    expect(screen.getByText('20h')).toBeInTheDocument();
   });
 
   it('shows a not-found empty state for a 404', async () => {
@@ -544,12 +551,10 @@ describe('Game page', () => {
     renderAt('/games/hades');
     expect(await screen.findByRole('heading', { name: 'Hades' })).toBeInTheDocument();
 
-    const reviewsTab = screen.getByRole('tab', { name: /^Reviews/ });
-    await userEvent.click(reviewsTab);
+    const communityTab = screen.getByRole('tab', { name: 'Community' });
+    await userEvent.click(communityTab);
     expect(await screen.findByText('No reviews yet')).toBeInTheDocument();
-
-    const friendsTab = screen.getByRole('tab', { name: 'Friends' });
-    await userEvent.click(friendsTab);
+    expect(screen.getByText('Friends who have the game')).toBeInTheDocument();
     expect(await screen.findByText('No friends playing yet')).toBeInTheDocument();
   });
 });

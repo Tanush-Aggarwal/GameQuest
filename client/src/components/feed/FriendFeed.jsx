@@ -13,9 +13,9 @@ export function FriendFeed() {
         loadPage={getFeed}
         renderEmpty={(page) =>
           page.friendCount === 0 ? (
-            <EmptyState icon={Users} title="No friends yet" description="Add friends to see what they’re playing, finishing and reviewing." actionLabel="Find friends" actionTo="/friends?tab=find" />
+            <EmptyState icon={Users} title="No friends yet" description="Add friends to see what they’re playing, finishing and reviewing." actionLabel="Find friends" actionTo="/friends?tab=find" headingLevel="h3" />
           ) : (
-            <EmptyState icon={Users} title="Nothing new from your friends" description="When they start, finish or review a game, it shows up here." />
+            <EmptyState icon={Users} title="Nothing new from your friends" description="When they start, finish or review a game, it shows up here." headingLevel="h3" />
           )
         }
       />

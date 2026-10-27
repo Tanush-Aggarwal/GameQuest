@@ -392,6 +392,7 @@ export default function Library() {
           }
           actionLabel="Find games"
           actionTo="/explore"
+          suggestions={tab === 'all'}
         />
       )}
 

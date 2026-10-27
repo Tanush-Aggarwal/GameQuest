@@ -144,6 +144,8 @@ export function PlayNextSection({ playNext }) {
           description="Add games to your backlog and we'll suggest what to play next."
           actionLabel="Find games"
           actionTo="/explore"
+          suggestions
+          headingLevel="h3"
         />
       )}
 

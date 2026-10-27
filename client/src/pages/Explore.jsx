@@ -234,6 +234,7 @@ export default function Explore() {
                   ? 'Try a different spelling or a shorter search.'
                   : 'Search for a game by name to add it to the catalog.'
               }
+              suggestions
             />
           ) : (
             <div className="flex flex-col gap-8">

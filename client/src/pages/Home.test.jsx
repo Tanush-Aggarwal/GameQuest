@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -8,6 +8,7 @@ vi.mock('@/services/sessionsApi.js', () => ({ listSessions: vi.fn() }));
 vi.mock('@/services/recommendationsApi.js', () => ({ listInbox: vi.fn() }));
 
 const { AuthContext } = await import('@/features/auth/AuthContext.jsx');
+const { ArtContext } = await import('@/components/art/artContext.js');
 const progress = await import('@/services/progressApi.js');
 const social = await import('@/services/socialApi.js');
 const sessions = await import('@/services/sessionsApi.js');
@@ -54,6 +55,22 @@ describe('Home', () => {
     expect(screen.getByText('Waiting 12 days')).toBeInTheDocument();
   });
 
+  it('with nothing to suggest, shows a compact empty state with popular games to start from', async () => {
+    const popular = [1, 2, 3].map((n) => ({ id: `p${n}`, slug: `popular-${n}`, title: `Popular ${n}`, cover: null, backdrop: null }));
+    render(
+      <ArtContext.Provider value={{ pool: popular, suggestions: popular, status: 'ready', artFor: () => null }}>
+        <AuthContext.Provider value={{ user, status: 'authenticated' }}>
+          <MemoryRouter>
+            <Home />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      </ArtContext.Provider>,
+    );
+    expect(await screen.findByText('Nothing to recommend yet')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Find games' })).toHaveAttribute('href', '/explore');
+    const picks = screen.getAllByRole('list', { name: 'Popular right now' })[0];
+    expect(within(picks).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/games/popular-1', '/games/popular-2', '/games/popular-3']);
+  });
   it('keeps every section on game art, and a failing section does not blank the others', async () => {
     progress.getPlayNext.mockRejectedValue(new Error('down'));
     const { container } = render(

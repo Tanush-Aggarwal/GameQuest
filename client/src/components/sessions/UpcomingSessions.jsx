@@ -21,7 +21,7 @@ export function UpcomingSessions() {
       {status === 'loading' && <Skeleton className="h-20 w-full" role="status" aria-label="Loading sessions" />}
       {status === 'error' && <ErrorState message={error.message} onRetry={retry} />}
       {status === 'success' && data.items.length === 0 && (
-        <EmptyState icon={CalendarDays} title="No sessions planned" description="Schedule a game night and invite your friends." actionLabel="Schedule a session" actionTo="/sessions/new" />
+        <EmptyState icon={CalendarDays} title="No sessions planned" description="Schedule a game night and invite your friends." actionLabel="Schedule a session" actionTo="/sessions/new" headingLevel="h3" />
       )}
       {status === 'success' && data.items.length > 0 && (
         <ul className="flex flex-col gap-2">

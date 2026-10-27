@@ -284,7 +284,7 @@ function PublicCollections({ username }) {
   const { status, data, error, retry } = useAsync(load);
   if (status === 'loading') return <Skeleton className="h-40 w-full" role="status" aria-label="Loading collections" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
-  if (data.length === 0) return <EmptyState icon={Layers} title="No collections to show" description={`${username} hasn’t shared any collections with you.`} />;
+  if (data.length === 0) return <EmptyState headingLevel="h3" icon={Layers} title="No collections to show" description={`${username} hasn’t shared any collections with you.`} />;
   return (
     <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {data.map((c) => (
@@ -311,7 +311,7 @@ export default function UserProfile() {
 
       {status === 'error' &&
         (error.status === 404 ? (
-          <EmptyState icon={UserX} title="Player not found" description="There’s no player with that username, or they’re not available to you." actionLabel="Find people" actionTo="/friends?tab=find" />
+          <EmptyState headingLevel="h1" icon={UserX} title="Player not found" description="There’s no player with that username, or they’re not available to you." actionLabel="Find people" actionTo="/friends?tab=find" />
         ) : (
           <ErrorState message={error.message} onRetry={retry} />
         ))}
@@ -344,7 +344,7 @@ export default function UserProfile() {
           </div>
 
           {profile.restricted ? (
-            <EmptyState icon={Lock} title="This profile is private" description={`${profile.user.username} only shares their profile with ${profile.relation === 'none' ? 'friends' : 'approved players'}.`} />
+            <EmptyState headingLevel="h1" icon={Lock} title="This profile is private" description={`${profile.user.username} only shares their profile with ${profile.relation === 'none' ? 'friends' : 'approved players'}.`} />
           ) : (
             <>
               {/* Stat Tiles */}
@@ -372,7 +372,7 @@ export default function UserProfile() {
                 <ActivityList
                   loadPage={loadActivity}
                   showActor={false}
-                  renderEmpty={() => <EmptyState title="No activity to show" description={`When ${profile.user.username} plays, finishes or reviews a game, it appears here.`} />}
+                  renderEmpty={() => <EmptyState headingLevel="h3" title="No activity to show" description={`When ${profile.user.username} plays, finishes or reviews a game, it appears here.`} />}
                 />
               </section>
 

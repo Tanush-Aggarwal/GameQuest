@@ -255,6 +255,7 @@ export default function Game() {
       {status === 'error' &&
         (error.status === 404 ? (
           <EmptyState
+            headingLevel="h1"
             title="Game not found"
             description="This game isn't in the catalog yet. Try searching for it."
             actionLabel="Search games"

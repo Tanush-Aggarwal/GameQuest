@@ -68,6 +68,6 @@ describe('route guards', () => {
 
   it('unknown URLs show the not-found page', async () => {
     renderAt('/nope', { status: 'authenticated', user });
-    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
   });
 });

@@ -10,6 +10,7 @@ vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(
 
 const { listLibrary, addToLibrary, changeStatus, removeFromLibrary } = await import('@/services/libraryApi.js');
 const { getGame, getTrailers } = await import('@/services/gamesApi.js');
+const { ArtContext } = await import('@/components/art/artContext.js');
 const { default: Library } = await import('./Library.jsx');
 const { default: Game } = await import('./Game.jsx');
 
@@ -57,6 +58,29 @@ describe('Library page', () => {
     expect(screen.getByRole('link', { name: 'Find games' })).toHaveAttribute('href', '/explore');
   });
 
+  it('an empty library offers popular games to start from, but a filtered empty tab does not', async () => {
+    const popular = [1, 2, 3].map((n) => ({ id: `p${n}`, slug: `popular-${n}`, title: `Popular ${n}`, cover: null, backdrop: null }));
+    const withSuggestions = (path) =>
+      render(
+        <ArtContext.Provider value={{ pool: popular, suggestions: popular, status: 'ready', artFor: () => null }}>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/library" element={<Library />} />
+            </Routes>
+          </MemoryRouter>
+        </ArtContext.Provider>,
+      );
+    listLibrary.mockResolvedValue({ items: [], nextCursor: null, counts: counts() });
+    const all = withSuggestions('/library');
+    expect(await screen.findByText('Your library is empty')).toBeInTheDocument();
+    const picks = screen.getByRole('list', { name: 'Popular right now' });
+    expect(within(picks).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/games/popular-1', '/games/popular-2', '/games/popular-3']);
+    all.unmount();
+
+    withSuggestions('/library?status=backlog');
+    await screen.findByText('No backlog games');
+    expect(screen.queryByRole('list', { name: 'Popular right now' })).not.toBeInTheDocument();
+  });
   it('shows an error with Retry', async () => {
     listLibrary.mockRejectedValueOnce(new Error('down')).mockResolvedValueOnce({ items: [], nextCursor: null, counts: counts() });
     renderLibrary();

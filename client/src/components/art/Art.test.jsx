@@ -216,6 +216,35 @@ describe('ArtProvider', () => {
     await waitFor(() => expect(screen.getByTestId('pool')).toHaveTextContent(/^ready:$/));
   });
 
+  it('offers the popular games you do not already own as suggestions for empty states', async () => {
+    function Suggestions() {
+      const { suggestions } = useArt();
+      return <p data-testid="suggestions">{suggestions.map((g) => g.id).join(',')}</p>;
+    }
+    listLibrary.mockResolvedValue({ items: [{ game: game(1) }, { game: game(2) }] });
+    searchGames.mockResolvedValue({ items: [game(1), game(3), game(4, { slug: '' }), game(5, { backdrop: null, cover: null }), game(6)] });
+    render(
+      <ArtProvider>
+        <Suggestions />
+      </ArtProvider>,
+    );
+    // owned (g1) is left out; no slug or no art is not linkable/showable
+    await waitFor(() => expect(screen.getByTestId('suggestions')).toHaveTextContent(/^g3,g6$/));
+  });
+
+  it('caps the suggestions', async () => {
+    function Count() {
+      return <p data-testid="count">{useArt().suggestions.length}</p>;
+    }
+    listLibrary.mockResolvedValue({ items: [] });
+    searchGames.mockResolvedValue({ items: Array.from({ length: 24 }, (_, i) => game(i)) });
+    render(
+      <ArtProvider>
+        <Count />
+      </ArtProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('count')).toHaveTextContent('12'));
+  });
   it('skips a library entry whose game is missing', async () => {
     listLibrary.mockResolvedValue({ items: [{ game: null }, { game: game(1) }, {}] });
     searchGames.mockResolvedValue({ items: [] });

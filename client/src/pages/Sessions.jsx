@@ -63,6 +63,7 @@ export default function Sessions() {
           description="Plan a game night with your friends — pick a game, a time, and who to invite."
           actionLabel="Schedule a session"
           actionTo="/sessions/new"
+          suggestions
         />
       )}
 

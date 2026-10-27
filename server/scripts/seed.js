@@ -318,8 +318,9 @@ async function ensureGame(data) {
   const existing = (await Game.findOne({ 'externalIds.igdb': data.externalIds.igdb })) ?? (await Game.findOne({ slug: data.slug }));
   if (!existing) return Game.create({ ...data, source: 'igdb' });
   let changed = false;
-  // The slug of an existing game is left alone: `npm run catalog:fix` aligns slugs with IGDB's.
-  if (existing.cover !== data.cover) {
+  // The slug and art of an existing game are left alone: `catalog:fix` aligns slugs and `catalog:art` takes the art
+  // from IGDB. (Hand-typed image ids here were wrong for several games, so the seed never overwrites real art.)
+  if (!existing.cover && data.cover) {
     existing.cover = data.cover;
     changed = true;
   }

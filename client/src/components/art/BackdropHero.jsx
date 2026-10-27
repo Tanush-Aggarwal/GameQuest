@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils.js';
-import { artImageUrl, fallbackGradient } from '@/lib/art.js';
+import { artImageUrl, artImageSrcSet, fallbackGradient } from '@/lib/art.js';
 
 // Text sits on the left over --bg at 90-100%, so --text and --text-muted keep their contrast whatever the art is;
 // the bottom fades into the page. (tailwind.test.js compiles these classes.)
@@ -40,23 +40,30 @@ export function BackdropHero({ art, seed = '', as: Tag = 'section', className, c
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         {usable ? (
-          <img
-            key={url}
-            ref={(el) => {
-              if (el?.complete && el.naturalWidth > 0) accept(el);
-            }}
-            src={url}
-            alt=""
-            fetchPriority="high"
-            decoding="async"
-            onLoad={(e) => accept(e.currentTarget)}
-            onError={() => reject(url)}
-            className={cn(
-              'h-full w-full object-cover motion-safe:transition-opacity motion-safe:duration-500',
-              loadedUrl === url ? 'opacity-100' : 'opacity-0',
-              url === coverUrl && 'scale-125 blur-2xl',
-            )}
-          />
+          (() => {
+            const responsive = artImageSrcSet(url, url === backdropUrl ? 'hero' : 'cover');
+            return (
+              <img
+                key={url}
+                ref={(el) => {
+                  if (el?.complete && el.naturalWidth > 0) accept(el);
+                }}
+                src={url}
+                srcSet={responsive?.srcSet}
+                sizes={responsive?.sizes}
+                alt=""
+                fetchPriority="high"
+                decoding="async"
+                onLoad={(e) => accept(e.currentTarget)}
+                onError={() => reject(url)}
+                className={cn(
+                  'h-full w-full object-cover motion-safe:transition-opacity motion-safe:duration-500',
+                  loadedUrl === url ? 'opacity-100' : 'opacity-0',
+                  url === coverUrl && 'scale-125 blur-2xl',
+                )}
+              />
+            );
+          })()
         ) : (
           <div className="h-full w-full" style={{ backgroundImage: fallbackGradient(seed) }} />
         )}

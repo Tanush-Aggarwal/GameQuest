@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
@@ -25,6 +25,7 @@ vi.mock('@/services/socialApi.js', () => ({ listFriends: vi.fn().mockResolvedVal
 vi.mock('@/services/recommendationsApi.js', () => ({ sendRecommendation: vi.fn() }));
 
 const { getLibraryEntry, changeStatus, removeFromLibrary } = await import('@/services/libraryApi.js');
+const { setProgress } = await import('@/services/progressApi.js');
 const { default: LibraryEntry } = await import('./LibraryEntry.jsx');
 
 const entry = (extra = {}) => ({
@@ -116,5 +117,47 @@ describe('Library entry page actions', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove from library' }));
     await userEvent.click(within(screen.getByRole('group', { name: 'Confirm removal' })).getByRole('button', { name: 'Remove' }));
     expect(removeFromLibrary).toHaveBeenCalledWith('e1');
+  });
+
+  it('updates manual progress and disables save button after successful save', async () => {
+    getLibraryEntry.mockResolvedValue(entry({ manualProgress: 30 }));
+    setProgress.mockResolvedValue({ id: 'e1', manualProgress: 60 });
+    renderEntry();
+
+    const slider = await screen.findByLabelText('Manual progress');
+    const saveBtn = screen.getByRole('button', { name: 'Save progress' });
+    expect(saveBtn).toBeDisabled();
+
+    fireEvent.change(slider, { target: { value: '60' } });
+    expect(saveBtn).not.toBeDisabled();
+
+    await userEvent.click(saveBtn);
+    expect(setProgress).toHaveBeenCalledWith('e1', 60);
+    await waitFor(() => expect(saveBtn).toBeDisabled());
+  });
+
+  it('preserves tab state across switching tabs because panels are forceMounted', async () => {
+    getLibraryEntry.mockResolvedValue(entry({ manualProgress: 30 }));
+    renderEntry();
+
+    // Switch to Journal tab and click Add note
+    const journalTab = await screen.findByRole('tab', { name: 'Journal' });
+    await userEvent.click(journalTab);
+
+    const addNoteBtn = await screen.findByRole('button', { name: 'Add note' });
+    await userEvent.click(addNoteBtn);
+
+    const textarea = screen.getByPlaceholderText(/Where did you leave off/);
+    await userEvent.type(textarea, 'Reached chapter 4 boss');
+    expect(textarea).toHaveValue('Reached chapter 4 boss');
+
+    // Switch back to Progress tab
+    const progressTab = screen.getByRole('tab', { name: 'Progress' });
+    await userEvent.click(progressTab);
+    expect(screen.getByLabelText('Manual progress')).toBeInTheDocument();
+
+    // Switch back to Journal tab - draft note must still be there
+    await userEvent.click(journalTab);
+    expect(screen.getByPlaceholderText(/Where did you leave off/)).toHaveValue('Reached chapter 4 boss');
   });
 });

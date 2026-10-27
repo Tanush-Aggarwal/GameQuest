@@ -176,6 +176,60 @@ describe('libraryService', () => {
     expect(next.facets).toBeUndefined();
   });
 
+  it('sorts server-side by title, playtime, progress, and timeToBeat with cursor paging', async () => {
+    const ctx = setupLibrary();
+    const gA = await ctx.Game.create({ title: 'Zelda', slug: 'zelda', timeToBeat: { main: 50 }, genres: [], platforms: [] });
+    const gB = await ctx.Game.create({ title: 'Apex', slug: 'apex', timeToBeat: { main: 10 }, genres: [], platforms: [] });
+    const gC = await ctx.Game.create({ title: 'Celeste', slug: 'celeste', timeToBeat: { main: 8 }, genres: [], platforms: [] });
+
+    await ctx.LibraryEntry.create({
+      userId: 'u1',
+      gameId: gA._id,
+      status: 'playing',
+      manualProgress: 20,
+      ownerships: [{ platform: 'Switch', playtimeMin: 300 }],
+    });
+    await ctx.LibraryEntry.create({
+      userId: 'u1',
+      gameId: gB._id,
+      status: 'playing',
+      manualProgress: 90,
+      ownerships: [{ platform: 'PC', playtimeMin: 1200 }],
+    });
+    const eC = await ctx.LibraryEntry.create({
+      userId: 'u1',
+      gameId: gC._id,
+      status: 'backlog',
+      manualProgress: 50,
+      ownerships: [{ platform: 'PC', playtimeMin: 60 }],
+    });
+
+    // Sort title (A-Z)
+    const byTitle = await ctx.service.list('u1', { sort: 'title', limit: 10 });
+    expect(byTitle.items.map((e) => e.game.title)).toEqual(['Apex', 'Celeste', 'Zelda']);
+
+    // Sort playtime (most played first)
+    const byPlaytime = await ctx.service.list('u1', { sort: 'playtime', limit: 10 });
+    expect(byPlaytime.items.map((e) => e.game.title)).toEqual(['Apex', 'Zelda', 'Celeste']);
+
+    // Sort progress (highest progress first)
+    const byProgress = await ctx.service.list('u1', { sort: 'progress', limit: 10 });
+    expect(byProgress.items.map((e) => e.game.title)).toEqual(['Apex', 'Celeste', 'Zelda']);
+
+    // Sort timeToBeat (shortest first)
+    const byTtb = await ctx.service.list('u1', { sort: 'timeToBeat', limit: 10 });
+    expect(byTtb.items.map((e) => e.game.title)).toEqual(['Celeste', 'Apex', 'Zelda']);
+
+    // Cursor pagination on sorted results
+    const page1 = await ctx.service.list('u1', { sort: 'title', limit: 2 });
+    expect(page1.items.map((e) => e.game.title)).toEqual(['Apex', 'Celeste']);
+    expect(page1.nextCursor).toBe(String(eC._id));
+
+    const page2 = await ctx.service.list('u1', { sort: 'title', limit: 2, cursor: page1.nextCursor });
+    expect(page2.items.map((e) => e.game.title)).toEqual(['Zelda']);
+    expect(page2.nextCursor).toBeNull();
+  });
+
   it('removes an entry together with its history', async () => {
     const ctx = setupLibrary();
     const game = await makeGame(ctx, 'G');

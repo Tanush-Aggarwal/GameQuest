@@ -42,9 +42,9 @@ function ListSkeleton() {
   );
 }
 
-// A person's row sits on game art picked from their name, so the lists are never flat grey cards.
-const Row = ({ children, seed }) => (
-  <ArtPanel as="li" seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-3">
+// A person's row sits on their currently playing game art (or art picked from their name), so the lists are never flat grey cards.
+const Row = ({ children, art, seed }) => (
+  <ArtPanel as="li" art={art} seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-3">
     {children}
   </ArtPanel>
 );
@@ -101,8 +101,16 @@ function FriendsTab() {
   return (
     <ul className="flex flex-col gap-2">
       {friends.map((f) => (
-        <Row key={f.id} seed={f.username}>
-          <PlayerLink username={f.username} />
+        <Row key={f.id} art={f.currentlyPlaying} seed={f.username}>
+          <div className="flex min-w-0 items-center gap-3">
+            <PlayerLink username={f.username} />
+            {f.currentlyPlaying && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-bg/70 px-2.5 py-0.5 text-xs text-text-muted">
+                <span className="h-1.5 w-1.5 rounded-full bg-status-playing animate-pulse" aria-hidden="true" />
+                <span className="truncate max-w-[140px] md:max-w-[200px]">Playing {f.currentlyPlaying.title}</span>
+              </span>
+            )}
+          </div>
           <div className="flex gap-1">
             <ConfirmButton label="Unfriend" confirmLabel="Unfriend" icon={UserMinus} ariaLabel={`Unfriend ${f.username}`} onConfirm={() => remove(f, unfriend, `You and ${f.username} are no longer friends`)} />
             <ConfirmButton label="Block" confirmLabel="Block" icon={ShieldBan} ariaLabel={`Block ${f.username}`} onConfirm={() => remove(f, blockUser, `Blocked ${f.username}`)} />

@@ -10,6 +10,28 @@ export function artImageUrl(url, kind = 'backdrop') {
   return url.replace('/t_cover_big_2x/', '/t_cover_big/');
 }
 
+// Responsive srcSet for hero images: mobile phones load the 889px screenshot (or regular cover)
+// instead of 1080p, reducing mobile LCP by a factor of 4x.
+export function artImageSrcSet(url, _kind = 'hero') {
+  if (typeof url !== 'string' || !url) return null;
+  if (url.includes('/t_1080p/')) {
+    const mobile = url.replace('/t_1080p/', '/t_screenshot_big/');
+    return {
+      srcSet: `${mobile} 889w, ${url} 1920w`,
+      sizes: '(max-width: 640px) 100vw, 1920px',
+    };
+  }
+  if (url.includes('/t_cover_big/') || url.includes('/t_cover_big_2x/')) {
+    const mobile = url.replace('/t_cover_big_2x/', '/t_cover_big/');
+    const desktop = url.replace('/t_cover_big/', '/t_cover_big_2x/');
+    return {
+      srcSet: `${mobile} 264w, ${desktop} 528w`,
+      sizes: '(max-width: 640px) 100vw, 528px',
+    };
+  }
+  return null;
+}
+
 // Stable small number for a string, so a section always gets the same art.
 export function hashOf(text) {
   let hash = 0;

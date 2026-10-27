@@ -8,7 +8,7 @@ import { getErrorInfo } from '@/services/api.js';
 import { setProgress, logSession, listLogs, deleteLog, addJournalEntry, listJournalEntries, deleteJournalEntry } from '@/services/progressApi.js';
 
 // Full progress panel shown on the library-entry page: slider, play log, journal.
-export function ProgressPanel({ entryId, status, initialProgress = 0 }) {
+export function ProgressPanel({ entryId, status, initialProgress = 0, onProgressSaved }) {
   return (
     <Tabs.Root defaultValue="progress" className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)]">
       <Tabs.List aria-label="Progress, sessions and journal" className="flex border-b border-[var(--border)]">
@@ -23,13 +23,13 @@ export function ProgressPanel({ entryId, status, initialProgress = 0 }) {
         ))}
       </Tabs.List>
       <div className="p-4">
-        <Tabs.Content value="progress" className="focus-visible:outline-none">
-          <ProgressTab entryId={entryId} status={status} initialProgress={initialProgress} />
+        <Tabs.Content value="progress" forceMount className="data-[state=inactive]:hidden focus-visible:outline-none">
+          <ProgressTab entryId={entryId} status={status} initialProgress={initialProgress} onSaved={onProgressSaved} />
         </Tabs.Content>
-        <Tabs.Content value="sessions" className="focus-visible:outline-none">
+        <Tabs.Content value="sessions" forceMount className="data-[state=inactive]:hidden focus-visible:outline-none">
           <SessionsTab entryId={entryId} status={status} />
         </Tabs.Content>
-        <Tabs.Content value="journal" className="focus-visible:outline-none">
+        <Tabs.Content value="journal" forceMount className="data-[state=inactive]:hidden focus-visible:outline-none">
           <JournalTab entryId={entryId} />
         </Tabs.Content>
       </div>
@@ -38,9 +38,18 @@ export function ProgressPanel({ entryId, status, initialProgress = 0 }) {
 }
 // ── Progress tab ─────────────────────────────────────────────────────────────
 
-function ProgressTab({ entryId, status, initialProgress }) {
+function ProgressTab({ entryId, status, initialProgress, onSaved }) {
   const [value, setValue] = useState(initialProgress);
+  const [prevInitial, setPrevInitial] = useState(initialProgress);
+  const [currentInitial, setCurrentInitial] = useState(initialProgress);
   const [saving, setSaving] = useState(false);
+
+  // Adjust state during render if initialProgress changed from outside (e.g. status transition)
+  if (initialProgress !== prevInitial) {
+    setPrevInitial(initialProgress);
+    setValue(initialProgress);
+    setCurrentInitial(initialProgress);
+  }
 
   const blocked = status === 'wishlist';
   const completedBlock = status === 'completed';
@@ -49,10 +58,12 @@ function ProgressTab({ entryId, status, initialProgress }) {
     setSaving(true);
     try {
       await setProgress(entryId, value);
+      setCurrentInitial(value);
+      onSaved?.(value);
       toast.success(`Progress updated to ${value}%`);
     } catch (err) {
       toast.error(getErrorInfo(err).message);
-      setValue(initialProgress); // rollback
+      setValue(currentInitial); // rollback
     } finally {
       setSaving(false);
     }
@@ -80,7 +91,7 @@ function ProgressTab({ entryId, status, initialProgress }) {
             <p className="text-xs text-[var(--text-muted)]">Move back to Playing to change progress.</p>
           )}
           {!completedBlock && (
-            <Button variant="primary" onClick={save} disabled={saving || value === initialProgress}>
+            <Button variant="primary" onClick={save} disabled={saving || value === currentInitial}>
               {saving ? 'Saving…' : 'Save progress'}
             </Button>
           )}

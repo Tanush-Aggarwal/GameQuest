@@ -78,6 +78,17 @@ describe('Friends page — friends tab', () => {
     expect(screen.getByRole('link', { name: 'bea' })).toBeInTheDocument();
   });
 
+  it('shows what a friend is currently playing when exposed', async () => {
+    api.listFriends.mockResolvedValue([
+      {
+        ...friend('a1', 'alex'),
+        currentlyPlaying: { id: 'g1', title: 'Hades', slug: 'hades', cover: 'hades.jpg', backdrop: 'hades-bd.jpg' },
+      },
+    ]);
+    renderAt('/friends');
+    expect(await screen.findByText('Playing Hades')).toBeInTheDocument();
+  });
+
   it('shows an empty state with one action, and an error with Retry', async () => {
     api.listFriends.mockResolvedValueOnce([]);
     const first = renderAt('/friends');

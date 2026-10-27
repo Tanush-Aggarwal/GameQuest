@@ -1,4 +1,5 @@
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
+import { withParentArt } from './gameService.js';
 
 const MAX_RELATION_ROWS = 2000;
 
@@ -14,7 +15,7 @@ const toUserDto = (u) => ({ id: String(u._id), username: u.username });
 // Friendships are mutual (request → accept) and blocks override everything: a blocked pair can't
 // request, search, see or be seen by each other. This service also answers `isFriend`/`isBlocked`
 // for the other services' privacy filters.
-export function createFriendService({ Friendship, Block, User, eventBus, now = () => new Date() }) {
+export function createFriendService({ Friendship, Block, User, LibraryEntry, Game, eventBus, now = () => new Date() }) {
   async function isBlocked(a, b) {
     const hit = await Block.findOne({ $or: [{ blockerId: a, blockedId: b }, { blockerId: b, blockedId: a }] }).lean();
     return Boolean(hit);
@@ -144,10 +145,68 @@ export function createFriendService({ Friendship, Block, User, eventBus, now = (
 
     async listFriends(userId) {
       const rel = await loadRelations(userId);
-      const users = await usersById([...rel.friends.keys()]);
-      return [...rel.friends.entries()]
-        .filter(([id]) => users.has(id) && !rel.blockedMe.has(id))
-        .map(([id, f]) => ({ ...toUserDto(users.get(id)), since: f.acceptedAt ?? f.updatedAt ?? null }))
+      const friendIds = [...rel.friends.keys()];
+      const users = await usersById(friendIds);
+      const friends = [...rel.friends.entries()]
+        .filter(([id]) => users.has(id) && !rel.blockedMe.has(id));
+
+      const currentlyPlayingMap = new Map();
+      if (LibraryEntry && Game && friends.length) {
+        // Friends whose profile is not private
+        const visibleFriendIds = friends
+          .map(([id]) => id)
+          .filter((id) => users.get(id)?.privacy !== 'private');
+
+        if (visibleFriendIds.length) {
+          const entries = await LibraryEntry.find({
+            userId: { $in: visibleFriendIds },
+            status: 'playing',
+            hiddenFromFriends: false,
+          }).lean();
+
+          // Sort entries by most recently active first
+          entries.sort((a, b) => {
+            const timeA = new Date(a.lastPlayedAt ?? a.updatedAt ?? a.createdAt ?? 0).getTime();
+            const timeB = new Date(b.lastPlayedAt ?? b.updatedAt ?? b.createdAt ?? 0).getTime();
+            return timeB - timeA;
+          });
+
+          const friendGameMap = new Map();
+          for (const e of entries) {
+            const uid = String(e.userId);
+            if (!friendGameMap.has(uid)) {
+              friendGameMap.set(uid, e.gameId);
+            }
+          }
+
+          const gameIds = [...new Set(friendGameMap.values())];
+          if (gameIds.length) {
+            const rawGames = await Game.find({ _id: { $in: gameIds } }).lean();
+            const hydrated = await withParentArt(Game, rawGames);
+            const gamesById = new Map(hydrated.map((g) => [String(g._id), g]));
+
+            for (const [uid, gid] of friendGameMap.entries()) {
+              const g = gamesById.get(String(gid));
+              if (g) {
+                currentlyPlayingMap.set(uid, {
+                  id: String(g._id),
+                  title: g.title,
+                  slug: g.slug,
+                  cover: g.cover ?? null,
+                  backdrop: g.backdrop ?? null,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return friends
+        .map(([id, f]) => ({
+          ...toUserDto(users.get(id)),
+          since: f.acceptedAt ?? f.updatedAt ?? null,
+          currentlyPlaying: currentlyPlayingMap.get(id) ?? null,
+        }))
         .sort((a, b) => a.username.localeCompare(b.username));
     },
 

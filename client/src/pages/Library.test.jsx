@@ -242,14 +242,14 @@ describe('Library filter bar', () => {
     expect(screen.getByRole('button', { name: /^Dropped 1$/ })).toBeInTheDocument();
   });
 
-  it('sorts what is loaded without asking the server', async () => {
+  it('requests server-sorted library when sort option is changed', async () => {
     listLibrary.mockResolvedValue(page([entry('1', 'Zelda', 'playing'), entry('2', 'Alpha', 'playing')]));
     renderLibrary();
     await screen.findByRole('heading', { name: 'Zelda' });
-    const callsBefore = listLibrary.mock.calls.length;
+    listLibrary.mockResolvedValue(page([entry('2', 'Alpha', 'playing'), entry('1', 'Zelda', 'playing')]));
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Sort library' }), 'title');
-    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Alpha', 'Zelda']);
-    expect(listLibrary.mock.calls.length).toBe(callsBefore);
+    expect(listLibrary).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'title' }), expect.any(Object));
+    expect(await screen.findAllByRole('heading', { level: 3 })).toHaveLength(2);
   });
 
   it('with a brand new library there is no filter bar, only the empty state', async () => {

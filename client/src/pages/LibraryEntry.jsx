@@ -200,7 +200,12 @@ export default function LibraryEntry() {
       {game && <RecommendationModal game={{ id: entry.gameId, title: game.title }} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />}
 
       {/* Progress panel */}
-      <ProgressPanel entryId={id} status={entry.status} initialProgress={entry.manualProgress ?? 0} />
+      <ProgressPanel
+        entryId={id}
+        status={entry.status}
+        initialProgress={entry.manualProgress ?? 0}
+        onProgressSaved={(p) => setEntry({ ...entry, manualProgress: p })}
+      />
 
       {/* Reviews */}
       <ReviewPanel gameId={entry.gameId} status={entry.status} />

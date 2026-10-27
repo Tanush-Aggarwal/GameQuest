@@ -73,7 +73,7 @@ export function createApp({
   const progressService = _progressSvc ?? createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger });
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
   const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, eventBus });
-  const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, eventBus });
+  const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, LibraryEntry, Game, eventBus });
   const artService = createArtService({ Game, MediaCache, steam: steamAdapter, logger });
   const gameService =
     _gameSvc ??

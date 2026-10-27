@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const LIBRARY_STATUSES = ['wishlist', 'backlog', 'playing', 'completed', 'dropped'];
+export const LIBRARY_SORTS = ['default', 'title', 'playtime', 'progress', 'timeToBeat'];
 
 // Wishlist → Backlog → Playing → Completed | Dropped, plus the "undo" moves players really make
 // (pause a game, resume a dropped one, replay a completed one). The server enforces it; the client
@@ -31,6 +32,7 @@ export const libraryListQuerySchema = z.object({
   genre: z.string().trim().min(1).max(50).optional(),
   platform: z.string().trim().min(1).max(50).optional(),
   q: z.string().trim().min(1).max(100).optional(),
+  sort: z.enum(LIBRARY_SORTS).default('default').optional(),
   cursor: objectId.optional(),
   limit: z.coerce.number().int().min(1).max(50).default(24),
 });

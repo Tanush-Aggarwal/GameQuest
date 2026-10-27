@@ -29,7 +29,7 @@ function setup({ subscribe = true } = {}) {
   const Review = createFakeCollection({ unique: [['userId', 'gameId']] });
   const eventBus = createEventBus({ logger: { error: jest.fn() } });
 
-  const friendService = createFriendService({ Friendship, Block, User, eventBus });
+  const friendService = createFriendService({ Friendship, Block, User, LibraryEntry, Game, eventBus });
   const collectionService = createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });
   const activityService = createActivityService({ Activity, LibraryEntry, Game, User, Collection, social: friendService, logger });
   const profileService = createProfileService({ User, LibraryEntry, Review, friendService, activityService, collectionService, Game });
@@ -83,6 +83,48 @@ describe('friendService — requests and friendships', () => {
     expect((await ctx.friendService.listFriends(a.id)).map((f) => f.username)).toEqual(['bob']);
     expect((await ctx.friendService.listFriends(b.id)).map((f) => f.username)).toEqual(['alice']);
     await expect(ctx.friendService.accept(b.id, friendshipId)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('exposes a friend’s currently playing game with art, respecting hidden and privacy settings', async () => {
+    const ctx = setup();
+    const [a, b, c] = [await ctx.mkUser('alice'), await ctx.mkUser('bob'), await ctx.mkUser('carol')];
+    await ctx.befriend(a, b);
+    await ctx.befriend(a, c);
+
+    const hades = await ctx.mkGame('Hades');
+    const celeste = await ctx.mkGame('Celeste');
+
+    // Bob is playing Hades
+    await ctx.LibraryEntry.create({
+      userId: b.id,
+      gameId: hades._id,
+      status: 'playing',
+      hiddenFromFriends: false,
+    });
+
+    // Carol is playing Celeste but hid it from friends
+    await ctx.LibraryEntry.create({
+      userId: c.id,
+      gameId: celeste._id,
+      status: 'playing',
+      hiddenFromFriends: true,
+    });
+
+    const friendsOfA = await ctx.friendService.listFriends(a.id);
+    const bobRow = friendsOfA.find((f) => f.username === 'bob');
+    const carolRow = friendsOfA.find((f) => f.username === 'carol');
+
+    expect(bobRow.currentlyPlaying).toMatchObject({
+      title: 'Hades',
+      slug: 'hades',
+      cover: 'Hades.jpg',
+    });
+    expect(carolRow.currentlyPlaying).toBeNull();
+
+    // If Bob sets profile privacy to private, his currently playing game is hidden
+    await ctx.models.User.updateOne({ _id: b.id }, { $set: { privacy: 'private' } });
+    const friendsOfAAgain = await ctx.friendService.listFriends(a.id);
+    expect(friendsOfAAgain.find((f) => f.username === 'bob').currentlyPlaying).toBeNull();
   });
 
   it('treats crossed requests as an acceptance', async () => {

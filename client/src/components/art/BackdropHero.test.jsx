@@ -15,6 +15,8 @@ describe('BackdropHero', () => {
     const { container } = render(<BackdropHero art={{ backdrop: BACKDROP, cover: COVER }}>content</BackdropHero>);
     const img = imgOf(container);
     expect(img).toHaveAttribute('src', BACKDROP);
+    expect(img).toHaveAttribute('srcset', expect.stringContaining('/t_screenshot_big/bd.jpg 889w'));
+    expect(img).toHaveAttribute('sizes', '(max-width: 640px) 100vw, 1920px');
     expect(img).toHaveAttribute('fetchpriority', 'high');
     expect(img.className).toMatch(/opacity-0/);
     sized(img, 1920, 1080);

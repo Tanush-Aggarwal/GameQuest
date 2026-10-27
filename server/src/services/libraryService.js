@@ -95,9 +95,10 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
     },
 
     // Filters: status, one game, genre / title search (both live on the Game, so they are resolved to a set of the
-    // user's game ids first), and the platform the game is owned on. `facets` (first page only) lists the genres and platforms
-    // present in the whole library, so the filter menus are complete even when only one page is loaded.
-    async list(userId, { status, gameId, genre, platform, q, cursor, limit }) {
+    // user's game ids first), and the platform the game is owned on. `sort` sorts by default (newest first),
+    // title (A-Z), playtime (most played), progress (highest %), or timeToBeat (shortest first).
+    // `facets` (first page only) lists the genres and platforms present in the whole library.
+    async list(userId, { status, gameId, genre, platform, q, sort = 'default', cursor, limit }) {
       const filter = { userId };
       if (status) filter.status = status;
       if (platform) filter['ownerships.platform'] = platform;
@@ -111,12 +112,54 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
         if (q) gameFilter.title = { $regex: new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
         const matching = await Game.find(gameFilter).select('_id').lean();
         filter.gameId = { $in: matching.map((g) => g._id) };
-      }      if (cursor) filter._id = { $lt: cursor };
-      const rows = await LibraryEntry.find(filter)
-        .sort({ _id: -1 })
-        .limit(limit + 1)
-        .lean();
-      const page = rows.slice(0, limit);
+      }
+
+      let page;
+      let nextCursor = null;
+
+      if (!sort || sort === 'default') {
+        if (cursor) filter._id = { $lt: cursor };
+        const rows = await LibraryEntry.find(filter)
+          .sort({ _id: -1 })
+          .limit(limit + 1)
+          .lean();
+        page = rows.slice(0, limit);
+        nextCursor = rows.length > limit ? String(page[page.length - 1]._id) : null;
+      } else {
+        const allMatching = await LibraryEntry.find(filter).lean();
+        const allGameIds = allMatching.map((e) => e.gameId);
+        const gamesForSort = allGameIds.length ? await Game.find({ _id: { $in: allGameIds } }).select('title timeToBeat').lean() : [];
+        const sortGameMap = new Map(gamesForSort.map((g) => [String(g._id), g]));
+        const minutesPlayed = (e) => (e.ownerships ?? []).reduce((s, o) => s + (o.playtimeMin ?? 0), 0) + (e.loggedMinutes ?? 0);
+
+        allMatching.sort((a, b) => {
+          let diff = 0;
+          if (sort === 'title') {
+            const titleA = sortGameMap.get(String(a.gameId))?.title ?? '';
+            const titleB = sortGameMap.get(String(b.gameId))?.title ?? '';
+            diff = titleA.localeCompare(titleB, undefined, { sensitivity: 'base' });
+          } else if (sort === 'playtime') {
+            diff = minutesPlayed(b) - minutesPlayed(a);
+          } else if (sort === 'progress') {
+            diff = (b.manualProgress ?? 0) - (a.manualProgress ?? 0);
+          } else if (sort === 'timeToBeat') {
+            const ttbA = sortGameMap.get(String(a.gameId))?.timeToBeat?.main ?? 999999;
+            const ttbB = sortGameMap.get(String(b.gameId))?.timeToBeat?.main ?? 999999;
+            diff = ttbA - ttbB;
+          }
+          if (diff !== 0) return diff;
+          return String(b._id).localeCompare(String(a._id));
+        });
+
+        let startIndex = 0;
+        if (cursor) {
+          const idx = allMatching.findIndex((e) => String(e._id) === String(cursor));
+          startIndex = idx >= 0 ? idx + 1 : 0;
+        }
+        page = allMatching.slice(startIndex, startIndex + limit);
+        nextCursor = startIndex + limit < allMatching.length ? String(page[page.length - 1]._id) : null;
+      }
+
       const found = page.length ? await Game.find({ _id: { $in: page.map((e) => e.gameId) } }).lean() : [];
       const games = await withParentArt(Game, found);
       const byId = new Map(games.map((g) => [String(g._id), g]));
@@ -132,7 +175,7 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
       }
       return {
         items: page.map((e) => toEntryDto(e, byId.get(String(e.gameId)))),
-        nextCursor: rows.length > limit ? String(page[page.length - 1]._id) : null,
+        nextCursor,
         ...(counts && { counts }),
         ...(facets && { facets }),
       };

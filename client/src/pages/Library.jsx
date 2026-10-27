@@ -161,12 +161,6 @@ function LibraryRow({ entry, onMove, onRemove, busy }) {
   );
 }
 
-const SORTS = {
-  title: (a, b) => (a.game?.title ?? '').localeCompare(b.game?.title ?? ''),
-  playtime: (a, b) => minutesPlayed(b) - minutesPlayed(a),
-  progress: (a, b) => (b.manualProgress ?? 0) - (a.manualProgress ?? 0),
-  timeToBeat: (a, b) => (a.game?.timeToBeat?.main ?? 999) - (b.game?.timeToBeat?.main ?? 999),
-};
 
 export default function Library() {
   const [params, setParams] = useSearchParams();
@@ -186,8 +180,14 @@ export default function Library() {
   }, [search]);
 
   const query = useMemo(
-    () => ({ status: tab === 'all' ? undefined : tab, genre: genre || undefined, platform: platform || undefined, q: q || undefined }),
-    [tab, genre, platform, q],
+    () => ({
+      status: tab === 'all' ? undefined : tab,
+      genre: genre || undefined,
+      platform: platform || undefined,
+      q: q || undefined,
+      sort: sortBy !== 'default' ? sortBy : undefined,
+    }),
+    [tab, genre, platform, q, sortBy],
   );
   const filtering = Boolean(genre || platform || q);
   const load = useCallback((signal) => listLibrary({ ...query, limit: PAGE_SIZE }, { signal }), [query]);
@@ -278,11 +278,8 @@ export default function Library() {
       setLoadingMore(false);
     }
   }
-  // Sorting only reorders what is loaded; the server pages newest first.
-  const displayItems = useMemo(() => {
-    const list = view?.items ?? [];
-    return SORTS[sortBy] ? [...list].sort(SORTS[sortBy]) : list;
-  }, [view?.items, sortBy]);
+  // The server sorts the full library by the chosen sort order across pages.
+  const displayItems = view?.items ?? [];
 
   const facets = view?.facets ?? kept.facets;
   const tabCounts = view?.counts ?? kept.counts;

@@ -140,6 +140,42 @@ describe('libraryService', () => {
     expect(backlog.items.map((e) => e.game.title)).toEqual(['C', 'A']);
   });
 
+  it('filters by genre, title and platform, and reports the genres and platforms of the whole library', async () => {
+    const ctx = setupLibrary();
+    const mk = (title, genres) => ctx.Game.create({ title, slug: title.toLowerCase().replace(/\W+/g, '-'), genres, platforms: [] });
+    const hades = await mk('Hades', ['Roguelike', 'Action']);
+    const celeste = await mk('Celeste', ['Platformer']);
+    const dead = await mk('Dead Cells', ['Roguelike']);
+    await ctx.service.add('u1', { gameId: hades._id, status: 'playing', platform: 'Steam' });
+    await ctx.service.add('u1', { gameId: celeste._id, status: 'backlog', platform: 'Switch' });
+    await ctx.service.add('u1', { gameId: dead._id, status: 'backlog', platform: 'Steam' });
+    await ctx.service.add('u2', { gameId: celeste._id, status: 'backlog' });
+
+    const titles = async (query) => (await ctx.service.list('u1', { limit: 10, ...query })).items.map((e) => e.game.title);
+    expect(await titles({ genre: 'Roguelike' })).toEqual(['Dead Cells', 'Hades']);
+    expect(await titles({ genre: 'Roguelike', status: 'backlog' })).toEqual(['Dead Cells']);
+    expect(await titles({ q: 'cel' })).toEqual(['Dead Cells', 'Celeste']); // case-insensitive substring, newest first
+    expect(await titles({ q: 'celes' })).toEqual(['Celeste']);
+    expect(await titles({ q: 'dead (cells' })).toEqual([]); // regex characters are literal, not syntax
+    expect(await titles({ platform: 'Steam' })).toEqual(['Dead Cells', 'Hades']);
+    expect(await titles({ platform: 'Steam', genre: 'Action' })).toEqual(['Hades']);
+    expect(await titles({ genre: 'Strategy' })).toEqual([]);
+    expect(await titles({ q: 'a.*' })).toEqual([]); // metacharacters are literal, never a pattern
+    expect(await titles({ q: '.*' })).toEqual([]);
+    expect(await titles({ genre: 'Roguelike', platform: 'Switch' })).toEqual([]);
+
+    // another user's games never leak in, even when they match the genre
+    const other = await mk('Other Roguelike', ['Roguelike']);
+    await ctx.service.add('u2', { gameId: other._id, status: 'backlog' });
+    expect(await titles({ genre: 'Roguelike' })).toEqual(['Dead Cells', 'Hades']);
+
+    const first = await ctx.service.list('u1', { limit: 1, genre: 'Platformer' });
+    expect(first.counts.all).toBe(3); // tab counts stay the whole library
+    expect(first.facets).toEqual({ genres: ['Roguelike', 'Action', 'Platformer'], platforms: ['Steam', 'Switch'] });
+    const next = await ctx.service.list('u1', { limit: 1, cursor: '9'.repeat(24) });
+    expect(next.facets).toBeUndefined();
+  });
+
   it('removes an entry together with its history', async () => {
     const ctx = setupLibrary();
     const game = await makeGame(ctx, 'G');

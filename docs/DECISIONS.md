@@ -210,3 +210,12 @@ Format: date — decision — why.
 - **Gold is for rewards only:** the community rating star in the hero uses the accent colour, not `--reward`.
 - **Lightbox focus:** like the palette, the thumbnail that opened it is remembered and focused on close (Radix only restores to a `Dialog.Trigger`).
 - **Screenshots** are stored at 1080p; thumbnails ask IGDB for `t_screenshot_med`.
+
+## 2026-10-27 — Claude Code — cinematic UI step 3: library as a cover grid, quick status menu, server-side filters
+- **Filters on the server:** `GET /library` now takes `genre`, `platform` and `q` (title). Genre and title live on the Game, so they are resolved among the user's OWN games first (the library bounds the lookup; no catalog-wide cap can hide matches); platform matches `ownerships.platform`. Reason: the old filters only looked at the 24 entries already loaded, so "show my Roguelikes" silently missed most of a big library. The first page also returns `facets` (genres, most common first, and platforms of the WHOLE library) so the menus are complete; tab counts stay whole-library totals. `q` is escaped (regex characters are literal).
+- **Sorting is client-side on loaded items only:** the server pages newest first; sorting by playtime/progress/time-to-beat needs a computed field across two collections, so it is left as a known limitation (see PROGRESS).
+- **Quick status menu:** `QuickStatusMenu` (Radix DropdownMenu, `@radix-ui/react-dropdown-menu` is a new dependency) replaces the "Move to…" select on cards and rows. It offers only `LIBRARY_TRANSITIONS[status]`, each with icon + label, plus "Open entry" and "Remove…" (confirmed in place, Cancel focused). On cards the button appears on hover/focus-within and is always visible below `md` (touch); 44 px target.
+- **Steam sync in the header:** `SteamSyncControl` shows the last sync and a "Sync now" button (or "Link Steam"); its own section, so a failure never affects the list; after a sync the list reloads.
+- **Entry page:** same `BackdropHero` as the other game pages; the page body stays in a 2xl column.
+- **Optimistic edits:** every edit and rollback is a functional update touching only its own entry and counts, so two requests in flight cannot undo each other. The tab counts and filter menus are kept while a filtered reload runs, and the bar stays (with Clear filters) when a reload fails.
+- **Test helper:** the fake collection's dotted paths now look through arrays like Mongo does (`ownerships.platform`).

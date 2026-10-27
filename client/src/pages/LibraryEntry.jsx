@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,16 +13,11 @@ import { RecommendationModal } from '@/components/recommendations/Recommendation
 import { getLibraryEntry, changeStatus, setVisibility, removeFromLibrary } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { useAmbient } from '@/components/art/ambientContext.js';
+import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { SteamDetails } from '@/components/steam/SteamBadge.jsx';
 import { otherPlatforms, steamOwnership } from '@/lib/steam.js';
-
-const STATUS_COLORS = {
-  wishlist: 'var(--status-wishlist)',
-  backlog: 'var(--status-backlog)',
-  playing: 'var(--status-playing)',
-  completed: 'var(--status-completed)',
-  dropped: 'var(--status-dropped)',
-};
 
 const STATUS_LABELS = {
   wishlist: 'Wishlist',
@@ -45,13 +40,28 @@ export default function LibraryEntry() {
   const entry = override.source === fetched && fetched ? override.entry : fetched;
   const setEntry = (next) => setOverride({ source: fetched, entry: next });
 
+  // the game of this entry tints the background behind the page
+  const { setBase, clearBase } = useAmbient();
+  const art = entry?.game ?? null;
+  useEffect(() => {
+    if (!art) return undefined;
+    setBase(art);
+    return () => clearBase(art);
+  }, [art, setBase, clearBase]);
+
+  const [busy, setBusy] = useState(false); // one status change at a time: a double click must not send two requests
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+
   async function handleStatusChange(to) {
+    setBusy(true);
     try {
       const updated = await changeStatus(id, to);
       setEntry(updated);
       toast.success(`Moved to ${STATUS_LABELS[to]}`);
     } catch (err) {
       toast.error(getErrorInfo(err).message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -67,7 +77,6 @@ export default function LibraryEntry() {
   }
 
   async function handleRemove() {
-    if (!confirm('Remove this game from your library?')) return;
     try {
       await removeFromLibrary(id);
       toast.success('Removed from library');
@@ -89,56 +98,50 @@ export default function LibraryEntry() {
   );
 
   return (
-    <section className="flex flex-col gap-6 pb-12 max-w-2xl mx-auto">
+    <section className="flex flex-col gap-6 pb-12">
       {/* Back nav */}
-      <Link to="/library" className="flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors w-fit">
-        <ArrowLeft size={14} /> Library
+      <Link to="/library" className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text)]">
+        <ArrowLeft size={14} aria-hidden="true" /> Library
       </Link>
 
-      {/* Hero */}
-      <div className="flex gap-4">
-        {game.cover ? (
-          <CoverImage cover={game.cover} title={game.title} alt={game.title} className="w-24 h-32 rounded-xl flex-shrink-0 shadow-lg" />
-        ) : (
-          <div className="w-24 h-32 rounded-xl flex-shrink-0 bg-[var(--surface-raised)] flex items-center justify-center">
-            <Gamepad2 size={28} className="text-[var(--text-muted)]" />
-          </div>
-        )}
+      {/* Hero: the game's backdrop, cover, title, status and the numbers that matter */}
+      <BackdropHero art={game} seed={game.title ?? 'entry'} className="px-4 py-6 sm:px-8 sm:py-8">
+        <div className="flex items-end gap-4 sm:gap-6">
+          {game.cover ? (
+            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-32 w-24 flex-shrink-0 rounded-xl shadow-lg sm:h-44 sm:w-32" />
+          ) : (
+            <div className="flex h-32 w-24 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--surface-raised)] sm:h-44 sm:w-32">
+              <Gamepad2 size={28} className="text-[var(--text-muted)]" aria-hidden="true" />
+            </div>
+          )}
 
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">{game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : ''}</p>
-          <h1 className="font-bold font-heading text-2xl leading-tight">{game.title ?? 'Unknown game'}</h1>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 text-xs uppercase tracking-wide text-[var(--text-muted)]">{game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : ''}</p>
+            <h1 className="font-heading text-2xl font-bold leading-tight sm:text-4xl">{game.title ?? 'Unknown game'}</h1>
 
-          {/* Status badge */}
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            <span
-              className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
-              style={{ background: `color-mix(in srgb, ${STATUS_COLORS[entry.status]} 15%, transparent)`, color: STATUS_COLORS[entry.status] }}
-            >
-              {STATUS_LABELS[entry.status]}
-            </span>
-            {entry.status === 'completed' && entry.completedAt && (
-              <span className="text-xs text-[var(--text-muted)]">
-                {new Date(entry.completedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+            {/* Status: icon + label on a solid pill, so it never relies on colour alone */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-bg px-2.5 py-1">
+                <StatusBadge status={entry.status} />
               </span>
-            )}
-          </div>
+              {entry.status === 'completed' && entry.completedAt && (
+                <span className="text-xs text-[var(--text-muted)]">
+                  {new Date(entry.completedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </div>
 
-          {/* Quick stats */}
-          <div className="mt-3 flex gap-4 flex-wrap text-sm">
-            {totalPlaytimeMin > 0 && (
-              <Stat icon={Clock} value={`${Math.round(totalPlaytimeMin / 60)}h`} label="played" />
-            )}
-            {game.ratingAvg > 0 && (
-              <Stat icon={Star} value={game.ratingAvg.toFixed(1)} label="rating" />
-            )}
-            {game.timeToBeat?.main > 0 && (
-              <Stat icon={Trophy} value={`~${game.timeToBeat.main}h`} label="to beat" />
-            )}
+            {/* Quick stats */}
+            <div className="mt-3 flex flex-wrap gap-4 text-sm">
+              {totalPlaytimeMin > 0 && <Stat icon={Clock} value={`${Math.round(totalPlaytimeMin / 60)}h`} label="played" />}
+              {game.ratingAvg > 0 && <Stat icon={Star} value={game.ratingAvg.toFixed(1)} label="rating" />}
+              {game.timeToBeat?.main > 0 && <Stat icon={Trophy} value={`~${game.timeToBeat.main}h`} label="to beat" />}
+            </div>
           </div>
         </div>
-      </div>
+      </BackdropHero>
 
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       {/* Status actions */}
       {nextStatuses.length > 0 && (
         <div className="flex gap-2 flex-wrap">
@@ -146,7 +149,8 @@ export default function LibraryEntry() {
             <button
               key={to}
               onClick={() => handleStatusChange(to)}
-              className="text-xs font-medium px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              disabled={busy}
+              className="min-h-11 rounded-full border border-[var(--border)] px-4 text-sm font-medium transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
             >
               Move to {STATUS_LABELS[to]}
             </button>
@@ -189,7 +193,7 @@ export default function LibraryEntry() {
 
       <div className="flex flex-wrap items-center gap-2">
         <AddToCollection entryId={id} />
-        <Button variant="secondary" onClick={() => setRecommendOpen(true)} className="text-xs h-9">
+        <Button variant="secondary" onClick={() => setRecommendOpen(true)}>
           Recommend
         </Button>
       </div>
@@ -202,29 +206,42 @@ export default function LibraryEntry() {
       <ReviewPanel gameId={entry.gameId} status={entry.status} />
 
       {/* Danger zone */}
-      <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-2">
         <button
           onClick={handleToggleVisibility}
-          className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          className="flex min-h-11 items-center gap-1.5 rounded-control px-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          {entry.hiddenFromFriends ? <EyeOff size={13} /> : <Eye size={13} />}
+          {entry.hiddenFromFriends ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
           {entry.hiddenFromFriends ? 'Hidden from friends' : 'Visible to friends'}
         </button>
-        <button
-          onClick={handleRemove}
-          className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors"
-        >
-          <Trash2 size={13} /> Remove from library
-        </button>
+        {confirmingRemove ? (
+          <div role="group" aria-label="Confirm removal" className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-[var(--text-muted)]">Remove this game from your library?</span>
+            <Button variant="secondary" onClick={handleRemove}>
+              Remove
+            </Button>
+            {/* the safe choice takes focus */}
+            <Button variant="ghost" autoFocus onClick={() => setConfirmingRemove(false)}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingRemove(true)}
+            className="flex min-h-11 items-center gap-1.5 rounded-control px-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Trash2 size={14} aria-hidden="true" /> Remove from library
+          </button>
+        )}
       </div>
-    </section>
+      </div>    </section>
   );
 }
 
 function Stat({ icon: Icon, value, label }) {
   return (
     <div className="flex items-center gap-1 text-[var(--text-muted)]">
-      <Icon size={13} />
+      <Icon size={13} aria-hidden="true" />
       <span className="font-semibold tabular-nums text-[var(--text)]">{value}</span>
       <span className="text-xs">{label}</span>
     </div>
@@ -249,17 +266,10 @@ function CollapsibleSummary({ text }) {
 
 function LoadingSkeleton() {
   return (
-    <section className="flex flex-col gap-6 pb-12 max-w-2xl mx-auto animate-pulse">
-      <div className="h-4 w-20 rounded bg-[var(--surface)]" />
-      <div className="flex gap-4">
-        <div className="w-24 h-32 rounded-xl bg-[var(--surface)]" />
-        <div className="flex-1 flex flex-col gap-3">
-          <div className="h-4 w-24 rounded bg-[var(--surface)]" />
-          <div className="h-7 w-48 rounded bg-[var(--surface)]" />
-          <div className="h-5 w-20 rounded-full bg-[var(--surface)]" />
-        </div>
-      </div>
-      <div className="h-48 rounded-[var(--radius-card)] bg-[var(--surface)]" />
+    <section role="status" aria-label="Loading library entry" className="flex flex-col gap-6 pb-12">
+      <div className="h-11 w-24 rounded bg-[var(--surface)] motion-safe:animate-pulse" />
+      <div className="h-64 rounded-[var(--radius-card)] bg-[var(--surface)] motion-safe:animate-pulse" />
+      <div className="mx-auto h-48 w-full max-w-2xl rounded-[var(--radius-card)] bg-[var(--surface)] motion-safe:animate-pulse" />
     </section>
   );
 }

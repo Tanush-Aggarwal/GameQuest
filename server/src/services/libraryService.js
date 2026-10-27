@@ -5,6 +5,7 @@ import { toGameDto, withParentArt } from './gameService.js';
 export const STATUSES = LIBRARY_STATUSES;
 export const TRANSITIONS = LIBRARY_TRANSITIONS;
 const INITIAL_STATUSES = ['wishlist', 'backlog', 'playing'];
+const FACET_GENRES = 20;
 
 export const toEntryDto = (entry, game) => ({
   id: String(entry._id),
@@ -58,6 +59,17 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
     });
   }
 
+  // Genres (most common first) and platforms present in the user's whole library.
+  async function libraryFacets(userId) {
+    const entries = await LibraryEntry.find({ userId }).select('gameId ownerships.platform').lean();
+    const platforms = [...new Set(entries.flatMap((e) => (e.ownerships ?? []).map((o) => o.platform)).filter(Boolean))].sort();
+    const games = entries.length ? await Game.find({ _id: { $in: entries.map((e) => e.gameId) } }).select('genres').lean() : [];
+    const tally = new Map();
+    for (const g of games) for (const name of g.genres ?? []) tally.set(name, (tally.get(name) ?? 0) + 1);
+    const genres = [...tally.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, FACET_GENRES).map(([name]) => name);
+    return { genres, platforms };
+  }
+
   return {
     async add(userId, { gameId, status, platform }) {
       // Completed/Dropped are reached by moving, so the state machine cannot be skipped on creation.
@@ -82,11 +94,24 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
       return toEntryDto(entry, game);
     },
 
-    async list(userId, { status, gameId, cursor, limit }) {
+    // Filters: status, one game, genre / title search (both live on the Game, so they are resolved to a set of the
+    // user's game ids first), and the platform the game is owned on. `facets` (first page only) lists the genres and platforms
+    // present in the whole library, so the filter menus are complete even when only one page is loaded.
+    async list(userId, { status, gameId, genre, platform, q, cursor, limit }) {
       const filter = { userId };
       if (status) filter.status = status;
-      if (gameId) filter.gameId = gameId;
-      if (cursor) filter._id = { $lt: cursor };
+      if (platform) filter['ownerships.platform'] = platform;
+      if (gameId) {
+        filter.gameId = gameId;
+      } else if (genre || q) {
+        // Resolved among the user's OWN games, so the library bounds the lookup (no silent cap on a big catalog).
+        const own = await LibraryEntry.find({ userId, ...(status && { status }), ...(platform && { 'ownerships.platform': platform }) }).select('gameId').lean();
+        const gameFilter = { _id: { $in: own.map((e) => e.gameId) } };
+        if (genre) gameFilter.genres = genre;
+        if (q) gameFilter.title = { $regex: new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+        const matching = await Game.find(gameFilter).select('_id').lean();
+        filter.gameId = { $in: matching.map((g) => g._id) };
+      }      if (cursor) filter._id = { $lt: cursor };
       const rows = await LibraryEntry.find(filter)
         .sort({ _id: -1 })
         .limit(limit + 1)
@@ -96,20 +121,22 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
       const games = await withParentArt(Game, found);
       const byId = new Map(games.map((g) => [String(g._id), g]));
 
-      // Tab counts only on the first page; later pages are "load more" and don't need them.
+      // Tab counts and facets only on the first page; later pages are "load more" and don't need them.
       let counts;
+      let facets;
       if (!cursor) {
         const totals = await Promise.all(STATUSES.map((s) => LibraryEntry.countDocuments({ userId, status: s })));
         counts = Object.fromEntries(STATUSES.map((s, i) => [s, totals[i]]));
         counts.all = totals.reduce((a, b) => a + b, 0);
+        facets = await libraryFacets(userId);
       }
       return {
         items: page.map((e) => toEntryDto(e, byId.get(String(e.gameId)))),
         nextCursor: rows.length > limit ? String(page[page.length - 1]._id) : null,
         ...(counts && { counts }),
+        ...(facets && { facets }),
       };
     },
-
     async changeStatus(userId, entryId, to) {
       const entry = await findOwned(userId, entryId);
       const from = entry.status;

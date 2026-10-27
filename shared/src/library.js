@@ -27,6 +27,10 @@ export const addToLibrarySchema = z.object({
 export const libraryListQuerySchema = z.object({
   status: z.enum(LIBRARY_STATUSES).optional(),
   gameId: objectId.optional(),
+  // Filters on the game (genre, title search) and on where it is owned.
+  genre: z.string().trim().min(1).max(50).optional(),
+  platform: z.string().trim().min(1).max(50).optional(),
+  q: z.string().trim().min(1).max(100).optional(),
   cursor: objectId.optional(),
   limit: z.coerce.number().int().min(1).max(50).default(24),
 });

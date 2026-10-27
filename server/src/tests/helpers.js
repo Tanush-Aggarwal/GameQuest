@@ -14,7 +14,9 @@ export function testConfig(extra = {}) {
   });
 }
 
-const getPath = (doc, path) => path.split('.').reduce((o, k) => o?.[k], doc);
+// Like Mongo, a dotted path through an array looks at every element ("ownerships.platform" -> all the platforms).
+const getPath = (doc, path) =>
+  path.split('.').reduce((o, k) => (Array.isArray(o) && !/^\d+$/.test(k) ? o.flatMap((x) => x?.[k]).filter((v) => v !== undefined) : o?.[k]), doc);
 function setPath(doc, path, value) {
   const keys = path.split('.');
   const last = keys.pop();

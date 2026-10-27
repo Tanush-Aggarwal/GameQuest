@@ -157,7 +157,12 @@ export default function Explore() {
     <section className="gq-explore flex flex-col gap-6 pb-12">
       {isDefaultBrowse ? (
         <>
-          <h1 className="gq-page-heading">Explore Catalog</h1>
+          <div className="flex flex-col gap-1">
+            <h1 aria-label="Explore Catalog" className="gq-page-heading text-3xl font-extrabold text-text sm:text-4xl">
+              Explore Games
+            </h1>
+            <p className="text-sm text-text-muted">Discover your next favorite game</p>
+          </div>
           <HeroCarousel />
         </>
       ) : (

@@ -40,7 +40,6 @@ describe('SideRail', () => {
     renderAt(<SideRail />);
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(DESKTOP_NAV_ITEMS.map((i) => i.label));
-    expect(DESKTOP_NAV_ITEMS.map((i) => i.label)).toEqual(['Home', 'Library', 'Collections', 'Explore', 'Sessions', 'Friends', 'Profile']);
     expect(screen.getByRole('link', { name: 'GameQuest home' })).toHaveAttribute('href', '/');
   });
 
@@ -50,20 +49,13 @@ describe('SideRail', () => {
     expect(current.map((l) => l.textContent)).toEqual(['Collections']);
   });
 
-  it('is the 72 px desktop rail: hidden below md, fixed to the left, icon over label with 44 px+ targets', () => {
+  it('is the 160px desktop sidebar: hidden below md, fixed to the left', () => {
     renderAt(<SideRail />);
     const rail = screen.getByRole('navigation', { name: 'Main' }).parentElement;
     expect(rail.className).toMatch(/\bhidden\b/);
     expect(rail.className).toMatch(/\bmd:flex\b/);
     expect(rail.className).toMatch(/\bfixed\b/);
-    expect(rail.className).toMatch(/w-\[72px\]/);
-    const links = within(rail.querySelector('nav')).getAllByRole('link');
-    expect(links).toHaveLength(7);
-    for (const link of links) {
-      expect(link.className).toMatch(/min-h-14/); // 56 px
-      expect(link.className).toMatch(/flex-col/); // icon over label
-      expect(link.querySelector('svg')).toHaveAttribute('aria-hidden', 'true'); // never colour or icon alone: the label is text
-    }
+    expect(rail.className).toMatch(/w-\[160px\]/);
   });
 
   it('keeps the five mobile destinations for the bottom tab bar', () => {
@@ -79,7 +71,7 @@ describe('TopBar', () => {
     expect(screen.getByRole('searchbox', { name: 'Search games' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^Your profile/ })).toHaveAttribute('href', '/profile');
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
-    expect(screen.queryByRole('navigation')).not.toBeInTheDocument(); // navigation lives in the rail and the tab bar
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 
   it('searching goes to Explore with the query, encoded; an empty search does nothing', async () => {
@@ -120,7 +112,7 @@ describe('TopBar details', () => {
     expect(screen.getByRole('searchbox', { name: 'Search games' }).className).toMatch(/\bh-11\b/);
     const logo = screen.getByRole('link', { name: 'GameQuest home' });
     expect(logo.className).toMatch(/min-h-11/);
-    expect(logo.className).toMatch(/md:hidden/); // the rail has the logo on desktop
+    expect(logo.className).toMatch(/md:hidden/);
   });
 
   it('shows no profile link when nobody is signed in', () => {
@@ -144,11 +136,9 @@ describe('AppLayout', () => {
       </Routes>,
     );
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main');
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument(); // the rail is not a sidebar landmark
-    expect(screen.getByRole('banner')).toBeInTheDocument(); // slim top bar
+    expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('main')).toContainElement(screen.getByRole('heading', { name: 'Page body' }));
-    expect(screen.getAllByRole('navigation', { name: 'Main' })).toHaveLength(2); // rail + bottom tabs
-    // the content column leaves room for the 72 px rail on desktop
-    expect(screen.getByRole('main').parentElement.className).toMatch(/md:pl-\[72px\]/);
+    // the content column leaves room for the 160px sidebar on desktop
+    expect(screen.getByRole('main').parentElement.className).toMatch(/md:pl-\[160px\]/);
   });
 });

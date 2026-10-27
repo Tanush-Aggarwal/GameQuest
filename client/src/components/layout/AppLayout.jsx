@@ -71,7 +71,7 @@ export function AppLayout() {
             Skip to content
           </a>
           <SideRail />
-          <div className="md:pl-[72px]">
+          <div className="md:pl-[160px]">
             <TopBar onOpenPalette={() => openPalette(true)} />
             <main id="main" className="gq-main mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 pb-24 lg:pb-12">
               <AnimatedPage />

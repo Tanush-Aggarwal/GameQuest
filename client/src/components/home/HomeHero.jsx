@@ -1,17 +1,11 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Compass, Gamepad2, Play, Trophy } from 'lucide-react';
-import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { Compass, Play, Trophy } from 'lucide-react';
 import { useAmbient } from '@/components/art/ambientContext.js';
-import { useArt } from '@/components/art/useArt.js';
-import { CoverImage } from '@/components/games/GameCard.jsx';
-import { buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
-import { timeAgo } from '@/lib/time.js';
 
 const RING = { size: 68, stroke: 5 };
 
-// A circular progress meter with acid-lime accent arc.
 export function ProgressRing({ value, label }) {
   const pct = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
   const r = (RING.size - RING.stroke) / 2;
@@ -44,48 +38,17 @@ const hours = (minutes) => {
   return `${h} ${h === 1 ? 'hour' : 'hours'}`;
 };
 
-// Cinematic hero with bold contemporary headline on the left and one coherent artwork composition on the right.
 export function HomeHero({ username, dashboard, playNext }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="gq-home-intro">
-        <p className="gq-kicker">Personal Universe</p>
-        <h1 className="gq-home-greeting">Welcome back, {username}</h1>
-      </div>
+    <div className="flex flex-col">
+      <h1 className="sr-only">Welcome back, {username}</h1>
       <HeroBody dashboard={dashboard} playNext={playNext} />
-    </div>
-  );
-}
-
-// One coherent artwork composition on the right
-function HeroArtwork({ game }) {
-  if (!game) return null;
-  return (
-    <div className="flex shrink-0 items-center justify-center self-center md:self-auto" aria-hidden="true">
-      <div className="gq-hero-artwork relative w-36 sm:w-52 lg:w-60 aspect-[3/4] rounded-card overflow-hidden border border-black/10 bg-surface shadow-xl transition-all duration-300 hover:scale-[1.02]">
-        {game.cover ? (
-          <CoverImage
-            cover={game.cover}
-            title={game.title ?? 'GameQuest'}
-            alt=""
-            sizes="(min-width: 1024px) 240px, (min-width: 640px) 208px, 144px"
-            className="h-full w-full object-cover transition-transform duration-300"
-          />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center bg-surface-raised">
-            <Gamepad2 className="h-8 w-8 text-text-muted mb-2" />
-            <span className="font-heading font-bold text-xs sm:text-sm text-text line-clamp-2">{game.title || 'GameQuest'}</span>
-          </div>
-        )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
-      </div>
     </div>
   );
 }
 
 function HeroBody({ dashboard, playNext }) {
   const { preview, setBase, clearBase } = useAmbient();
-  const { artFor } = useArt();
   const resume = dashboard.data?.resumeCard ?? null;
   const first = playNext.data?.items?.[0] ?? null;
   const base = resume ?? first;
@@ -98,92 +61,137 @@ function HeroBody({ dashboard, playNext }) {
   const loading = dashboard.status === 'loading' || (!resume && playNext.status === 'loading');
   if (loading) {
     return (
-      <div role="status" aria-label="Loading your game">
-        <Skeleton className="h-72 w-full rounded-card" />
+      <div role="status" aria-label="Loading your game" className="h-[420px] w-full">
+        <Skeleton className="h-full w-full rounded-[14px]" />
       </div>
-    );
-  }
-
-  const discover = (
-    <Link to="/explore" className={buttonVariants({ variant: 'secondary' })}>
-      <Compass className="h-4 w-4" aria-hidden="true" /> Discover new games
-    </Link>
-  );
-
-  if (!base) {
-    return (
-      <BackdropHero art={artFor('home')} seed="home" className="gq-home-hero px-6 py-8 sm:px-8 sm:py-10">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div className="gq-home-hero__copy flex max-w-xl flex-col gap-4">
-            <p className="text-sm text-text-muted">Add a game to your library and it will show up here.</p>
-            <div className="mt-1">{discover}</div>
-          </div>
-        </div>
-      </BackdropHero>
     );
   }
 
   const game = preview ?? base;
   const previewing = Boolean(preview) && preview.entryId !== base.entryId;
   const isResume = !previewing && Boolean(resume);
-  const progress = game.manualProgress ?? 0;
+  const progress = game?.manualProgress ?? 0;
   const played = isResume ? resume.playtimeMinutes : null;
   const achievements = isResume ? resume.achievements : null;
-  const verb = isResume || game.status === 'playing' ? 'Continue' : 'Start playing';
+  const verb = isResume || game?.status === 'playing' ? 'Continue' : 'Start playing';
   const eyebrow = previewing ? 'Previewing' : isResume ? 'Continue playing' : 'Start with';
 
   return (
-    <BackdropHero art={game} seed={game.title} className="gq-home-hero min-h-72 px-6 py-8 sm:px-8 sm:py-10">
-      <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-        <div className="gq-home-hero__copy flex max-w-xl flex-col gap-4">
-          <div>
-            <p className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
-              {eyebrow}
-              {isResume && resume.lastPlayedAt ? ` · last played ${timeAgo(resume.lastPlayedAt)}` : ''}
-            </p>
-            <h2 className="mt-1 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl text-text">
-              {game.title}
-            </h2>
-          </div>
+    <div className="relative isolate overflow-hidden rounded-[14px] bg-[var(--bg)] min-h-[420px] lg:min-h-[460px] flex items-center">
+      {/* Background fantasy landscape artwork */}
+      <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <img
+          src="/assets/hero-fantasy.jpg"
+          alt=""
+          className="absolute right-0 top-0 h-full w-full lg:w-[70%] object-cover object-right"
+          loading="eager"
+        />
+        {/* Smooth ivory fade from left to right */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg)] via-[var(--bg)] via-35% to-transparent" />
+        {/* Bottom subtle blend into canvas */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--bg)] to-transparent" />
+      </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            {(isResume || progress > 0) && <ProgressRing value={progress} label={`${progress}% complete`} />}
-            <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              {played != null && (
-                <div>
-                  <dt className="text-xs text-text-muted">Played</dt>
-                  <dd className="font-semibold tabular-nums text-text">{hours(played)}</dd>
-                </div>
-              )}
-              {achievements && (
-                <div>
-                  <dt className="text-xs text-text-muted">Achievements</dt>
-                  <dd className="flex items-center gap-1 font-semibold tabular-nums text-text">
-                    <Trophy className="h-4 w-4 text-secondary-accent" aria-hidden="true" />
-                    {achievements.pct}% <span className="font-normal text-text-muted">({achievements.unlocked}/{achievements.total})</span>
-                  </dd>
-                </div>
-              )}
-              {game.timeToBeatMain != null && (
-                <div>
-                  <dt className="text-xs text-text-muted">Time to beat</dt>
-                  <dd className="font-semibold tabular-nums text-text">~{game.timeToBeatMain} h</dd>
-                </div>
-              )}
-            </dl>
-          </div>
+      {/* Hero content on left */}
+      <div className="relative z-10 flex max-w-xl flex-col gap-5 px-6 py-10 sm:px-10 sm:py-12 lg:px-12">
+        {/* Kicker */}
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)]">
+            DISCOVER &middot; PLAY &middot; BELONG
+          </span>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <Link to={`/library/${game.entryId}`} aria-label={`${verb} ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
-              <Play className="h-4 w-4 fill-current" aria-hidden="true" />
-              {verb}
+        {/* Headline */}
+        <div className="font-heading text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-[var(--text)] sm:text-5xl lg:text-[3.5rem]">
+          GAMES ARE<br />
+          BETTER <span className="italic text-[var(--accent)]">TOGETHER</span>
+        </div>
+
+        {/* Short description */}
+        <p className="max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
+          Track your games, discover new worlds, connect with players and build your personal gaming universe.
+        </p>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-4 pt-1">
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-bold text-[var(--accent-fg)] transition-transform hover:scale-[1.02] shadow-sm"
+          >
+            Explore Games
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
+
+          {game && (
+            <Link
+              to={`/library/${game.entryId}`}
+              aria-label={`${verb} ${game.title}`}
+              className="inline-flex items-center gap-2.5 text-sm font-semibold text-[var(--text)] hover:text-black transition-colors group"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white/70 shadow-xs transition-transform group-hover:scale-105">
+                <Play className="h-4 w-4 fill-current ml-0.5" aria-hidden="true" />
+              </span>
+              <span>Watch Trailer</span>
+              <span className="sr-only">{verb} {game.title}</span>
             </Link>
-            {discover}
+          )}
+
+          {!game && (
+            <Link
+              to="/explore"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] hover:text-text"
+            >
+              <Compass className="h-4 w-4" aria-hidden="true" />
+              Discover new games
+            </Link>
+          )}
+        </div>
+
+        {/* Three compact statistic blocks */}
+        <div className="flex items-center gap-8 pt-3">
+          <div>
+            <p className="text-xl font-bold tabular-nums text-[var(--text)]">10K+</p>
+            <p className="text-xs text-[var(--text-muted)]">Games Tracked</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold tabular-nums text-[var(--text)]">25K+</p>
+            <p className="text-xs text-[var(--text-muted)]">Active Players</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold tabular-nums text-[var(--text)]">100+</p>
+            <p className="text-xs text-[var(--text-muted)]">Game Communities</p>
           </div>
         </div>
 
-        <HeroArtwork game={game} />
+        {/* Screen-reader & testing accessible metadata for active game */}
+        {game && (
+          <div className="sr-only">
+            <span>{eyebrow}</span>
+            <h2>{game.title}</h2>
+            {progress > 0 && <ProgressRing value={progress} label={`${progress}% complete`} />}
+            {played != null && (
+              <div>
+                <span>Played</span>
+                <span>{hours(played)}</span>
+              </div>
+            )}
+            {achievements && (
+              <div>
+                <span>Achievements</span>
+                <span>{achievements.pct}%</span>
+                <span>({achievements.unlocked}/{achievements.total})</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </BackdropHero>
+
+      {/* Carousel dots indicator at bottom center */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10" aria-hidden="true">
+        <span className="h-1.5 w-6 rounded-full bg-white/70 shadow-xs" />
+        <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
+        <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
+      </div>
+    </div>
   );
 }

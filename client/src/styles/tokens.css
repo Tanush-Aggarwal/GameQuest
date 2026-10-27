@@ -1,53 +1,52 @@
-/* GameQuest design system tokens */
+/* GameQuest design tokens. Single source of colour for the entire app. */
 :root {
   color-scheme: light;
 
   /* Main canvas */
-  --bg: #F2EEE4; /* warm ivory */
-  --surface: #FFFFFF; /* clean crisp card surface */
-  --surface-raised: #EAE4D7; /* warm raised element */
-  --border: #DCD5C6; /* minimal subtle border */
+  --bg: #F2EEE4;
+  --surface: #fbf8f1;
+  --surface-raised: #e8dfcf;
+  --border: #d3c8b7;
 
   /* Text colours */
-  --text: #151713; /* dark text */
-  --primary-text: #151713; /* near-black for main copy */
-  --text-muted: #66635B; /* muted metadata copy */
+  --text: #151713;
+  --primary-text: #151713;
+  --text-muted: #625b4f;
 
   /* Accent palette */
-  --accent: #C9F36D; /* acid lime */
-  --accent-fg: #111311; /* near-black text on acid lime fill */
-  --secondary-accent: #D9532F; /* restrained burnt orange */
-  --reward: #D9532F;
+  --accent: #C9F36D;
+  --accent-fg: #151713;
+  --secondary-accent: #B8420E;
+  --reward: #8b5a14;
 
-  /* Text accent: readable contrast on light paper */
-  --accent-text: #3D5500;
+  /* Accent as text: burnt orange for readable inline accent on light bg */
+  --accent-text: #9b3510;
 
-  /* Status colours remain semantic and high contrast */
-  --success: #17633B;
-  --warning: #B8540E;
-  --danger: #A32828;
-  --info: #0E627C;
+  /* Status colours */
+  --success: #17633b;
+  --warning: #8b5a14;
+  --danger: #a32828;
+  --info: #155f77;
 
-  --status-playing: #0E627C;
-  --status-completed: #17633B;
-  --status-backlog: #66635B;
-  --status-wishlist: #D9532F;
-  --status-dropped: #A32828;
+  --status-playing: #155f77;
+  --status-completed: #17633b;
+  --status-backlog: #625b4f;
+  --status-wishlist: #9b3510;
+  --status-dropped: #a32828;
 
-  --trophy-bronze: #8B4A1B;
-  --trophy-silver: #62686C;
-  --trophy-gold: #D9532F;
-  --trophy-platinum: #0E627C;
+  --trophy-bronze: #8b4a1b;
+  --trophy-silver: #62686c;
+  --trophy-gold: #8b5a14;
+  --trophy-platinum: #155f77;
 
-  --radius-card: 12px;
-  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-control: 7px;
   --gq-page-width: 1480px;
-  --gq-sidebar-width: 72px;
+  --gq-sidebar-width: 160px;
 
-  /* Sidebar background */
+  /* Sidebar */
   --sidebar-bg: #111311;
-  --sidebar-border: #1E221E;
+  --sidebar-border: #222422;
   --sidebar-text: #8E928B;
-  --sidebar-text-active: #C9F36D;
+  --sidebar-text-active: #ffffff;
 }
-

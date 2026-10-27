@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Gamepad2, Heart, Layers, Star } from 'lucide-react';
 import { useMotionOk } from '@/lib/motion.js';
 
 /**
@@ -86,19 +87,79 @@ export function SharedCover({ slug, className = '', children }) {
   );
 }
 
+export const ARTWORK_LOOKUP = {
+  'hollow-knight-silksong': '/assets/trending-hollow-knight.jpg',
+  'elden-ring': '/assets/trending-elden-ring.jpg',
+  'clair-obscur-expedition-33': '/assets/trending-clair-obscur.jpg',
+  'hades': '/assets/trending-hades-2.jpg',
+  'zenless-zone-zero': '/assets/trending-zenless.jpg',
+  'genshin-impact': '/assets/rec-genshin.jpg',
+};
+
+export function getGameArtwork(game) {
+  if (!game) return null;
+  if (game.slug && ARTWORK_LOOKUP[game.slug]) return ARTWORK_LOOKUP[game.slug];
+  const lowerTitle = (game.title || '').toLowerCase();
+  if (lowerTitle.includes('silksong')) return '/assets/trending-hollow-knight.jpg';
+  if (lowerTitle.includes('elden ring')) return '/assets/trending-elden-ring.jpg';
+  if (lowerTitle.includes('clair obscur') || lowerTitle.includes('expedition 33')) return '/assets/trending-clair-obscur.jpg';
+  if (lowerTitle.includes('hades')) return '/assets/trending-hades-2.jpg';
+  if (lowerTitle.includes('zenless')) return '/assets/trending-zenless.jpg';
+  if (lowerTitle.includes('genshin')) return '/assets/rec-genshin.jpg';
+  return null;
+}
+
 export function GameCard({ game, shared = true }) {
-  const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
+  const rating = game.ratingAvg > 0
+    ? game.ratingAvg.toFixed(1)
+    : (game.totalRating ? (game.totalRating / 10).toFixed(1) : null);
+  const artwork = getGameArtwork(game);
+
   return (
     <Link
       to={`/games/${game.slug}`}
-      className="gq-game-card group flex flex-col overflow-hidden rounded-card border border-border bg-surface"
+      className="gq-game-card group relative flex flex-col aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-[#161816] text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
     >
-      <SharedCover slug={shared ? game.slug : null}>
-        <GameCover game={game} />
-      </SharedCover>
-      <div className="gq-game-card__caption flex flex-col gap-1 p-3">
-        <h3 className="gq-game-card__title line-clamp-2 text-sm font-semibold">{game.title}</h3>
-        <p className="gq-game-card__meta text-xs text-text-muted">{[year, game.genres[0]].filter(Boolean).join(' · ') || 'Game'}</p>
+      <div className="relative h-full w-full overflow-hidden">
+        <SharedCover slug={shared ? game.slug : null} className="h-full w-full">
+          {artwork ? (
+            <img
+              src={artwork}
+              alt={game.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <GameCover game={game} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          )}
+        </SharedCover>
+
+        {/* Top-right heart / wishlist icon */}
+        <div className="absolute top-2.5 right-2.5 rounded-full bg-black/40 p-1.5 backdrop-blur-xs text-white/80 transition-colors group-hover:text-white" aria-hidden="true">
+          <Heart className="h-3.5 w-3.5" />
+        </div>
+
+        {/* Bottom dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 via-45% to-transparent pointer-events-none" />
+
+        {/* Overlaid details at bottom */}
+        <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1 z-10">
+          <h3 className="line-clamp-2 text-xs sm:text-sm font-bold leading-tight text-white drop-shadow-sm">
+            {game.title}
+          </h3>
+          <div className="flex items-center justify-between text-xs pt-0.5">
+            <div className="flex items-center gap-1.5 text-gray-400">
+              <Gamepad2 className="h-3 w-3" aria-hidden="true" />
+              <Layers className="h-3 w-3" aria-hidden="true" />
+            </div>
+            {rating && (
+              <span className="flex items-center gap-1 font-bold text-[#E58A2B]">
+                <Star className="h-3 w-3 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />
+                {rating}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </Link>
   );
@@ -106,11 +167,14 @@ export function GameCard({ game, shared = true }) {
 
 export function GameCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-card border border-border bg-surface" aria-hidden="true">
-      <div className="aspect-[3/4] w-full animate-pulse bg-surface-raised" />
-      <div className="flex flex-col gap-2 p-3">
-        <div className="h-4 w-3/4 animate-pulse rounded-control bg-surface-raised" />
-        <div className="h-3 w-1/2 animate-pulse rounded-control bg-surface-raised" />
+    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-[#161816]" aria-hidden="true">
+      <div className="h-full w-full animate-pulse bg-white/5" />
+      <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-2">
+        <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-1/3 animate-pulse rounded bg-white/10" />
+          <div className="h-3 w-8 animate-pulse rounded bg-white/10" />
+        </div>
       </div>
     </div>
   );

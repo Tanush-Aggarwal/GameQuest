@@ -9,6 +9,7 @@ Format: date — decision — why.
 - 2026-10-26 — IGDB as main game data source (also unlocks Twitch clips with the same credentials); RAWG as fallback.
 - 2026-10-26 — Discord: OAuth `identify` + validated pasted invite first; bot-created invites/events second — linking an account cannot create server invites.
 - 2026-10-26 — Dark-first UI with Quest Violet accent and Loot Gold reserved for rewards.
+- 2026-10-27 — Pixel-accurate visual fidelity recreation: warm ivory canvas (#F2EEE4), wide fantasy landscape hero backdrop with monolith and soft left-side ivory fade, 5 full-bleed trending game cards with dark bottom gradient and white title/rating overlay, Genshin Impact adventure card, character community banner, and removal of distracting ambient/panel background textures.
 - 2026-10-26 — 3D features (Blender/VRoid) deferred until the full website is built.
 
 ## 2026-10-26 — Claude Code — item 1: monorepo scaffold

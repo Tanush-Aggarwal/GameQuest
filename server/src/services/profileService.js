@@ -21,7 +21,7 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
 
   async function populateFavourites(gameIds) {
     if (!gameIds?.length || !Game) return [];
-    const found = await Game.find({ _id: { $in: gameIds } }).select('title slug cover ratingAvg releaseDate genres').lean();
+    const found = await Game.find({ _id: { $in: gameIds } }).select('title slug cover backdrop ratingAvg releaseDate genres').lean();
     const byId = new Map(found.map((g) => [String(g._id), g]));
     return gameIds
       .map((id) => byId.get(String(id)))
@@ -31,6 +31,7 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
         title: g.title,
         slug: g.slug,
         cover: g.cover,
+        backdrop: g.backdrop ?? null,
         ratingAvg: g.ratingAvg,
         releaseDate: g.releaseDate,
         genres: g.genres ?? [],

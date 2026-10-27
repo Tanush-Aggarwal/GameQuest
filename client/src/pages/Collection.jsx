@@ -6,6 +6,7 @@ import { RULE_FIELDS, OPERATOR_LABELS } from '@gamequest/shared';
 import { Button } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
+import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { GameCover } from '@/components/games/GameCard.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { CollectionForm } from '@/components/collections/CollectionForm.jsx';
@@ -40,7 +41,7 @@ function ItemRow({ item, index, count, canEdit, isSmart, busy, onMove, onRemove,
       className="flex items-center gap-3 rounded-card border border-border bg-surface p-2"
     >
       {canEdit && !isSmart && <GripVertical className="h-5 w-5 shrink-0 cursor-grab text-text-muted" aria-hidden="true" />}
-      <div className="w-12 shrink-0 overflow-hidden rounded-control">{game ? <GameCover game={game} compact /> : <div className="aspect-[3/4] bg-surface-raised" />}</div>
+      <div className="w-16 shrink-0 overflow-hidden rounded-control border border-border">{game ? <GameCover game={game} compact /> : <div className="aspect-[3/4] bg-surface-raised" />}</div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Link to={canEdit ? `/library/${item.entry.id}` : `/games/${game?.slug ?? ''}`} className="line-clamp-1 text-sm font-semibold hover:underline">
           {title}
@@ -201,9 +202,10 @@ export default function Collection() {
 
       {status === 'success' && collection && (
         <>
-          <header className="flex flex-col gap-2">
+          {/* the art of the first game in it */}
+          <BackdropHero as="header" art={view.items[0]?.entry.game} seed={collection.name} className="flex flex-col gap-2 px-5 py-8 sm:px-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <h1 className="text-2xl font-bold">{collection.name}</h1>
+              <h1 className="font-heading text-2xl font-bold sm:text-4xl">{collection.name}</h1>
               {canEdit && !editing && (
                 <div className="flex gap-2">
                   <Button variant="secondary" onClick={() => setEditing(true)}>
@@ -234,7 +236,7 @@ export default function Collection() {
                 Filled automatically: {collection.rules.map(ruleText).join(' · ')}
               </p>
             )}
-          </header>
+          </BackdropHero>
 
           {editing && <CollectionForm initial={collection} submitLabel="Save changes" onSubmit={saveEdits} onCancel={() => setEditing(false)} />}
 

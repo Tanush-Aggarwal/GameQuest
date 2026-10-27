@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils.js';
 export const SLOT_COUNT = 4;
 // Cover-sized, not page-sized: the same fixed tile everywhere a favourite is shown.
 export const TILE = 'w-24 shrink-0 sm:w-28';
+// The public profile shows the favourites bigger: it is the showcase, not the editor.
+export const LARGE_TILE = 'w-32 shrink-0 sm:w-44';
 
 // The four favourite slots as a compact row of cover-sized tiles. A filled tile shows the cover and a remove
 // button; an empty tile is a dashed "+" that opens the picker for that slot. `slots` has SLOT_COUNT entries

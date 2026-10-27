@@ -39,7 +39,7 @@ function setup({ subscribe = true } = {}) {
     const { friendshipId } = await friendService.sendRequest(a.id, { username: b.username });
     await friendService.accept(b.id, friendshipId);
   };
-  const game = Game.create({ title: 'Hades', slug: 'hades', genres: [], platforms: [], cover: 'hades.jpg' });
+  const game = Game.create({ title: 'Hades', slug: 'hades', genres: [], platforms: [], cover: 'hades.jpg', backdrop: 'hades-backdrop.jpg' });
   const tick = () => new Promise((r) => setImmediate(r));
   const input = async (over = {}) => ({
     gameId: (await game)._id,
@@ -128,7 +128,7 @@ describe('sessionService — create and visibility', () => {
       myResponse: 'host',
       status: 'scheduled',
       discordInviteUrl: 'https://discord.gg/abc',
-      game: { slug: 'hades' },
+      game: { slug: 'hades', cover: 'hades.jpg', backdrop: 'hades-backdrop.jpg' }, // art for the session page
       counts: { going: 1, maybe: 0, spotsLeft: 3 },
     });
     expect(s.attendees[0]).toMatchObject({ role: 'host', response: 'going', user: { username: 'alex' } });

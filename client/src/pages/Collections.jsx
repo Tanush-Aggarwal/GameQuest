@@ -40,6 +40,7 @@ export default function Collections() {
       <ArtHeader
         title="Collections"
         seed="collections"
+        art={items[0]?.covers?.[0] ? { cover: items[0].covers[0] } : undefined}
         actions={
           !creating && (
             <Button onClick={() => setCreating(true)}>
@@ -74,7 +75,7 @@ export default function Collections() {
       {status === 'success' && items.length > 0 && (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {items.map((c) => (
-            <CollectionCard key={c.id} collection={c} />
+            <CollectionCard key={c.id} collection={c} headingLevel="h2" />
           ))}
         </ul>
       )}

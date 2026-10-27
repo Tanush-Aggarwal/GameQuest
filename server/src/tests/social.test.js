@@ -363,6 +363,20 @@ describe('profileService', () => {
     expect((await ctx.profileService.getProfile(ctx.demo.id, 'alex')).restricted).toBe(false);
   });
 
+  it('a restricted profile shows no favourite games and so no game art, to anyone but those it is shared with', async () => {
+    const ctx = await world();
+    const game = await ctx.mkGame('Hades');
+    await ctx.Game.updateOne({ _id: game._id }, { $set: { backdrop: 'hades-backdrop.jpg' } });
+    await ctx.profileService.updateProfile(ctx.alex.id, { favouriteGames: [game._id] });
+    await setPrivacy(ctx, 'friends');
+    const stranger = await ctx.profileService.getProfile(ctx.zed.id, 'alex');
+    expect(stranger.restricted).toBe(true);
+    expect(stranger.user.favouriteGames ?? []).toEqual([]);
+    expect(JSON.stringify(stranger)).not.toContain('hades-backdrop');
+    const friend = await ctx.profileService.getProfile(ctx.demo.id, 'alex');
+    expect(friend.user.favouriteGames[0]).toMatchObject({ title: 'Hades', backdrop: 'hades-backdrop.jpg' });
+  });
+
   it('private profile: only the owner', async () => {
     const ctx = await world();
     await setPrivacy(ctx, 'private');
@@ -391,6 +405,7 @@ describe('profileService', () => {
   it('updates profile bio, avatar, and favourite games with populated details', async () => {
     const ctx = await world();
     const [g1, g2] = [await ctx.mkGame('Hades'), await ctx.mkGame('Celeste')];
+    await ctx.Game.updateOne({ _id: g1._id }, { $set: { backdrop: 'hades-backdrop.jpg' } });
     const updated = await ctx.profileService.updateProfile(ctx.demo.id, {
       bio: 'Lifelong gamer & indie enthusiast',
       avatar: 'https://images.igdb.com/avatar.jpg',
@@ -400,8 +415,8 @@ describe('profileService', () => {
       bio: 'Lifelong gamer & indie enthusiast',
       avatar: 'https://images.igdb.com/avatar.jpg',
       favouriteGames: expect.arrayContaining([
-        expect.objectContaining({ title: 'Hades', slug: 'hades' }),
-        expect.objectContaining({ title: 'Celeste', slug: 'celeste' }),
+        expect.objectContaining({ title: 'Hades', slug: 'hades', backdrop: 'hades-backdrop.jpg' }), // art for the profile banner
+        expect.objectContaining({ title: 'Celeste', slug: 'celeste', backdrop: null }),
       ]),
     });
 

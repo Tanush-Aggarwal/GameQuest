@@ -21,14 +21,19 @@ export function CoverMosaic({ covers }) {
   );
 }
 
-export function CollectionCard({ collection }) {
+// A collection is its covers: the mosaic fills the card and the name, size and badges sit on a fade at the bottom.
+// `headingLevel`: h3 under a section heading (a profile), h2 when the card is directly under the page title.
+export function CollectionCard({ collection, headingLevel: Heading = 'h3' }) {
   return (
     <li>
-      <Link to={`/collections/${collection.id}`} className="flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:bg-surface-raised">
+      <Link
+        to={`/collections/${collection.id}`}
+        className="group relative block overflow-hidden rounded-card border border-border bg-surface shadow-lg transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
         <CoverMosaic covers={collection.covers} />
-        <div className="flex flex-col gap-1 p-3">
-          <h3 className="line-clamp-1 text-sm font-semibold">{collection.name}</h3>
-          <p className="text-xs text-text-muted tabular-nums">
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bg via-bg/90 to-transparent p-3 pt-12">
+          <Heading className="line-clamp-1 text-sm font-semibold">{collection.name}</Heading>
+          <p className="text-xs tabular-nums text-text-muted">
             {collection.itemCount} {collection.itemCount === 1 ? 'game' : 'games'}
           </p>
           <div className="flex gap-3">

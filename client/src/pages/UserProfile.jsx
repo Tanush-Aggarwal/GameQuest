@@ -22,7 +22,8 @@ import { ActivityList } from '@/components/feed/ActivityList.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
-import { TILE } from '@/components/profile/FavouriteTiles.jsx';
+import { LARGE_TILE } from '@/components/profile/FavouriteTiles.jsx';
+import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -169,7 +170,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
     <ArtPanel aria-labelledby="favourites-title" art={games[0]} seed="profile-favourites" className="flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <h2 id="favourites-title" className="text-lg font-semibold font-heading flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
+          <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
           Favourite 4 Showcase
         </h2>
         {isSelf && (
@@ -189,7 +190,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
       ) : (
         <ul className="flex flex-wrap gap-3">
           {games.map((game) => (
-            <li key={game.id} className={TILE}>
+            <li key={game.id} className={LARGE_TILE}>
               <Link to={`/games/${game.slug}`} className="group flex flex-col gap-1.5">
                 <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised transition-colors group-hover:border-accent">
                   <CoverImage
@@ -200,8 +201,8 @@ function FavouriteShowcase({ games = [], isSelf }) {
                     className="h-full w-full transition-transform duration-300 motion-safe:group-hover:scale-105"
                   />
                   {game.ratingAvg > 0 && (
-                    <span className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full bg-bg px-2 py-0.5 text-xs font-semibold text-reward">
-                      <span aria-hidden="true">★</span>
+                    <span className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full bg-bg px-2 py-0.5 text-xs font-semibold text-text">
+                      <span aria-hidden="true" className="text-accent">★</span>
                       <span>
                         {game.ratingAvg.toFixed(1)}
                         <span className="sr-only"> out of 5</span>
@@ -319,10 +320,9 @@ export default function UserProfile() {
       {status === 'success' && profile && (
         <>
           {/* User Hero Banner */}
-          <div className="relative overflow-hidden rounded-card border border-border bg-gradient-to-r from-surface to-surface-raised p-6 shadow-md">
-            <div className="absolute top-0 right-0 -mt-8 -mr-8 h-48 w-48 rounded-full bg-accent/10 blur-2xl pointer-events-none" />
-
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Banner: the art of their first favourite game (a gradient when they have none, or the profile is private) */}
+          <BackdropHero as="header" art={profile.restricted ? null : profile.user.favouriteGames?.[0]} seed={profile.user.username} className="px-5 py-8 sm:px-8 sm:py-10">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <UserAvatar user={profile.user} size="lg" />
                 <div>
@@ -337,14 +337,15 @@ export default function UserProfile() {
                   )}
                 </div>
               </div>
-              <div className="flex-shrink-0 self-start sm:self-center">
+              {/* a solid backing: these buttons sit at the open end of the banner, over whatever the art is */}
+              <div className="flex-shrink-0 self-start rounded-card bg-bg/80 p-1 sm:self-center">
                 <RelationActions profile={profile} setProfile={setProfile} />
               </div>
             </div>
-          </div>
+          </BackdropHero>
 
           {profile.restricted ? (
-            <EmptyState headingLevel="h1" icon={Lock} title="This profile is private" description={`${profile.user.username} only shares their profile with ${profile.relation === 'none' ? 'friends' : 'approved players'}.`} />
+            <EmptyState headingLevel="h2" icon={Lock} title="This profile is private" description={`${profile.user.username} only shares their profile with ${profile.relation === 'none' ? 'friends' : 'approved players'}.`} />
           ) : (
             <>
               {/* Stat Tiles */}
@@ -353,7 +354,7 @@ export default function UserProfile() {
                   <div key={key} className="rounded-card border border-border bg-surface p-3.5 flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-2">
                       <dt className="text-xs text-text-muted">{label}</dt>
-                      <Icon className="h-4 w-4 text-text-muted" />
+                      <Icon className="h-4 w-4 text-text-muted" aria-hidden="true" />
                     </div>
                     <dd className="text-2xl font-bold font-heading tabular-nums text-text">{profile.stats[key]}</dd>
                   </div>

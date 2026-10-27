@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
+import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { ResponseBadge } from '@/components/sessions/responses.jsx';
 import { SessionForm } from '@/components/sessions/SessionForm.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -130,9 +131,9 @@ export default function Session() {
             <p role="status" className="rounded-card border border-border bg-surface p-3 text-sm">This session has ended.</p>
           )}
 
-          <header className="flex flex-col gap-2">
+          <BackdropHero as="header" art={session.game} seed={session.id} className="flex flex-col gap-2 px-5 py-8 sm:px-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <h1 className="text-2xl font-bold">{session.title}</h1>
+              <h1 className="font-heading text-2xl font-bold sm:text-4xl">{session.title}</h1>
               <ResponseBadge response={session.myResponse} />
             </div>
             <p className="flex items-center gap-2 text-sm">
@@ -152,7 +153,7 @@ export default function Session() {
                 {session.visibility === 'friends' ? 'Open to friends' : 'Invite only'}
               </span>
             </p>
-          </header>
+          </BackdropHero>
 
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={addToCalendar} disabled={calendarBusy}>

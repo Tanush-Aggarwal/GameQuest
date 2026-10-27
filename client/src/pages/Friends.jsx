@@ -6,7 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
-import { ArtHeader } from '@/components/art/ArtPanel.jsx';
+import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -42,11 +42,17 @@ function ListSkeleton() {
   );
 }
 
-const Row = ({ children }) => (
-  <li className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-3">{children}</li>
+// A person's row sits on game art picked from their name, so the lists are never flat grey cards.
+const Row = ({ children, seed }) => (
+  <ArtPanel as="li" seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-3">
+    {children}
+  </ArtPanel>
 );
 const PlayerLink = ({ username }) => (
-  <Link to={`/u/${username}`} className="min-h-11 content-center font-semibold hover:underline">
+  <Link to={`/u/${username}`} className="flex min-h-11 items-center gap-3 rounded-control font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+    <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/25 text-sm uppercase">
+      {username.slice(0, 1)}
+    </span>
     {username}
   </Link>
 );
@@ -95,7 +101,7 @@ function FriendsTab() {
   return (
     <ul className="flex flex-col gap-2">
       {friends.map((f) => (
-        <Row key={f.id}>
+        <Row key={f.id} seed={f.username}>
           <PlayerLink username={f.username} />
           <div className="flex gap-1">
             <ConfirmButton label="Unfriend" confirmLabel="Unfriend" icon={UserMinus} ariaLabel={`Unfriend ${f.username}`} onConfirm={() => remove(f, unfriend, `You and ${f.username} are no longer friends`)} />
@@ -136,7 +142,7 @@ function RequestsTab() {
           <h2 id="incoming-title" className="text-sm font-semibold text-text-muted">Received</h2>
           <ul className="flex flex-col gap-2">
             {requests.incoming.map((r) => (
-              <Row key={r.id}>
+              <Row key={r.id} seed={r.user.username}>
                 <PlayerLink username={r.user.username} />
                 <div className="flex gap-1">
                   <Button onClick={() => resolve(r, 'incoming', acceptRequest, `You and ${r.user.username} are now friends`)} aria-label={`Accept ${r.user.username}`}>
@@ -156,7 +162,7 @@ function RequestsTab() {
           <h2 id="outgoing-title" className="text-sm font-semibold text-text-muted">Sent</h2>
           <ul className="flex flex-col gap-2">
             {requests.outgoing.map((r) => (
-              <Row key={r.id}>
+              <Row key={r.id} seed={r.user.username}>
                 <PlayerLink username={r.user.username} />
                 <Button variant="ghost" onClick={() => resolve(r, 'outgoing', cancelRequest, 'Request cancelled')} aria-label={`Cancel request to ${r.user.username}`}>
                   <X className="h-4 w-4" aria-hidden="true" /> Cancel
@@ -215,7 +221,7 @@ function FindTab() {
       {searchable && status === 'success' && results.length > 0 && (
         <ul className="flex flex-col gap-2">
           {results.map((u) => (
-            <Row key={u.id}>
+            <Row key={u.id} seed={u.username}>
               <PlayerLink username={u.username} />
               {u.relation === 'none' ? (
                 <Button onClick={() => add(u)} aria-label={`Add ${u.username} as a friend`}>

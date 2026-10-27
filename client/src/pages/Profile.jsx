@@ -15,7 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { FavouriteTiles, SLOT_COUNT } from '@/components/profile/FavouriteTiles.jsx';
 import { FavouritePicker } from '@/components/profile/FavouritePicker.jsx';
 import { SteamLinkCard } from '@/components/steam/SteamLinkCard.jsx';
-import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
@@ -41,14 +42,15 @@ const AVATAR_PRESETS = [
   { label: 'Mystic', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80' },
 ];
 
-function EditProfileSection({ username }) {
-  const load = useCallback((signal) => getProfile(username, { signal }), [username]);
-  const { status, data, error, retry } = useAsync(load);
+// `profile` is the page's one profile (status, data, error, retry, update): the banner, the editor and the privacy
+// setting all read it, and a save updates it in place, so nothing reloads, remounts or loses focus.
+function EditProfileSection({ profile }) {
+  const { status, data, error, retry, update } = profile;
 
   if (status === 'loading') return <Skeleton className="h-64 w-full" role="status" aria-label="Loading profile editor" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
 
-  return <ProfileEditor initialProfile={data?.user} onSaved={retry} />;
+  return <ProfileEditor initialProfile={data?.user} onSaved={(saved) => update({ ...data, user: { ...data.user, ...saved } })} />;
 }
 
 function ProfileEditor({ initialProfile, onSaved }) {
@@ -115,13 +117,13 @@ function ProfileEditor({ initialProfile, onSaved }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateProfile({
+      const savedUser = await updateProfile({
         avatar: avatar.trim() || null,
         bio: bio.trim(),
         favouriteGames: slots.filter(Boolean).map((g) => g.id),
       });
       toast.success('Profile updated successfully');
-      if (onSaved) onSaved();
+      if (onSaved) onSaved(savedUser);
     } catch (err) {
       toast.error(getErrorInfo(err).message);
     } finally {
@@ -159,7 +161,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
                     key={p.label}
                     type="button"
                     onClick={() => setAvatar(p.url)}
-                    className="text-xs px-2 py-0.5 rounded-full border border-border bg-surface-raised hover:border-accent text-text-muted hover:text-text transition-colors"
+                    className="min-h-11 rounded-full border border-border bg-surface-raised px-3 text-xs text-text-muted transition-colors hover:border-accent hover:text-text"
                   >
                     {p.label}
                   </button>
@@ -168,7 +170,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
                   <button
                     type="button"
                     onClick={() => setAvatar('')}
-                    className="text-xs px-2 py-0.5 rounded-full text-text-muted hover:text-red-400"
+                    className="min-h-11 rounded-full px-3 text-xs text-text-muted hover:text-text"
                   >
                     Clear
                   </button>
@@ -200,7 +202,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <span className="flex items-center gap-1.5 text-sm font-semibold">
-                <Sparkles className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
+                <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
                 Favourite 4 Showcase
               </span>
               <p className="mt-0.5 text-xs text-text-muted">Pick up to 4 games to feature on your profile</p>
@@ -233,24 +235,21 @@ function ProfileEditor({ initialProfile, onSaved }) {
   );
 }
 
-function PrivacySetting({ username }) {
+function PrivacySetting({ profile }) {
   const id = useId();
-  const load = useCallback((signal) => getProfile(username, { signal }), [username]);
-  const { status, data, error, retry } = useAsync(load);
-  const [profile, setProfile] = useLayered(data);
+  const { status, data: current, error, retry, update } = profile;
 
   async function change(next) {
-    const previous = profile;
-    setProfile({ ...profile, user: { ...profile.user, privacy: next } });
+    const previous = current;
+    update({ ...current, user: { ...current.user, privacy: next } });
     try {
       await setPrivacy(next);
       toast.success('Profile privacy updated');
     } catch (err) {
-      setProfile(previous);
+      update(previous);
       toast.error(getErrorInfo(err).message);
     }
   }
-
   if (status === 'loading') return <Skeleton className="h-16 w-full max-w-md" role="status" aria-label="Loading privacy" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
   return (
@@ -258,7 +257,7 @@ function PrivacySetting({ username }) {
       <label htmlFor={id} className="text-sm font-medium">Who can see my profile</label>
       <select
         id={id}
-        value={profile.user.privacy}
+        value={current.user.privacy}
         onChange={(e) => change(e.target.value)}
         className="min-h-11 rounded-control border border-border bg-surface px-3 text-sm text-text focus:outline-none focus:ring-1 focus:ring-accent"
       >
@@ -317,25 +316,31 @@ function SettingsSection({ id, title, seed, children }) {
 
 export default function Profile() {
   const { user } = useAuth();
+  const username = user?.username;
+  const load = useCallback((signal) => (username ? getProfile(username, { signal }) : Promise.resolve(null)), [username]);
+  const loaded = useAsync(load);
+  const [data, update] = useLayered(loaded.data);
+  const profile = { status: loaded.status, data, error: loaded.error, retry: loaded.retry, update };
+  const banner = data?.user?.favouriteGames?.[0]; // the first favourite game's art is the banner
   return (
     <section className="flex flex-col gap-6 pb-12">
-      <ArtHeader
-        title="Profile & Settings"
-        subtitle="Customize your public gamer identity and privacy settings"
-        seed="profile"
-        actions={
-          user && (
+      <BackdropHero as="header" art={banner} seed="profile" className="px-5 py-8 sm:px-8 sm:py-10">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="font-heading text-2xl font-bold sm:text-4xl">Profile &amp; Settings</h1>
+            <p className="mt-1 text-sm text-text-muted">Customize your public gamer identity and privacy settings</p>
+          </div>
+          {user && (
             <Link to={`/u/${user.username}`} className={buttonVariants({ variant: 'secondary' })}>
-              View my public profile <ExternalLink className="h-3.5 w-3.5 ml-1.5" aria-hidden="true" />
+              View my public profile <ExternalLink className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
             </Link>
-          )
-        }
-      />
-
+          )}
+        </div>
+      </BackdropHero>
       {/* Profile Details & Favourite Showcase Editor */}
       {user && (
         <SettingsSection id="edit-profile-title" title="Gamer Identity" seed="profile-identity">
-          <EditProfileSection username={user.username} />
+          <EditProfileSection profile={profile} />
         </SettingsSection>
       )}
 
@@ -367,7 +372,7 @@ export default function Profile() {
       {/* Privacy Settings */}
       {user && (
         <SettingsSection id="privacy-title" title="Privacy" seed="profile-privacy">
-          <PrivacySetting username={user.username} />
+          <PrivacySetting profile={profile} />
         </SettingsSection>
       )}
 

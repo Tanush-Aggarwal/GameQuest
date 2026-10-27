@@ -10,12 +10,10 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 - (nothing)
 
 ## Next up (do these in order, one at a time)
-16. Phase 3: redesign (use the new catalog data: backdrops, artworks, screenshots, developer/publisher, popularity). Requested by the user, to plan (plan mode, many files) and build as separate commits:
-    - replace the website-style top nav with a left rail + slim top bar (keep the mobile bottom tab bar from AGENTS.md);
-    - every page section gets game art behind it (backdrops / blurred covers), not flat grey cards;
-    - Profile "Favourite 4": compact cover-sized tiles with a picker, not full-screen empty boxes;
-    - "What to play next": a rail of large covers with the reason for each, not one small row;
-    - compact empty states that suggest games from the catalog instead of big blank panels.
+16. Phase 3: redesign, remaining work (the five requested items below are DONE, see Done; what is left is applying the same treatment to the rest: game page, library entry, collections, sessions detail and forms, auth pages):
+    - look at it in a browser at desktop and 375 px (no browser tooling was available when it was built);
+    - game art behind the remaining sections (Game page tabs, LibraryEntry panels, Collection detail, Session detail/forms, auth pages);
+    - the text-accent contrast (about 4.4:1) is a token decision to revisit.
 17. Phase 4: cloud deploy (Atlas + Render + Vercel, then `npm run db:indexes`; see docs/DEPLOY.md)
 
 ## Done
@@ -42,6 +40,7 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 - Item 4: client shell (lazy routes, top nav + mobile tab bar, login/register using shared Zod schemas, protected/public-only routes, session restore + refresh-on-401, toasts, ui primitives; 20 client tests)
 
 ## Known issues / blockers
+- UI: the redesign was verified by tests, the build and compiled-CSS checks only (no browser in the session); look at it. Art backdrops load two extra requests per page load (library + popular games); suggestions use the first 24 library entries. 	ext-accent is about 4.4:1 on --bg (token from the brief).
 - Catalog: 18 visible games have no backdrop (IGDB has no artwork or screenshot for them; they use the cover/fallback). The Steam art fallback cannot help: none of the 18 has a Steam id, here or on IGDB (`npm run catalog:steam-art` reports 0 candidates). `popularity` is a log-scaled blend (see DECISIONS) so very different games can score close together. The import's "recent" step scans at most 5,000 releases in its window before ranking.
 - Catalog: some title variants exist as separate games (e.g. Resident Evil 4 has the 2023 remake, the 2005 original and a VR version). Search shows all of them; the seeded demo entry is the 2023 remake.
 - `client` routing.test.jsx can time out when server and client suites run at the same time (`npm test` at the root); it passes alone and in a full client run.
@@ -66,6 +65,7 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 
 ## Session log
 <!-- newest first: date — tool used — what changed — commit hash -->
+- 2026-10-27 — Claude Code — UI redesign pass (rail + top bar, game art sections, Tailwind opacity fix, play-next rail, Favourite 4 tiles + picker, compact empty states); reviewer subagent before each commit; 541 server + 248 client tests pass — commits 0966217, 711771b, 390f3a3, 72c17e7, 55aeaa9
 - 2026-10-27 — Claude Code — trailer quality pipeline (picker, service, "Wrong trailer?", refresh script; live run over the top 300 games and a second pass after tightening the search rules); reviewer subagent before the commit; 536 server + 153 client tests pass; UI redesign requests recorded under "Next up" — commit after this entry
 - 2026-10-27 — Claude Code — Phase 2 Steam + YouTube (d2b5802 link, 382d94d sync, e312298 Steam art, 25a20fe trailers, 53f6b8e Explore shelves, docs commit); reviewer subagent before each commit; real Steam sync on the demo user; 377 server + 144 client tests pass
 - 2026-10-27 — Claude Code — Phase 0 review fixes + Phase 1 catalog import and repair (827d069, 0f4d994, c8363da, b5aa140 and the final docs/seed commit); ran import + fix + seed-id repair against Atlas; 277 server + 118 client tests pass

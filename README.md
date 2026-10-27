@@ -12,7 +12,7 @@ A full-stack MERN web app: one unified game library across platforms, smart "wha
 | **Server** | Node.js, Express 5, Mongoose 9, Zod (validation), Pino (logging), Helmet, bcrypt, JSON Web Tokens |
 | **Database** | MongoDB Atlas |
 | **Shared** | `@gamequest/shared` — Zod schemas re-used on both client and server |
-| **Testing** | Jest + Supertest (server, 536 tests), Vitest + Testing Library (client, 153 tests) |
+| **Testing** | Jest + Supertest (server, 541 tests), Vitest + Testing Library (client, 248 tests) |
 
 ---
 
@@ -181,7 +181,7 @@ All routes are under `/api/v1` and (except `/health` and `/auth/*`) require the 
 | GET · POST · DELETE | `/library/:id/journal[/:noteId]` | Journal notes |
 | GET | `/library/:id/history` | Status history |
 | DELETE | `/library/:id` | Remove from library |
-| GET | `/insights/dashboard` · `/insights/play-next` · `/insights/backlog-health` | Dashboard data |
+| GET | `/insights/dashboard` · `/insights/play-next?limit=` · `/insights/backlog-health` | Dashboard data; play-next takes `limit` 1-12 (default 5) and returns each game's cover, backdrop and reasons |
 | PUT · DELETE | `/reviews/:gameId` | Upsert / delete own review |
 | GET | `/reviews/mine/:gameId` · `/reviews/game/:gameId` · `/reviews/user/:userId` | Read reviews |
 | GET · POST | `/collections` | List mine · create (manual or smart) |

@@ -55,3 +55,8 @@ export async function getBacklogHealth({ signal } = {}) {
   const { data } = await api.get('/insights/backlog-health', { signal });
   return data;
 }
+
+export async function getNextAdventure({ signal } = {}) {
+  const { data } = await api.get('/insights/next-adventure', { signal });
+  return data;
+}

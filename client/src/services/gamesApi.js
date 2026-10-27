@@ -29,3 +29,16 @@ export async function getGameFriends(slug, { signal } = {}) {
   const { data } = await api.get(`/games/${encodeURIComponent(slug)}/friends`, { signal });
   return data.items ?? [];
 }
+
+// Featured games: released popular games with cover & backdrop.
+// Resolves to { items: Game[] } with real rating (IGDB score out of 10, one decimal, or null).
+export async function getFeaturedGames(params = {}, { signal } = {}) {
+  const { data } = await api.get('/games/featured', { params, signal });
+  return data;
+}
+
+// System requirements from Steam store: { available, reason, minimum, recommended, source }.
+export async function getGameRequirements(slug, { signal } = {}) {
+  const { data } = await api.get(`/games/${encodeURIComponent(slug)}/requirements`, { signal });
+  return data;
+}

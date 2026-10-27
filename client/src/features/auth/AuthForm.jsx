@@ -51,7 +51,7 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer,
   }
 
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[minmax(0,1fr)_30rem]">
+    <div className="isolate min-h-screen md:grid md:grid-cols-[minmax(0,1fr)_30rem]">
       <CoverCollage />
       <section className="hidden flex-col justify-end gap-4 p-12 md:flex lg:p-16">
         <p className="font-heading text-7xl font-bold leading-none text-text lg:text-8xl">GameQuest</p>

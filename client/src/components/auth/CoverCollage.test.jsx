@@ -75,7 +75,7 @@ describe('CoverCollage', () => {
     getPublicCovers.mockResolvedValue(covers(6));
     const { container } = render(<CoverCollage />);
     await waitFor(() => expect(container.querySelector('img')).not.toBeNull());
-    expect(container.querySelector('.bg-bg\\/75')).not.toBeNull();
+    expect(container.querySelector('.bg-bg\\/45')).not.toBeNull();
   });
 
   it('falls back to a gradient while loading, when the covers fail, and when there are none', async () => {

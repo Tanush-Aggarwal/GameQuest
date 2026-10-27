@@ -56,8 +56,8 @@ export function CoverCollage() {
         </div>
       )}
       {/* the scrim: the covers stay a texture, never competing with the form */}
-      <div className="absolute inset-0 bg-bg/75" />
-      <div className="absolute inset-0 bg-gradient-to-b from-bg/40 via-transparent to-bg/80" />
+      <div className="absolute inset-0 bg-bg/45" />
+      <div className="absolute inset-0 bg-gradient-to-b from-bg/20 via-transparent to-bg/60" />
     </div>
   );
 }

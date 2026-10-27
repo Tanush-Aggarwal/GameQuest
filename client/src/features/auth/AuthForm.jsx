@@ -51,14 +51,21 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer,
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4 py-10">
+    <div className="min-h-screen md:grid md:grid-cols-[minmax(0,1fr)_30rem]">
       <CoverCollage />
-      <div className="flex items-center gap-2 font-heading text-2xl font-bold">
+      <section className="hidden flex-col justify-end gap-4 p-12 md:flex lg:p-16">
+        <p className="font-heading text-7xl font-bold leading-none text-text lg:text-8xl">GameQuest</p>
+        <p className="max-w-md text-lg text-text">
+          Your games from every platform in one library. Pick what to play next and play it with friends.
+        </p>
+      </section>
+      <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-4 py-10 md:max-w-none md:border-l md:border-border md:bg-surface md:px-12">
+      <div className="flex items-center gap-2 font-heading text-2xl font-bold md:hidden">
         <Gamepad2 className="h-7 w-7 text-accent" aria-hidden="true" />
         GameQuest
       </div>
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-card border border-border bg-surface/95 p-6 shadow-2xl supports-[backdrop-filter]:bg-surface/70 supports-[backdrop-filter]:backdrop-blur-md">
-        <h1 className="text-xl font-semibold">{title}</h1>
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-card border border-border bg-surface p-6 md:rounded-none md:border-0 md:p-0">
+        <h1 className="font-heading text-3xl font-bold">{title}</h1>
         {oauth && (
           <>
             {oauth}
@@ -119,7 +126,8 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer,
           {pending ? 'Please wait…' : submitLabel}
         </Button>
       </form>
-      <p className="rounded-card bg-bg/70 px-3 py-2 text-center text-sm text-text-muted">{footer}</p>
+      <p className="rounded-card bg-bg/70 px-3 py-2 text-center text-sm text-text-muted md:bg-transparent md:px-0">{footer}</p>
+      </main>
     </div>
   );
 }

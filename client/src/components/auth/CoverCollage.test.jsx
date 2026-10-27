@@ -109,15 +109,14 @@ describe('sign-in pages with the collage', () => {
   it.each([
     ['Log in', Login],
     ['Create account', Register],
-  ])('%s still works when the collage cannot load, and the card is glass with a solid fallback', async (heading, Page) => {
+  ])('%s still works when the collage cannot load, and the form sits on a solid panel', async (heading, Page) => {
     getPublicCovers.mockRejectedValue(new Error('down'));
     const { container } = renderPage(Page);
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /log in|create|sign up|register/i })).toBeInTheDocument();
-    const form = container.querySelector('form');
-    expect(form.className).toMatch(/\bbg-surface\/95\b/); // solid enough where backdrop blur is not supported
-    expect(form.className).toMatch(/supports-\[backdrop-filter\]:bg-surface\/70/);
-    expect(form.className).toMatch(/supports-\[backdrop-filter\]:backdrop-blur-md/);
+    const panel = container.querySelector('main');
+    expect(panel.className).toMatch(/\bmd:bg-surface\b/); // opaque beside the collage on wide screens
+    expect(panel.contains(container.querySelector('form'))).toBe(true);
     expect(container.querySelector('[data-collage]')).not.toBeNull();
   });
 

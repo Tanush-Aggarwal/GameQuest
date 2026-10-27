@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { LIBRARY_TRANSITIONS } from '@gamequest/shared';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -97,157 +97,170 @@ export default function LibraryEntry() {
     (entry.ownerships ?? []).reduce((s, o) => s + (o.playtimeMin ?? 0), 0),
   );
 
+  const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
+  const progress = Math.max(0, Math.min(100, entry.manualProgress ?? 0));
+
   return (
     <section className="flex flex-col gap-6 pb-12">
-      {/* Back nav */}
-      <Link to="/library" className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text)]">
-        <ArrowLeft size={14} aria-hidden="true" /> Library
+      <Link to="/library" className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-medium text-text-muted transition-colors hover:text-text">
+        <ArrowLeft size={16} aria-hidden="true" /> Back to library
       </Link>
 
-      {/* Hero: the game's backdrop, cover, title, status and the numbers that matter */}
-      <BackdropHero art={game} seed={game.title ?? 'entry'} className="px-4 py-6 sm:px-8 sm:py-8">
-        <div className="flex items-end gap-4 sm:gap-6">
+      {/* Hero: backdrop behind a dark scrim, so every word on it is white and readable */}
+      <BackdropHero art={game} seed={game.title ?? 'entry'} className="min-h-[300px] px-5 py-7 text-white sm:px-10 sm:py-10">
+        <div className="flex h-full flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
           {game.cover ? (
-            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-32 w-24 flex-shrink-0 rounded-xl shadow-lg sm:h-44 sm:w-32" />
+            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-48 w-36 flex-shrink-0 rounded-[10px] border-2 border-[var(--accent)] shadow-2xl sm:h-60 sm:w-44" />
           ) : (
-            <div className="flex h-32 w-24 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--surface-raised)] sm:h-44 sm:w-32">
-              <Gamepad2 size={28} className="text-[var(--text-muted)]" aria-hidden="true" />
+            <div className="flex h-48 w-36 flex-shrink-0 items-center justify-center rounded-[10px] bg-white/10 sm:h-60 sm:w-44">
+              <Gamepad2 size={32} className="text-white/60" aria-hidden="true" />
             </div>
           )}
 
-          <div className="min-w-0 flex-1">
-            <p className="mb-1 text-xs uppercase tracking-wide text-[var(--text-muted)]">{game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : ''}</p>
-            <h1 className="font-heading text-2xl font-bold leading-tight sm:text-4xl">{game.title ?? 'Unknown game'}</h1>
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/70">
+              <span>In your library</span>
+              {year && <><span aria-hidden="true">•</span><span>{year}</span></>}
+              {game.developer?.[0] && <><span aria-hidden="true">•</span><span className="normal-case tracking-normal">{game.developer[0]}</span></>}
+            </div>
+            <h1 className="font-heading text-3xl font-bold leading-none tracking-tight text-white sm:text-5xl">{game.title ?? 'Unknown game'}</h1>
 
-            {/* Status: icon + label on a solid pill, so it never relies on colour alone */}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-bg px-2.5 py-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#fbf8f1] px-3 py-1.5 shadow">
                 <StatusBadge status={entry.status} />
               </span>
               {entry.status === 'completed' && entry.completedAt && (
-                <span className="text-xs text-[var(--text-muted)]">
-                  {new Date(entry.completedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                <span className="text-xs text-white/70">
+                  Completed {new Date(entry.completedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                 </span>
               )}
             </div>
 
-            {/* Quick stats */}
-            <div className="mt-3 flex flex-wrap gap-4 text-sm">
+            <div className="mt-1 flex flex-wrap gap-2">
               {totalPlaytimeMin > 0 && <Stat icon={Clock} value={`${Math.round(totalPlaytimeMin / 60)}h`} label="played" />}
               {game.ratingAvg > 0 && <Stat icon={Star} value={game.ratingAvg.toFixed(1)} label="rating" />}
               {game.timeToBeat?.main > 0 && <Stat icon={Trophy} value={`~${game.timeToBeat.main}h`} label="to beat" />}
+              <Stat icon={Gamepad2} value={`${progress}%`} label="progress" />
             </div>
+
+            {nextStatuses.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {nextStatuses.map((to, i) => (
+                  <button
+                    key={to}
+                    onClick={() => handleStatusChange(to)}
+                    disabled={busy}
+                    className={`min-h-11 rounded-full px-5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-60 ${
+                      i === 0 ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-105' : 'border border-white/30 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Move to {STATUS_LABELS[to]}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </BackdropHero>
 
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      {/* Status actions */}
-      {nextStatuses.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {nextStatuses.map((to) => (
-            <button
-              key={to}
-              onClick={() => handleStatusChange(to)}
-              disabled={busy}
-              className="min-h-11 rounded-full border border-[var(--border)] px-4 text-sm font-medium transition-colors hover:border-[var(--accent)] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
-            >
-              Move to {STATUS_LABELS[to]}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="mx-auto grid w-full max-w-[1200px] gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Main column: what you do with the game */}
+        <div className="flex min-w-0 flex-col gap-6">
+          {game.summary && (
+            <Card title="About">
+              <CollapsibleSummary text={game.summary} />
+              {(game.genres ?? []).length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {game.genres.map((g) => (
+                    <span key={g} className="rounded-full border border-border bg-bg px-3 py-1 text-xs font-medium text-text-muted">{g}</span>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
 
-      {/* Platforms */}
-      {steamOwnership(entry) && <SteamDetails entry={entry} />}
-      {otherPlatforms(entry).length > 0 && (
-        <div>
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-2">Platforms</p>
-          <div className="flex gap-2 flex-wrap">
-            {otherPlatforms(entry).map((o, i) => (
-              <span key={i} className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-raised)] border border-[var(--border)]">
-                {o.platform}
-                {o.playtimeMin > 0 && <> · {Math.round(o.playtimeMin / 60)}h</>}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+          <ProgressPanel
+            entryId={id}
+            status={entry.status}
+            initialProgress={entry.manualProgress ?? 0}
+            onProgressSaved={(p) => setEntry({ ...entry, manualProgress: p })}
+          />
 
-      {/* Summary */}
-      {game.summary && (
-        <div>
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-2">About</p>
-          <CollapsibleSummary text={game.summary} />
+          <ReviewPanel gameId={entry.gameId} status={entry.status} />
         </div>
-      )}
 
-      {/* Genres */}
-      {(game.genres ?? []).length > 0 && (
-        <div className="flex gap-1.5 flex-wrap">
-          {game.genres.map((g) => (
-            <span key={g} className="text-xs px-2 py-0.5 rounded bg-[var(--surface-raised)] text-[var(--text-muted)]">{g}</span>
-          ))}
-        </div>
-      )}
+        {/* Side column: platform data and actions */}
+        <aside className="flex min-w-0 flex-col gap-6">
+          {steamOwnership(entry) && <SteamDetails entry={entry} />}
+          {otherPlatforms(entry).length > 0 && (
+            <Card title="Platforms">
+              <div className="flex flex-wrap gap-2">
+                {otherPlatforms(entry).map((o, i) => (
+                  <span key={i} className="rounded-full border border-border bg-bg px-3 py-1 text-xs font-medium">
+                    {o.platform}
+                    {o.playtimeMin > 0 && <> · {Math.round(o.playtimeMin / 60)}h</>}
+                  </span>
+                ))}
+              </div>
+            </Card>
+          )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <AddToCollection entryId={id} />
-        <Button variant="secondary" onClick={() => setRecommendOpen(true)}>
-          Recommend
-        </Button>
+          <Card title="Share & organise">
+            <div className="flex flex-col gap-3">
+              <AddToCollection entryId={id} />
+              <Button variant="secondary" onClick={() => setRecommendOpen(true)} className="w-full">
+                <Sparkles size={16} aria-hidden="true" /> Recommend to a friend
+              </Button>
+              <button
+                onClick={handleToggleVisibility}
+                className="flex min-h-11 items-center gap-2 rounded-control px-1 text-sm text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {entry.hiddenFromFriends ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                {entry.hiddenFromFriends ? 'Hidden from friends' : 'Visible to friends'}
+              </button>
+            </div>
+          </Card>
+          {game && <RecommendationModal game={{ id: entry.gameId, title: game.title }} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />}
+
+          <Card title="Danger zone">
+            {confirmingRemove ? (
+              <div role="group" aria-label="Confirm removal" className="flex flex-col gap-3">
+                <span className="text-sm text-text-muted">Remove this game from your library? Progress and notes go with it.</span>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={handleRemove}>Remove</Button>
+                  {/* the safe choice takes focus */}
+                  <Button variant="ghost" autoFocus onClick={() => setConfirmingRemove(false)}>Cancel</Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingRemove(true)}
+                className="flex min-h-11 items-center gap-2 rounded-control px-1 text-sm font-medium text-[var(--danger)] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <Trash2 size={16} aria-hidden="true" /> Remove from library
+              </button>
+            )}
+          </Card>
+        </aside>
       </div>
-      {game && <RecommendationModal game={{ id: entry.gameId, title: game.title }} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />}
+    </section>
+  );
+}
 
-      {/* Progress panel */}
-      <ProgressPanel
-        entryId={id}
-        status={entry.status}
-        initialProgress={entry.manualProgress ?? 0}
-        onProgressSaved={(p) => setEntry({ ...entry, manualProgress: p })}
-      />
-
-      {/* Reviews */}
-      <ReviewPanel gameId={entry.gameId} status={entry.status} />
-
-      {/* Danger zone */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-2">
-        <button
-          onClick={handleToggleVisibility}
-          className="flex min-h-11 items-center gap-1.5 rounded-control px-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          {entry.hiddenFromFriends ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-          {entry.hiddenFromFriends ? 'Hidden from friends' : 'Visible to friends'}
-        </button>
-        {confirmingRemove ? (
-          <div role="group" aria-label="Confirm removal" className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-[var(--text-muted)]">Remove this game from your library?</span>
-            <Button variant="secondary" onClick={handleRemove}>
-              Remove
-            </Button>
-            {/* the safe choice takes focus */}
-            <Button variant="ghost" autoFocus onClick={() => setConfirmingRemove(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirmingRemove(true)}
-            className="flex min-h-11 items-center gap-1.5 rounded-control px-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <Trash2 size={14} aria-hidden="true" /> Remove from library
-          </button>
-        )}
-      </div>
-      </div>    </section>
+function Card({ title, children }) {
+  return (
+    <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">{title}</h2>
+      {children}
+    </section>
   );
 }
 
 function Stat({ icon: Icon, value, label }) {
   return (
-    <div className="flex items-center gap-1 text-[var(--text-muted)]">
-      <Icon size={13} aria-hidden="true" />
-      <span className="font-semibold tabular-nums text-[var(--text)]">{value}</span>
+    <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-white/75 backdrop-blur-sm">
+      <Icon size={14} aria-hidden="true" />
+      <span className="font-semibold tabular-nums text-white">{value}</span>
       <span className="text-xs">{label}</span>
     </div>
   );
@@ -259,9 +272,9 @@ function CollapsibleSummary({ text }) {
   const shown = expanded || !short ? text : text.slice(0, 240) + '…';
   return (
     <div>
-      <p className="text-sm text-[var(--text-muted)] leading-relaxed">{shown}</p>
+      <p className="text-sm leading-7 text-text">{shown}</p>
       {short && (
-        <button onClick={() => setExpanded((v) => !v)} className="mt-1 flex items-center gap-1 text-xs text-accent hover:underline">
+        <button onClick={() => setExpanded((v) => !v)} className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--accent-text)] hover:underline">
           {expanded ? 'Show less' : 'Show more'} <ChevronRight size={12} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
         </button>
       )}
@@ -274,7 +287,7 @@ function LoadingSkeleton() {
     <section role="status" aria-label="Loading library entry" className="flex flex-col gap-6 pb-12">
       <div className="h-11 w-24 rounded bg-[var(--surface)] motion-safe:animate-pulse" />
       <div className="h-64 rounded-[var(--radius-card)] bg-[var(--surface)] motion-safe:animate-pulse" />
-      <div className="mx-auto h-48 w-full max-w-2xl rounded-[var(--radius-card)] bg-[var(--surface)] motion-safe:animate-pulse" />
+      <div className="mx-auto h-48 w-full max-w-[1200px] rounded-[var(--radius-card)] bg-[var(--surface)] motion-safe:animate-pulse" />
     </section>
   );
 }

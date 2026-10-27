@@ -28,6 +28,7 @@ export function TopBar({ onOpenPalette }) {
   const [notifications, setNotifications] = useState({ items: [], unread: 0 });
   const [openNotifications, setOpenNotifications] = useState(false);
   const notifRef = useRef(null);
+  const isGamePage = pathname.startsWith('/games/');
   const showSearch = pathname !== '/explore';
 
   useEffect(() => {
@@ -86,7 +87,7 @@ export function TopBar({ onOpenPalette }) {
   }
 
   return (
-    <header className="gq-topbar sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur-md">
+    <header className={`gq-topbar sticky top-0 z-20 border-b backdrop-blur-md transition-colors ${isGamePage ? 'is-game-page !border-white/10 !bg-[#0B0C0F]/95 text-white' : 'border-border bg-bg/90'}`}>
       <div className="gq-topbar-inner mx-auto flex h-12 w-full max-w-[1480px] items-center gap-2 px-3 sm:gap-3 sm:px-6">
         {/* Mobile logo */}
         <Link
@@ -94,7 +95,7 @@ export function TopBar({ onOpenPalette }) {
           aria-label="GameQuest home"
           className="gq-mobile-brand flex min-h-11 min-w-11 items-center gap-2 font-heading font-bold md:hidden"
         >
-          <span className="text-sm font-bold tracking-tight text-text">
+          <span className={`text-sm font-bold tracking-tight ${isGamePage ? 'text-white' : 'text-text'}`}>
             Game<span className="text-[var(--accent)]">Quest</span>
           </span>
         </Link>
@@ -102,16 +103,16 @@ export function TopBar({ onOpenPalette }) {
         {/* Search bar */}
         {showSearch && (
           <form role="search" onSubmit={search} className="relative min-w-0 flex-1 md:max-w-md mx-auto">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+            <Search className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isGamePage ? 'text-[#9AA3B2]' : 'text-text-muted'}`} aria-hidden="true" />
             <input
               type="search"
               aria-label="Search games"
               placeholder="Search games, genres, players..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="gq-search h-11 w-full rounded-full border border-border bg-surface pl-9 pr-14 text-sm text-text placeholder:text-text-muted transition-colors focus:border-text focus:outline-none"
+              className={`gq-search h-11 w-full rounded-full border pl-9 pr-14 text-sm transition-colors focus:outline-none ${isGamePage ? '!border-white/15 !bg-[#16181D] !text-white placeholder:!text-[#9AA3B2] focus:!border-white/40' : 'border-border bg-surface text-text placeholder:text-text-muted focus:border-text'}`}
             />
-            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-block rounded border border-border bg-surface-raised px-1.5 py-0.5 text-[10px] font-mono font-medium text-text-muted">
+            <kbd className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-block rounded border px-1.5 py-0.5 text-[10px] font-mono font-medium ${isGamePage ? '!border-white/15 !bg-white/10 !text-[#9AA3B2]' : 'border-border bg-surface-raised text-text-muted'}`}>
               Ctrl K
             </kbd>
           </form>
@@ -124,11 +125,11 @@ export function TopBar({ onOpenPalette }) {
               variant="ghost"
               onClick={onOpenPalette}
               aria-keyshortcuts="Control+K Meta+K"
-              className="h-10 px-2 sm:px-2.5 text-text-muted hover:text-text transition-colors"
+              className={`h-10 px-2 sm:px-2.5 transition-colors ${isGamePage ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
             >
               <Command className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only">Quick search</span>
-              <kbd className="hidden rounded-control border border-border bg-surface px-1.5 py-0.5 text-[11px] font-mono font-medium text-text-muted lg:inline">Ctrl K</kbd>
+              <kbd className={`hidden rounded-control border px-1.5 py-0.5 text-[11px] font-mono font-medium lg:inline ${isGamePage ? 'border-white/15 bg-white/10 text-[#9AA3B2]' : 'border-border bg-surface text-text-muted'}`}>Ctrl K</kbd>
             </Button>
           )}
 
@@ -136,7 +137,7 @@ export function TopBar({ onOpenPalette }) {
           <div className="relative" ref={notifRef}>
             <Button
               variant="ghost"
-              className="relative h-10 w-10 px-0 text-text-muted hover:text-text transition-colors"
+              className={`relative h-10 w-10 px-0 transition-colors ${isGamePage ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
               aria-label={notifications.unread > 0 ? `Notifications (${notifications.unread} unread)` : 'Notifications'}
               onClick={() => setOpenNotifications((o) => !o)}
             >
@@ -150,10 +151,10 @@ export function TopBar({ onOpenPalette }) {
               <div
                 role="region"
                 aria-label="Notifications list"
-                className="absolute right-0 top-12 mt-1 w-80 max-w-[calc(100vw-24px)] rounded-[14px] border border-border bg-surface p-3 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+                className={`absolute right-0 top-12 mt-1 w-80 max-w-[calc(100vw-24px)] rounded-[14px] border p-3 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${isGamePage ? 'border-white/15 bg-[#16181D] text-white' : 'border-border bg-surface'}`}
               >
-                <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                  <span className="font-heading text-xs font-bold uppercase tracking-wider text-text">
+                <div className={`flex items-center justify-between pb-2 border-b ${isGamePage ? 'border-white/10' : 'border-border/60'}`}>
+                  <span className={`font-heading text-xs font-bold uppercase tracking-wider ${isGamePage ? 'text-white' : 'text-text'}`}>
                     Notifications {notifications.unread > 0 && `(${notifications.unread})`}
                   </span>
                   {notifications.unread > 0 && (
@@ -209,7 +210,7 @@ export function TopBar({ onOpenPalette }) {
           {user && (
             <Link
               to="/profile"
-              className="flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-control px-1.5 sm:px-2 py-1 text-sm font-medium text-text-muted hover:text-text transition-colors"
+              className={`flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-control px-1.5 sm:px-2 py-1 text-sm font-medium transition-colors ${isGamePage ? 'text-gray-200 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
             >
               <span
                 aria-hidden="true"
@@ -226,7 +227,7 @@ export function TopBar({ onOpenPalette }) {
             variant="ghost"
             onClick={handleLogout}
             aria-label="Log out"
-            className="h-10 px-2 sm:px-2.5 text-text-muted hover:text-text transition-colors"
+            className={`h-10 px-2 sm:px-2.5 transition-colors ${isGamePage ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
             <span className="hidden text-xs font-semibold lg:inline">Log out</span>

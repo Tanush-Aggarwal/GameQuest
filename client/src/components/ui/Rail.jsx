@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils.js';
 // A horizontal row of cards that scrolls with snap points and no native scrollbar. On pointer devices there are
 // labelled arrow buttons (hidden when the row does not overflow, disabled at its ends); on touch the row swipes.
 // Children are <li> elements.
-export function Rail({ label, children, className }) {
+export function Rail({ label, children, className, outsideArrows = false }) {
   const list = useRef(null);
   const [edges, setEdges] = useState({ overflow: false, left: false, right: false });
   const count = Array.isArray(children) ? children.length : 1;
@@ -15,8 +15,8 @@ export function Rail({ label, children, className }) {
     if (!el) return;
     setEdges({
       overflow: el.scrollWidth > el.clientWidth + 1,
-      left: el.scrollLeft > 1,
-      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
     });
   }, []);
 
@@ -40,7 +40,11 @@ export function Rail({ label, children, className }) {
     el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: reduced ? 'auto' : 'smooth' });
   }
 
-  const arrow = 'absolute top-1/3 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-border bg-bg/90 text-text shadow-lg hover:border-accent disabled:opacity-0 md:flex';
+  const arrow =
+    'absolute top-1/3 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[#16181D]/90 text-white shadow-xl transition hover:border-[#C8F135] hover:bg-[#16181D] disabled:opacity-0 disabled:pointer-events-none md:flex';
+  const leftPos = outsideArrows ? '-left-6 sm:-left-7' : '-left-3';
+  const rightPos = outsideArrows ? '-right-6 sm:-right-7' : '-right-3';
+
   return (
     <div className="group/rail relative">
       {/* padding with a matching negative margin: focus rings, hover lifts and shadows are not clipped by the scroll box */}
@@ -49,10 +53,22 @@ export function Rail({ label, children, className }) {
       </ul>
       {edges.overflow && (
         <>
-          <button type="button" aria-label={`Scroll ${label} left`} onClick={() => scrollBy(-1)} disabled={!edges.left} className={cn(arrow, '-left-3')}>
+          <button
+            type="button"
+            aria-label={`Scroll ${label} left`}
+            onClick={() => scrollBy(-1)}
+            disabled={!edges.left}
+            className={cn(arrow, leftPos, !edges.left && 'opacity-0 pointer-events-none')}
+          >
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <button type="button" aria-label={`Scroll ${label} right`} onClick={() => scrollBy(1)} disabled={!edges.right} className={cn(arrow, '-right-3')}>
+          <button
+            type="button"
+            aria-label={`Scroll ${label} right`}
+            onClick={() => scrollBy(1)}
+            disabled={!edges.right}
+            className={cn(arrow, rightPos, !edges.right && 'opacity-0 pointer-events-none')}
+          >
             <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
         </>

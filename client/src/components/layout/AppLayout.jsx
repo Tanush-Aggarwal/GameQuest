@@ -47,6 +47,17 @@ function AnimatedPage() {
 export function AppLayout() {
   const [palette, setPalette] = useState({ open: false, used: false });
   const openPalette = (open) => setPalette((p) => ({ open, used: p.used || open }));
+  const { pathname } = useLocation();
+  const isGamePage = pathname.startsWith('/games/');
+
+  useEffect(() => {
+    if (isGamePage) {
+      document.body.style.backgroundColor = '#0B0C0F';
+      return () => {
+        document.body.style.backgroundColor = '';
+      };
+    }
+  }, [isGamePage]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -63,7 +74,7 @@ export function AppLayout() {
     <ArtProvider>
       <AmbientProvider>
         <AmbientBackground />
-        <div className="gq-app min-h-screen">
+        <div className={`gq-app min-h-screen ${isGamePage ? 'bg-[#0B0C0F]' : ''}`}>
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-3 focus:py-2 focus:text-accent-fg"
@@ -71,9 +82,16 @@ export function AppLayout() {
             Skip to content
           </a>
           <SideRail />
-          <div className="md:pl-[160px]">
+          <div className={`md:pl-[160px] ${isGamePage ? 'bg-[#0B0C0F]' : ''}`}>
             <TopBar onOpenPalette={() => openPalette(true)} />
-            <main id="main" className="gq-main mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 pb-24 lg:pb-12">
+            <main
+              id="main"
+              className={`gq-main mx-auto w-full pb-24 lg:pb-12 ${
+                isGamePage
+                  ? '!max-w-none !p-0 bg-[#0B0C0F]'
+                  : 'px-4 py-6 sm:px-6 lg:px-8'
+              }`}
+            >
               <AnimatedPage />
             </main>
           </div>

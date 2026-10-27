@@ -24,10 +24,12 @@
 
 .gq-game-hero {
   position: relative;
-  min-height: 20rem;
-  border-radius: var(--radius-card) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background-color: #111311 !important;
+  border-radius: 0 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: #0B0C0F !important;
   color: #ffffff !important;
 }
 

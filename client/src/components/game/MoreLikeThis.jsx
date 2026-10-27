@@ -27,32 +27,32 @@ export function MoreLikeThis({ game }) {
   if (!genre) return null;
 
   return (
-    <section aria-labelledby="more-like-title" className="flex flex-col gap-3">
-      <h2 id="more-like-title" className="font-heading text-lg font-bold">
+    <section aria-labelledby="more-like-title" className="flex flex-col gap-4 pb-8">
+      <h2 id="more-like-title" className="font-heading text-2xl font-bold text-white">
         More like this
       </h2>
       {status === 'loading' && (
         <div role="status" aria-label="Loading similar games" className="flex gap-4 overflow-hidden">
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className={`${CARD} aspect-[3/4] rounded-card`} />
+            <Skeleton key={i} className={`${CARD} aspect-[3/4] rounded-card bg-[#16181D]`} />
           ))}
         </div>
       )}
       {status === 'error' && <ErrorState message="Couldn't load similar games." onRetry={retry} />}
       {status === 'success' && data.length === 0 && (
-        <p className="flex items-center gap-2 text-sm text-text-muted">
+        <p className="flex items-center gap-2 text-sm text-[#9AA3B2]">
           <Gamepad2 className="h-4 w-4" aria-hidden="true" /> No other {genre} games in the catalog yet.
         </p>
       )}
       {status === 'success' && data.length > 0 && (
-        <Rail label="Similar games">
+        <Rail label="Similar games" outsideArrows>
           {data.map((g) => (
             <li key={g.id} className={CARD}>
               <Link to={`/games/${g.slug}`} aria-label={g.title} className="group flex flex-col gap-2 rounded-card">
-                <SharedCover slug={g.slug} className="overflow-hidden rounded-card border border-border shadow-lg group-hover:border-accent">
+                <SharedCover slug={g.slug} className="overflow-hidden rounded-card border border-white/15 shadow-lg group-hover:border-[#C8F135]">
                   <CoverImage cover={g.cover} title={g.title} alt="" sizes="160px" className="aspect-[3/4] w-full" />
                 </SharedCover>
-                <span className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-accent">{g.title}</span>
+                <span className="truncate text-sm font-semibold text-white group-hover:text-[#C8F135]">{g.title}</span>
               </Link>
             </li>
           ))}

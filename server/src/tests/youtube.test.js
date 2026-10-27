@@ -611,6 +611,71 @@ describe('trailerService: refresh helpers', () => {
     expect((await s.service.primeGame(game)).status).toBe('paused');
     expect((await s.service.primeGame(await s.mk({ slug: 'two', title: 'Two' }))).status).toBe('paused');
   });
+
+  describe('rescoreGame', () => {
+    const CINEMATIC = vid('cinema', `${WITCHER} – Killing Monsters Cinematic Trailer`, { channel: 'CD PROJEKT RED', views: 25_000_000 });
+    const DEBUT = vid('debut', `${WITCHER} – Official Gameplay Trailer`, { channel: 'CD PROJEKT RED', views: 900 });
+    const oldRow = (game, ids, v = CACHE_VERSION - 1) => ({
+      gameId: game._id,
+      source: 'trailers',
+      payload: { v, pool: ids.map((videoId) => ({ videoId, label: 'Cinematic', source: 'igdb' })) },
+      fetchedAt: new Date('2026-10-26T10:00:00Z'),
+      expiresAt: new Date('2026-11-26T10:00:00Z'),
+    });
+
+    it('re-ranks an older pick with videos.list only (no searches) and puts gameplay ahead of cinematic', async () => {
+      const s = setup({ details: [CINEMATIC, DEBUT] });
+      const game = await s.mk({ videos: [CINEMATIC.videoId] });
+      await s.MediaCache.create(oldRow(game, [CINEMATIC.videoId, DEBUT.videoId]));
+
+      const r = await s.service.rescoreGame(game);
+
+      expect(r.status).toBe('rescored');
+      expect(s.youtube.search).not.toHaveBeenCalled();
+      expect(s.youtube.getVideos).toHaveBeenCalledTimes(1);
+      const row = trailersRow(s);
+      expect(row.payload.v).toBe(CACHE_VERSION);
+      expect(row.payload.pool.map((p) => p.videoId)).toEqual([DEBUT.videoId, CINEMATIC.videoId]);
+    });
+
+    it('skips games with no older pick, a current pick or a failed pick', async () => {
+      const s = setup({ details: [DEBUT] });
+      const none = await s.mk({ slug: 'none' });
+      const current = await s.mk({ slug: 'current' });
+      const failed = await s.mk({ slug: 'failed' });
+      await s.MediaCache.create(oldRow(current, [DEBUT.videoId], CACHE_VERSION));
+      await s.MediaCache.create({ ...oldRow(failed, []), payload: { v: CACHE_VERSION - 1, pool: [], failed: true } });
+      for (const g of [none, current, failed]) expect((await s.service.rescoreGame(g)).status).toBe('skipped');
+      expect(s.youtube.getVideos).not.toHaveBeenCalled();
+    });
+
+    it('stores nothing when no older candidate survives, so a later visit can search', async () => {
+      const s = setup({ details: [] });
+      const game = await s.mk();
+      await s.MediaCache.create(oldRow(game, [DEBUT.videoId]));
+      expect((await s.service.rescoreGame(game)).status).toBe('skipped');
+      expect(trailersRow(s).payload.v).toBe(CACHE_VERSION - 1);
+      expect(s.youtube.search).not.toHaveBeenCalled();
+    });
+
+    it('reports failed, without pausing, on a non-quota error', async () => {
+      const s = setup({ listError: new Error('network') });
+      const game = await s.mk();
+      await s.MediaCache.create(oldRow(game, [DEBUT.videoId]));
+      expect((await s.service.rescoreGame(game)).status).toBe('failed');
+      s.youtube.getVideos.mockClear();
+      expect((await s.service.rescoreGame(game)).status).toBe('failed'); // still tries: not paused
+      expect(s.youtube.getVideos).toHaveBeenCalled();
+    });
+
+    it('reports paused after a quota error and stays paused', async () => {
+      const s = setup({ listError: Object.assign(new Error('quota'), { quota: true }) });
+      const game = await s.mk();
+      await s.MediaCache.create(oldRow(game, [DEBUT.videoId]));
+      expect((await s.service.rescoreGame(game)).status).toBe('paused');
+      expect((await s.service.rescoreGame(game)).status).toBe('paused');
+    });
+  });
 });
 
 // ── HTTP ────────────────────────────────────────────────────────────────────────────────────────

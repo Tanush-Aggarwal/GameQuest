@@ -374,14 +374,15 @@ describe('scoring and labels', () => {
     expect(label('Hades - Teaser')).toBe('Teaser');
   });
 
-  it('ranks gameplay trailer > launch > release > reveal > plain trailer > gameplay > teaser', () => {
+  it('ranks gameplay trailer > gameplay > launch > release > reveal > plain trailer > cinematic > teaser', () => {
     const order = [
       'Hades - Gameplay Trailer',
+      'Hades - Gameplay',
       'Hades - Launch Trailer',
       'Hades - Release Date Trailer',
       'Hades - Reveal Trailer',
       'Hades - Trailer',
-      'Hades - Gameplay',
+      'Hades - Cinematic Trailer',
       'Hades - Teaser',
     ];
     const scores = order.map((t) => score(t, { views: 1000 }));
@@ -389,14 +390,26 @@ describe('scoring and labels', () => {
     expect(new Set(scores).size).toBe(scores.length);
   });
 
-  it('"official" adds, an official channel adds, and more views add (logarithmically)', () => {
+  it('"official" adds 10 and an official channel adds 15; views are not part of the score', () => {
     const base = score('Hades - Launch Trailer', { views: 1000 });
-    expect(score('Hades - Official Launch Trailer', { views: 1000 })).toBeGreaterThan(base);
-    expect(score('Hades - Launch Trailer', { views: 1000, channel: 'Supergiant Games' })).toBeGreaterThan(base + 20); // the developer's channel
-    expect(score('Hades - Launch Trailer', { views: 1000, channel: 'IGN' })).toBeGreaterThan(base + 20); // a known official channel
-    expect(score('Hades - Launch Trailer', { views: 1_000_000 })).toBeGreaterThan(base);
-    // 10x views is worth a constant 5 points, not 10x the score
-    expect(score('Hades - Launch Trailer', { views: 10_000 }) - base).toBeCloseTo(5, 0);
+    expect(score('Hades - Official Launch Trailer', { views: 1000 }) - base).toBeCloseTo(10, 5);
+    expect(score('Hades - Launch Trailer', { views: 1000, channel: 'Supergiant Games' }) - base).toBeCloseTo(15, 5); // the developer's channel
+    expect(score('Hades - Launch Trailer', { views: 1000, channel: 'IGN' }) - base).toBeCloseTo(15, 5); // a known official channel
+    expect(score('Hades - Launch Trailer', { views: 50_000_000 })).toBe(base);
+  });
+
+  it('a gameplay trailer beats a cinematic one however many more views the cinematic has', () => {
+    const cinematic = score('Hades - Cinematic Trailer', { views: 25_000_000, channel: 'Supergiant Games' });
+    const gameplay = score('Hades - Gameplay Trailer', { views: 300, channel: 'Supergiant Games' });
+    expect(gameplay).toBeGreaterThan(cinematic);
+    const { accepted } = rank(
+      [
+        { video: vid('cin', 'Hades - Cinematic Trailer', { views: 25_000_000 }) },
+        { video: vid('gp', 'Hades - Gameplay Trailer', { views: 300 }) },
+      ],
+      hades,
+    );
+    expect(accepted.map((a) => a.videoId)).toEqual([id('gp'), id('cin')]);
   });
 
   it('matches developer/publisher channels loosely and known channels by name', () => {
@@ -430,6 +443,13 @@ describe('scoring and labels', () => {
     const b = vid('bbb', 'Hades - Launch Trailer', { views: 500 });
     const { accepted } = rank([{ video: a }, { video: b }, { video: a }], hades);
     expect(accepted).toHaveLength(2);
+  });
+
+  it('views only order trailers of the same score', () => {
+    const low = vid('low', 'Hades - Launch Trailer', { views: 500 });
+    const high = vid('high', 'Hades - Launch Trailer', { views: 90_000 });
+    const { accepted } = rank([{ video: low }, { video: high }], hades);
+    expect(accepted.map((a) => a.videoId)).toEqual([id('high'), id('low')]);
   });
 });
 

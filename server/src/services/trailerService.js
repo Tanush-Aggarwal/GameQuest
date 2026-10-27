@@ -7,7 +7,7 @@ const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
 // Bump when the picking rules change: cached picks with another version are ignored and recomputed.
-export const CACHE_VERSION = 2;
+export const CACHE_VERSION = 3;
 const SOURCE = 'trailers';
 const DISMISSED_SOURCE = 'trailer-dismissed';
 const STATE_SOURCE = 'youtube-state';
@@ -221,21 +221,24 @@ export function createTrailerService({
   // ── the pipeline ───────────────────────────────────────────────────────────────────────────────
   // Returns { entry, meter } or { skipped: 'budget' }. `allowSearch()` is the caller's own search budget
   // (the refresh script); the daily ceiling always applies on top of it.
-  async function evaluate(game, { allowSearch } = {}) {
+  async function evaluate(game, { allowSearch, extraIds = [], noSearch = false } = {}) {
     const meter = { searches: 0, listCalls: 0 };
     const dismissed = await readDismissed(game);
     const names = new Map((game.videoMeta ?? []).map((m) => [m.id, m.name]));
-    const igdbIds = (game.videos ?? []).filter((id) => isVideoId(id) && !dismissed.dropped.has(id));
+    // The game's own IGDB videos, plus (when re-scoring) the videos of its previous pick. extraIds are judged as
+    // search results, since that is where they came from.
+    const own = new Set((game.videos ?? []).filter(isVideoId));
+    const igdbIds = [...new Set([...own, ...extraIds.filter(isVideoId)])].filter((id) => !dismissed.dropped.has(id));
 
     const igdbDetails = await getDetails(igdbIds, meter);
     let { accepted } = rank(
-      igdbIds.map((id) => ({ video: igdbDetails.get(id), source: 'igdb', igdbName: names.get(id) })),
+      igdbIds.map((id) => ({ video: igdbDetails.get(id), source: own.has(id) ? 'igdb' : 'youtube', igdbName: names.get(id) })),
       game,
     );
 
     let searched = false;
     let cutShort = false; // the search budget ran out between the two queries
-    if (!accepted.length) {
+    if (!accepted.length && !noSearch) {
       const checked = new Set(igdbIds);
       let first = true;
       for (const query of searchQueries(game.title)) {
@@ -256,7 +259,7 @@ export function createTrailerService({
       }
     }
 
-    const pool = accepted.slice(0, POOL_SIZE).map(({ videoId, label, score, source, title, channel }) => ({ videoId, label, score, source, title, channel }));
+    const pool = accepted.slice(0, POOL_SIZE).map(({ videoId, label, score, source, title, channel, views }) => ({ videoId, label, score, source, title, channel, views }));
     // "Nothing found" after only the first query is a partial answer: remembered, but not for a week.
     const partial = cutShort && !pool.length;
     return { entry: { v: CACHE_VERSION, pool, searched, ...(partial && { partial: true }), evaluatedAt: now().toISOString() }, meter };
@@ -365,6 +368,37 @@ export function createTrailerService({
       return { trailers: visible(entry, dismissed, user), changed: true, dropped };
     },
 
+    // Re-rank a game's cached candidates under new scoring rules WITHOUT searching: the candidates are its IGDB
+    // videos plus the videos of its previous pick, re-checked with videos.list (1 unit per 50 ids, shared across
+    // games). Used after the rules change (a CACHE_VERSION bump) so existing picks are recomputed almost for free.
+    // status: rescored | skipped (nothing older to rescore) | paused | failed
+    async rescoreGame(game) {
+      await refreshState();
+      if (isPaused()) return { status: 'paused' };
+      let old;
+      try {
+        old = (await MediaCache.findOne({ gameId: game._id, source: SOURCE }).lean())?.payload;
+      } catch (err) {
+        logger?.warn({ err }, 'could not read the trailer cache');
+      }
+      if (!old || old.v === CACHE_VERSION || old.failed || !Array.isArray(old.pool)) return { status: 'skipped' };
+      try {
+        const result = await evaluate(game, { extraIds: old.pool.map((p) => p.videoId), noSearch: true });
+        // Nothing survived (videos gone or private): keep no row, so a normal visit or primeGame searches later.
+        if (!result.entry.pool.length) return { status: 'skipped' };
+        await store(game, result.entry, ttlMs);
+        return { status: 'rescored', picked: result.entry.pool.length, first: result.entry.pool[0]?.label ?? null };
+      } catch (err) {
+        if (err?.quota) {
+          blockedUntil = clock() + quotaBackoffMs;
+          await persistPause();
+          logger?.error({ err }, 'youtube quota or key problem; trailer lookups paused for 24 hours');
+          return { status: 'paused' };
+        }
+        logger?.warn({ err, slug: game.slug }, 'trailer rescore failed');
+        return { status: 'failed' };
+      }
+    },
     // For the refresh script: check many videos with few videos.list calls, then prime games one by one.
     async warm(ids) {
       const meter = { searches: 0, listCalls: 0 };

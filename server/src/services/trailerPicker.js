@@ -149,17 +149,21 @@ const HARD_REJECT = [
 ];
 
 // ── what kind of video it is ─────────────────────────────────────────────────────────────────────
-// Highest weight first; the first pattern that matches names the video.
+// The first pattern that matches names the video; the number is its weight in the score. People come to a trailer
+// to see the game being played, so gameplay content outranks everything else, and a cinematic trailer is
+// weighted low: it can never beat a gameplay one, however many views it has.
 const KINDS = [
-  [/\bgameplay (trailer|reveal|teaser)\b/, 'Gameplay trailer', 50],
-  [/\blaunch (trailer|teaser)\b/, 'Launch trailer', 40],
-  [/\brelease (date )?(trailer|teaser)\b/, 'Release trailer', 38],
-  [/\b(reveal|announcement|announce) (trailer|teaser)\b/, 'Reveal trailer', 35],
-  [/\bcinematic (trailer|teaser)\b/, 'Cinematic trailer', 32],
-  [/\btrailer\b/, 'Trailer', 30],
-  [/\bgameplay\b/, 'Gameplay', 28],
-  [/\bteaser\b/, 'Teaser', 24],
+  [/\bgameplay (trailer|reveal|teaser)\b/, 'Gameplay trailer', 100],
+  [/\blaunch (trailer|teaser)\b/, 'Launch trailer', 60],
+  [/\brelease (date )?(trailer|teaser)\b/, 'Release trailer', 56],
+  [/\b(reveal|announcement|announce) (trailer|teaser)\b/, 'Reveal trailer', 50],
+  [/\bcinematic (trailer|teaser)\b/, 'Cinematic trailer', 30],
+  [/\btrailer\b/, 'Trailer', 45],
+  [/\bgameplay\b/, 'Gameplay', 80],
+  [/\bteaser\b/, 'Teaser', 25],
 ];
+// Labels that are not a trailer: from a search they are only trusted from an official source.
+const BARE_KINDS = new Set(['Gameplay', 'Teaser']);
 
 // Channels that publish official trailers; a game's own developer/publisher channel counts as well.
 const OFFICIAL_CHANNELS = [
@@ -258,17 +262,19 @@ export function assess(video, game, { source = 'youtube', igdbName = '' } = {}) 
   const official = /\bofficial\b/.test(rest);
   const channelMatch = isOfficialChannel(video.channel, game);
   // A bare "gameplay" or "teaser" upload is only trusted from an official source.
-  if (source === 'youtube' && kind[2] < 30 && !official && !channelMatch) return reject('no official signal');
+  if (source === 'youtube' && BARE_KINDS.has(kind[1]) && !official && !channelMatch) return reject('no official signal');
 
   const hint = normalise(igdbName);
   // IGDB's own label is a mild signal that the video was curated as a trailer.
-  const curated = source === 'igdb' && /\b(trailer|gameplay|launch|reveal|teaser)\b/.test(hint) ? 5 : 0;
-  const score = kind[2] + (official ? 15 : 0) + (channelMatch ? 25 : 0) + Math.log10(video.views + 1) * 5 + curated;
+  const curated = source === 'igdb' && /\b(trailer|gameplay|launch|reveal|teaser)\b/.test(hint) ? 3 : 0;
+  // Views are NOT part of the score: they only break a tie between videos of equal score (see rank), so a popular
+  // video can never outrank a better kind of video.
+  const score = kind[2] + (official ? 10 : 0) + (channelMatch ? 15 : 0) + curated;
   return {
     ok: true,
     videoId: video.videoId,
     label: kind[1],
-    score: Math.round(score * 10) / 10,
+    score,
     source,
     title,
     channel: video.channel,
@@ -291,6 +297,6 @@ export function rank(candidates, game) {
     if (result.ok) accepted.push(result);
     else rejected.push({ videoId: id, title: video?.title ?? '', reason: result.reason });
   }
-  accepted.sort((a, b) => b.score - a.score || b.views - a.views);
+  accepted.sort((a, b) => b.score - a.score || (b.views ?? 0) - (a.views ?? 0));
   return { accepted, rejected };
 }

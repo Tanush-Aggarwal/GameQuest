@@ -77,6 +77,20 @@ describe('HomeHero', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Welcome back, neo' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /discover new games/i })).toBeInTheDocument();
   });
+
+  it('opens and closes the trailer modal for the featured game when Watch Trailer is clicked', async () => {
+    const user = userEvent.setup();
+    renderHero({ dashboard: ok({ resumeCard: resume }), playNext: ok({ items: [nextItem] }) });
+    const trailerBtn = screen.getByRole('button', { name: /watch trailer for hades/i });
+    expect(trailerBtn).toBeInTheDocument();
+
+    await user.click(trailerBtn);
+    expect(await screen.findByRole('dialog', { name: /hades trailer/i })).toBeInTheDocument();
+
+    const closeBtn = screen.getByRole('button', { name: /close trailer/i });
+    await user.click(closeBtn);
+    expect(screen.queryByRole('dialog', { name: /hades trailer/i })).not.toBeInTheDocument();
+  });
 });
 
 describe('hovering or focusing a suggestion previews it in the hero (250 ms debounce)', () => {

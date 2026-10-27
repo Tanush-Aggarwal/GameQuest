@@ -86,7 +86,7 @@ export default function Home() {
 
         {/* Right: Recommendation + Community */}
         <div className="flex flex-col gap-4">
-          <AdventureCard playNext={playNext} />
+          <AdventureCard />
           <CommunityCard />
         </div>
       </div>
@@ -230,20 +230,20 @@ function TrendingCard({ game }) {
 }
 
 // "Your Next Adventure" recommendation card
-function AdventureCard({ playNext }) {
-  const item = playNext.data?.items?.[0];
+function AdventureCard() {
+  const title = 'Genshin Impact';
   const genres = ['Open World', 'RPG', 'Anime'];
-  const title = item?.title || 'Genshin Impact';
-  const summary = item?.summary || 'Explore a vast world of wonders and uncover its hidden secrets.';
-  const link = item?.entryId ? `/library/${item.entryId}` : (item?.slug ? `/games/${item.slug}` : '/explore');
+  const summary = 'Explore a vast world of wonders and uncover its hidden secrets.';
+  const artwork = '/assets/rec-genshin.jpg';
+  const link = '/games/genshin-impact';
 
   return (
     <div className="relative flex flex-col justify-between overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[200px]">
       {/* Background artwork on the right */}
       <div className="absolute inset-0 -z-0">
         <img
-          src="/assets/rec-genshin.jpg"
-          alt=""
+          src={artwork}
+          alt={title}
           className="absolute right-0 top-0 h-full w-[55%] object-cover object-right"
           loading="lazy"
         />

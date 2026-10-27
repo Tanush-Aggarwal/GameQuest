@@ -91,14 +91,14 @@ export function GameCard({ game, shared = true }) {
   return (
     <Link
       to={`/games/${game.slug}`}
-      className="group flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:bg-surface-raised"
+      className="gq-game-card group flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:bg-surface-raised"
     >
       <SharedCover slug={shared ? game.slug : null}>
         <GameCover game={game} />
       </SharedCover>
-      <div className="flex flex-col gap-1 p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold">{game.title}</h3>
-        <p className="text-xs text-text-muted">{[year, game.genres[0]].filter(Boolean).join(' · ') || 'Game'}</p>
+      <div className="gq-game-card__caption flex flex-col gap-1 p-3">
+        <h3 className="gq-game-card__title line-clamp-2 text-sm font-semibold">{game.title}</h3>
+        <p className="gq-game-card__meta text-xs text-text-muted">{[year, game.genres[0]].filter(Boolean).join(' · ') || 'Game'}</p>
       </div>
     </Link>
   );

@@ -33,26 +33,34 @@ export default function Home() {
   const backlogHealth = useAsync(loadBacklogHealth);
 
   return (
-    <section className="flex flex-col gap-6 pb-12">
+    <section className="gq-home flex flex-col gap-8 pb-12">
+      {/* Large cinematic gaming-artwork hero */}
       <HomeHero username={user?.username} dashboard={dashboard} playNext={playNext} />
 
-      {/* Recommended for you */}
-      <RecommendationWidget />
+      {/* Main layout: trending row & stats alongside narrower recommendation & community column */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
+        {/* Main column: Trending / What to play next row, quick stats strip, and velocity chart */}
+        <div className="flex flex-col gap-8 lg:col-span-8">
+          {/* Trending games arranged in a horizontal row */}
+          <PlayNextSection playNext={playNext} />
 
-      {/* Stat tiles */}
-      <StatTiles dashboard={dashboard} />
+          {/* Quick stat tiles */}
+          <StatTiles dashboard={dashboard} />
 
-      {/* Play next */}
-      <PlayNextSection playNext={playNext} />
+          {/* Backlog health with Recharts */}
+          <BacklogHealth dashboard={dashboard} backlogHealth={backlogHealth} />
+        </div>
 
-      {/* Planned game nights */}
-      <UpcomingSessions />
+        {/* Narrower recommendation and community column alongside */}
+        <div className="flex flex-col gap-6 lg:col-span-4">
+          {/* Recommended for you */}
+          <RecommendationWidget />
 
-      {/* What friends are up to */}
-      <FriendFeed />
-
-      {/* Backlog health with Recharts */}
-      <BacklogHealth dashboard={dashboard} backlogHealth={backlogHealth} />
+          {/* Community & friends: upcoming sessions & activity feed */}
+          <UpcomingSessions />
+          <FriendFeed />
+        </div>
+      </div>
     </section>
   );
 }
@@ -61,7 +69,6 @@ export default function Home() {
 
 function StatTiles({ dashboard }) {
   if (dashboard.status === 'loading') {
-    // the same height as the loaded panel, so nothing below moves when the numbers arrive
     return (
       <div role="status" aria-label="Loading your library at a glance">
         <Skeleton className="h-[8.25rem] w-full rounded-card" />
@@ -71,23 +78,25 @@ function StatTiles({ dashboard }) {
   if (dashboard.status === 'error') return <ErrorState message="Couldn't load your stats." onRetry={dashboard.retry} />;
   const d = dashboard.data ?? {};
   const tiles = [
-    { icon: Gamepad2, label: 'Playing', value: d.statusCounts?.playing ?? 0, color: 'var(--status-playing)' },
-    { icon: Layers, label: 'Backlog', value: d.statusCounts?.backlog ?? 0, color: 'var(--status-backlog)' },
-    { icon: Trophy, label: 'Completed', value: d.statusCounts?.completed ?? 0, color: 'var(--status-completed)' },
-    { icon: Clock, label: 'Hours logged', value: d.totalHours ?? 0, color: 'var(--accent)' },
+    { icon: Gamepad2, label: 'Playing', value: d.statusCounts?.playing ?? 0 },
+    { icon: Layers, label: 'Backlog', value: d.statusCounts?.backlog ?? 0 },
+    { icon: Trophy, label: 'Completed', value: d.statusCounts?.completed ?? 0 },
+    { icon: Clock, label: 'Hours logged', value: d.totalHours ?? 0 },
   ];
   return (
-    <ArtPanel aria-label="Your library at a glance" seed="home-stats" className="p-3">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {tiles.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="flex flex-col gap-1 rounded-card border border-border/60 bg-bg/70 p-4">
-            <Icon size={18} style={{ color }} aria-hidden="true" />
-            <p className="font-heading text-2xl font-bold tabular-nums">{value}</p>
-            <p className="text-xs text-text-muted">{label}</p>
+    <section aria-label="Your library at a glance" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {tiles.map(({ icon: Icon, label, value }) => (
+        <div key={label} className="flex items-center gap-3 rounded-card border border-[#DCD5C6] bg-surface p-4 shadow-2xs transition-shadow hover:shadow-xs">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-surface-raised text-text">
+            <Icon size={18} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-heading text-xl font-bold tabular-nums text-text leading-none">{value}</p>
+            <p className="mt-1 text-xs text-text-muted truncate">{label}</p>
           </div>
-        ))}
-      </div>
-    </ArtPanel>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -105,14 +114,14 @@ function BacklogHealth({ dashboard, backlogHealth }) {
   }));
 
   return (
-    <ArtPanel aria-labelledby="backlog-health-title" seed="home-backlog" className="flex flex-col gap-4 p-5">
+    <ArtPanel aria-labelledby="backlog-health-title" seed="home-backlog" className="gq-editorial-panel gq-backlog-panel flex flex-col gap-4 p-5 rounded-card border border-[#DCD5C6] bg-surface shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="backlog-health-title" className="font-semibold flex items-center gap-2 font-heading">
-          <Layers size={18} className="text-accent" />
+        <h2 id="backlog-health-title" className="font-bold flex items-center gap-2 font-heading text-base text-text">
+          <Layers size={18} className="text-text" />
           Backlog Health & Velocity
         </h2>
         {h?.projectedClearMonths != null && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#C9F36D] px-3 py-1 text-xs font-bold text-[#111311]">
             <Hourglass className="h-3.5 w-3.5" />
             Clear backlog in ~{h.projectedClearMonths} months
           </span>
@@ -143,7 +152,7 @@ function BacklogHealth({ dashboard, backlogHealth }) {
             <p className="text-xs text-[var(--text-muted)] mb-1.5">Top genres played</p>
             <div className="flex flex-wrap gap-1">
               {d.topGenres.slice(0, 4).map((g) => (
-                <span key={g.name} className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-raised)] text-[var(--text-muted)] font-medium">
+                <span key={g.name} className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-raised)] text-text font-medium">
                   {g.name}
                 </span>
               ))}
@@ -159,7 +168,7 @@ function BacklogHealth({ dashboard, backlogHealth }) {
             <span>6-Month Trajectory: Added vs Completed</span>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-accent" /> Added
+                <span className="h-2.5 w-2.5 rounded-full bg-[#C9F36D] border border-black/20" /> Added
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-[var(--status-completed)]" /> Completed

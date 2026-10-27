@@ -68,16 +68,16 @@ describe('ArtPanel', () => {
   });
 
   it('keeps the readability scrim values that give >= 4.5:1 for muted text even over white art', () => {
-    // pixel = img*opacity over bg, then the scrim over that: compute the worst case (white art) and check contrast
-    const bg = [0x0e, 0x0f, 0x14];
-    const muted = [0xa3, 0xa8, 0xbd];
+    // Worst case: pure white art beneath the image opacity and paper-colour scrim.
+    const bg = [0xf2, 0xf0, 0xe7];
+    const muted = [0x5d, 0x62, 0x58];
     const lum = (c) => 0.2126 * ((c[0] / 255) ** 2.2) + 0.7152 * ((c[1] / 255) ** 2.2) + 0.0722 * ((c[2] / 255) ** 2.2);
     const imgOpacity = Number(/opacity-(\d+)/.exec(ART_IMAGE_CLASS)[1]) / 100;
-    const scrimMin = Math.min(...[...ART_SCRIM_CLASS.matchAll(/bg-(?:\/)?|(?:from|via|to)-bg\/(\d+)/g)].map((m) => Number(m[1])).filter(Boolean)) / 100;
+    const scrimMin = Math.min(...[...ART_SCRIM_CLASS.matchAll(/(?:from|via|to)-bg\/(\d+)/g)].map((m) => Number(m[1])).filter(Boolean)) / 100;
     const mix = (top, bottom, a) => top.map((v, i) => v * a + bottom[i] * (1 - a));
     const withImage = mix([255, 255, 255], bg, imgOpacity);
     const behindText = mix(bg, withImage, scrimMin);
-    const ratio = (lum(muted) + 0.05) / (lum(behindText) + 0.05);
+    const ratio = (lum(behindText) + 0.05) / (lum(muted) + 0.05);
     expect(scrimMin).toBeGreaterThanOrEqual(0.7);
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });

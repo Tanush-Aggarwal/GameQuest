@@ -154,10 +154,10 @@ export default function Explore() {
   const isDefaultBrowse = !q && !filtered;
 
   return (
-    <section className="flex flex-col gap-6 pb-12">
+    <section className="gq-explore flex flex-col gap-6 pb-12">
       {isDefaultBrowse ? (
         <>
-          <h1 className="font-heading text-2xl font-bold">Explore Catalog</h1>
+          <h1 className="gq-page-heading">Explore Catalog</h1>
           <HeroCarousel />
         </>
       ) : (
@@ -209,7 +209,7 @@ export default function Explore() {
       </div>
 
       {/* Genre pills */}
-      <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+      <div className="gq-genre-index scrollbar-none flex gap-2 overflow-x-auto pb-1" aria-label="Browse by genre">
         {GENRES.map((g) => {
           const active = selectedGenre === g.id;
           return (
@@ -218,9 +218,7 @@ export default function Explore() {
               type="button"
               aria-pressed={active}
               onClick={() => setFilter('genre', g.id)}
-              className={`inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
-                active ? 'border-accent bg-accent text-accent-fg shadow-sm' : 'border-border bg-surface text-text-muted hover:bg-surface-raised hover:text-text'
-              }`}
+              className={`gq-genre-tab inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold transition-colors ${active ? 'is-active' : ''}`}
             >
               {g.label}
             </button>

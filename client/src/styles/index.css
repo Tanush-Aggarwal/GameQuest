@@ -1,4 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import './tokens.css';
+@import './visual-refresh.css';
 
 @tailwind base;
 @tailwind components;
@@ -6,20 +8,33 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
+    background: var(--bg);
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-bg font-sans text-text antialiased;
+    min-height: 100vh;
   }
+  .font-heading,
   h1, h2, h3, h4 {
-    @apply font-heading;
+    font-family: 'Space Grotesk', 'Instrument Sans', system-ui, sans-serif !important;
+    color: var(--text);
+    letter-spacing: -0.025em;
+  }
+  button, input, select, textarea {
+    font: inherit;
   }
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-text);
     outline-offset: 2px;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    color: var(--accent-fg);
+    background: var(--accent);
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -32,7 +47,6 @@
 }
 
 @layer utilities {
-  /* Horizontal rails scroll by touch, buttons and keyboard focus; the bar itself is just noise. */
   .scrollbar-none {
     scrollbar-width: none;
   }
@@ -40,3 +54,128 @@
     display: none;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* GameQuest Shell & Layout                                                   */
+/* -------------------------------------------------------------------------- */
+.gq-app {
+  isolation: isolate;
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+/* Sidebar navigation */
+.gq-side-rail {
+  width: var(--gq-sidebar-width);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+.gq-side-rail nav a[aria-current='page'],
+.gq-side-rail nav a.is-active {
+  color: var(--sidebar-text-active);
+  font-weight: 600;
+}
+
+/* Top bar */
+.gq-topbar {
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+.gq-topbar-inner {
+  max-width: var(--gq-page-width);
+}
+
+.gq-search {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.gq-search:focus {
+  border-color: var(--text);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--text);
+}
+
+.gq-main {
+  max-width: var(--gq-page-width);
+}
+
+/* Modern Typography */
+.gq-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.gq-page-heading {
+  font-family: 'Space Grotesk', var(--font-heading, system-ui), sans-serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+/* Clean artwork-led game cards */
+.gq-game-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform .22s cubic-bezier(.2, .75, .25, 1), box-shadow .22s ease, border-color .22s ease;
+}
+.gq-game-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--text) 25%, transparent);
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--text) 18%, transparent);
+}
+.gq-game-card img {
+  display: block;
+  transition: transform .3s ease;
+}
+.gq-game-card:hover img {
+  transform: scale(1.035);
+}
+.gq-game-card__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+.gq-game-card__meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Play next covers */
+.gq-play-next-card {
+  transition: transform .2s ease;
+}
+.gq-play-next-cover {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--text) 25%, transparent);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.gq-play-next-card:hover .gq-play-next-cover {
+  border-color: var(--text);
+  box-shadow: 0 12px 28px -10px color-mix(in srgb, var(--text) 32%, transparent);
+}
+
+/* Form controls */
+input, select, textarea {
+  border-color: var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-control);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+

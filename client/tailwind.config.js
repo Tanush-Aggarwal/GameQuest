@@ -53,8 +53,9 @@ export default {
         'drift-down': 'drift-down 110s linear infinite',
       },
       fontFamily: {
-        heading: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Space Grotesk', 'Instrument Sans', 'system-ui', 'sans-serif'],
+        sans: ['Instrument Sans', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
       },
     },
   },

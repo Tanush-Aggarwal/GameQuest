@@ -63,7 +63,7 @@ export function AppLayout() {
     <ArtProvider>
       <AmbientProvider>
         <AmbientBackground />
-        <div className="min-h-screen">
+        <div className="gq-app min-h-screen">
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-3 focus:py-2 focus:text-accent-fg"
@@ -73,7 +73,7 @@ export function AppLayout() {
           <SideRail />
           <div className="md:pl-[72px]">
             <TopBar onOpenPalette={() => openPalette(true)} />
-            <main id="main" className="mx-auto max-w-6xl px-4 pb-24 pt-6 md:pb-10">
+            <main id="main" className="gq-main mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 pb-24 lg:pb-12">
               <AnimatedPage />
             </main>
           </div>

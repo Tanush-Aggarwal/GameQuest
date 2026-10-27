@@ -1,36 +1,53 @@
-/* Design tokens â€” the only source of colour in the UI. Dark theme by default. */
+/* GameQuest design system tokens */
 :root {
-  --bg: #0e0f14;
-  --surface: #161821;
-  --surface-raised: #1e2130;
-  --border: #2c3044;
-  --text: #f1f2f7;
-  --text-muted: #a3a8bd;
+  color-scheme: light;
 
-  --accent: #7c5cff; /* fills, borders, rings */
-  --accent-fg: #05050a; /* text ON an accent fill: 4.7:1 (white on #7c5cff is only 4.35:1, under AA) */
-  --accent-text: #a592ff; /* accent as TEXT or a link on a dark surface: 6.2:1 or better (#7c5cff itself is 3.7-4.4:1) */
-  --reward: #ffc14d; /* gold: quests, trophies and XP only */
+  /* Main canvas */
+  --bg: #F2EEE4; /* warm ivory */
+  --surface: #FFFFFF; /* clean crisp card surface */
+  --surface-raised: #EAE4D7; /* warm raised element */
+  --border: #DCD5C6; /* minimal subtle border */
 
-  /* status */
-  --success: #3ecf8e;
-  --warning: #f5a524;
-  --danger: #ff5c70;
-  --info: #4cc2ff;
+  /* Text colours */
+  --text: #151713; /* dark text */
+  --primary-text: #151713; /* near-black for main copy */
+  --text-muted: #66635B; /* muted metadata copy */
 
-  /* library status (always paired with an icon and a label) */
-  --status-playing: #22d3ee;
-  --status-completed: #34d399;
-  --status-backlog: #94a3b8;
-  --status-wishlist: #f472b6;
-  --status-dropped: #f87171;
+  /* Accent palette */
+  --accent: #C9F36D; /* acid lime */
+  --accent-fg: #111311; /* near-black text on acid lime fill */
+  --secondary-accent: #D9532F; /* restrained burnt orange */
+  --reward: #D9532F;
 
-  /* trophies */
-  --trophy-bronze: #cd7f32;
-  --trophy-silver: #c0c6d4;
-  --trophy-gold: #ffc14d;
-  --trophy-platinum: #8fd8ff;
+  /* Text accent: readable contrast on light paper */
+  --accent-text: #3D5500;
+
+  /* Status colours remain semantic and high contrast */
+  --success: #17633B;
+  --warning: #B8540E;
+  --danger: #A32828;
+  --info: #0E627C;
+
+  --status-playing: #0E627C;
+  --status-completed: #17633B;
+  --status-backlog: #66635B;
+  --status-wishlist: #D9532F;
+  --status-dropped: #A32828;
+
+  --trophy-bronze: #8B4A1B;
+  --trophy-silver: #62686C;
+  --trophy-gold: #D9532F;
+  --trophy-platinum: #0E627C;
 
   --radius-card: 12px;
   --radius-control: 8px;
+  --gq-page-width: 1480px;
+  --gq-sidebar-width: 72px;
+
+  /* Sidebar background */
+  --sidebar-bg: #111311;
+  --sidebar-border: #1E221E;
+  --sidebar-text: #8E928B;
+  --sidebar-text-active: #C9F36D;
 }
+

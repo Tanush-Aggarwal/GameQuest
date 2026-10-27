@@ -19,14 +19,14 @@ export function AmbientBackground() {
             src={url}
             alt=""
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.28 }}
+            animate={{ opacity: 0.14 }}
             exit={{ opacity: 0 }}
             transition={fade}
             className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl"
           />
         )}
       </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-b from-bg/60 via-bg/80 to-bg" />
+      <div className="absolute inset-0 bg-gradient-to-b from-bg/85 via-bg/95 to-bg" />
     </div>
   );
 }

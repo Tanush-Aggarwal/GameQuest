@@ -3,39 +3,48 @@ import { Gamepad2 } from 'lucide-react';
 import { cn } from '@/lib/utils.js';
 import { DESKTOP_NAV_ITEMS } from './navItems.js';
 
-// The desktop navigation: a slim rail down the left edge (icon over label), like a console dashboard
-// rather than a website header. Hidden below md, where the bottom tab bar takes over. The container is a
-// plain div: the only landmark is the labelled <nav> inside it (an <aside> would announce "complementary").
+// Narrow dark left sidebar with acid-lime active navigation.
 export function SideRail() {
   return (
-    <div className="fixed inset-y-0 left-0 z-30 hidden w-[72px] flex-col items-center gap-2 border-r border-border bg-surface py-3 md:flex">
+    <div
+      className="gq-side-rail fixed inset-y-0 left-0 z-30 hidden w-[72px] flex-col items-center border-r border-[#1E221E] bg-[#111311] py-4 md:flex"
+    >
       <Link
         to="/"
         aria-label="GameQuest home"
-        className="flex h-11 w-11 items-center justify-center rounded-control text-accent hover:bg-surface-raised"
+        className="gq-brand flex h-12 w-12 items-center justify-center rounded-control transition-colors hover:bg-white/5"
       >
-        <Gamepad2 className="h-7 w-7" aria-hidden="true" />
+        <span className="flex h-9 w-9 items-center justify-center rounded-control bg-[#C9F36D] text-[#111311] shadow-sm">
+          <Gamepad2 className="h-5 w-5" aria-hidden="true" />
+        </span>
       </Link>
 
-      <nav aria-label="Main" className="flex w-full flex-1 flex-col items-center">
+      <nav aria-label="Main" className="mt-5 flex w-full flex-1 flex-col items-center">
         <ul className="flex w-full flex-col items-center gap-1">
           {DESKTOP_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-            <li key={to} className="w-full px-0.5">
+            <li key={to} className="w-full">
               <NavLink
                 to={to}
                 end={to === '/'}
                 className={({ isActive }) =>
                   cn(
-                    'relative flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control text-[11px] font-medium leading-tight tracking-tight transition-colors',
-                    isActive ? 'bg-surface-raised text-text' : 'text-text-muted hover:bg-surface-raised/60 hover:text-text',
+                    'gq-nav-link relative flex min-h-14 w-full flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium transition-colors',
+                    isActive
+                      ? 'is-active text-[#C9F36D] font-semibold bg-white/[0.04]'
+                      : 'text-[#8E928B] hover:bg-white/[0.03] hover:text-[#F2EEE4]',
                   )
                 }
               >
                 {({ isActive }) => (
                   <>
-                    {isActive && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-accent" />}
-                    <Icon className={cn('h-5 w-5', isActive && 'text-accent')} aria-hidden="true" />
-                    {label}
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="gq-nav-indicator absolute inset-y-2 left-0 w-[3px] rounded-r bg-[#C9F36D]"
+                      />
+                    )}
+                    <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{label}</span>
                   </>
                 )}
               </NavLink>

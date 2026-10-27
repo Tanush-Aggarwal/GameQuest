@@ -3,12 +3,11 @@ import { cn } from '@/lib/utils.js';
 import { artImageUrl, fallbackGradient } from '@/lib/art.js';
 import { useArt } from './useArt.js';
 
-// Readability: the art is shown at 60% and covered by a scrim that is at least 70% --bg. Even for pure white art
-// the pixel behind the text is about #3a3b40, so --text-muted (#a3a8bd) keeps about 4.7:1 and --text far more.
-// Real game art is darker than white, so it does better. Do not lighten these without re-checking.
+// Art panels keep game imagery as a subtle texture, rather than letting several background images compete
+// with the actual game covers and text. The warm paper scrim stays opaque enough for readable content.
 // (tailwind.test.js compiles these classes: Tailwind silently drops an opacity it cannot apply.)
-export const ART_IMAGE_CLASS = 'opacity-60';
-export const ART_SCRIM_CLASS = 'bg-gradient-to-r from-bg/90 via-bg/80 to-bg/70';
+export const ART_IMAGE_CLASS = 'opacity-12';
+export const ART_SCRIM_CLASS = 'bg-gradient-to-r from-bg/98 via-bg/96 to-bg/93';
 
 function ArtLayer({ art, seed, waiting }) {
   const backdrop = artImageUrl(art?.backdrop, 'backdrop');
@@ -57,7 +56,7 @@ export function ArtPanel({ as: Tag = 'section', art, seed = '', className, child
   const waiting = !hasOwn && status === 'loading'; // the pool is not here yet
   const key = `${resolved?.backdrop ?? resolved?.cover ?? 'none'}:${waiting}`;
   return (
-    <Tag className={cn('relative isolate overflow-hidden rounded-card border border-border bg-surface', className)} {...rest}>
+    <Tag data-gq-art-panel className={cn('gq-art-panel relative isolate overflow-hidden rounded-card border border-border bg-surface', className)} {...rest}>
       <ArtLayer key={key} art={resolved} seed={seed} waiting={waiting} />
       {children}
     </Tag>

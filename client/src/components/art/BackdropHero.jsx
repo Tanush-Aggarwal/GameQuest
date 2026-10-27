@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils.js';
 import { artImageUrl, artImageSrcSet, fallbackGradient } from '@/lib/art.js';
 
-// Text sits on the left over --bg at 90-100%, so --text and --text-muted keep their contrast whatever the art is;
+// Text sits on the left over the page canvas, so the headline stays readable while the right side retains vivid game art;
 // the bottom fades into the page. (tailwind.test.js compiles these classes.)
-export const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-bg via-bg/75 to-bg/10';
-export const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-bg via-transparent to-transparent';
+export const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-bg via-bg/90 to-bg/12';
+export const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-bg/80 via-bg/20 to-transparent';
 
 // Art wider than this (IGDB sometimes stores a logo strip or a banner, e.g. 1920x295) is no backdrop: it would be a black
 // band with nothing in it, so the hero moves on to the next candidate.
@@ -38,7 +38,11 @@ export function BackdropHero({ art, seed = '', as: Tag = 'section', className, c
       className={cn('relative isolate overflow-hidden rounded-none border-y border-border bg-surface sm:rounded-card sm:border', className)}
       {...rest}
     >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+      <div
+        aria-hidden="true"
+        data-art={usable ? (url === backdropUrl ? 'backdrop' : 'cover') : 'gradient'}
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
         {usable ? (
           (() => {
             const responsive = artImageSrcSet(url, url === backdropUrl ? 'hero' : 'cover');

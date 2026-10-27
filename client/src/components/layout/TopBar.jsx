@@ -5,14 +5,12 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth.js';
 import { Button } from '@/components/ui/button.jsx';
 
-// The slim bar across the top: game search, and who you are. Navigation lives in the side rail (desktop)
-// and the bottom tab bar (mobile); the logo only shows here on mobile, where there is no rail.
+// Horizontal top bar containing search, command-palette shortcut, account and logout controls.
 export function TopBar({ onOpenPalette }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [text, setText] = useState('');
-  // Explore has its own search box (kept in sync with the URL); a second one up here would show other text.
   const showSearch = pathname !== '/explore';
 
   function search(e) {
@@ -31,11 +29,17 @@ export function TopBar({ onOpenPalette }) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur">
-      <div className="mx-auto flex h-12 max-w-6xl items-center gap-3 px-4">
-        <Link to="/" className="flex min-h-11 min-w-11 items-center gap-2 font-heading font-bold md:hidden">
-          <Gamepad2 className="h-6 w-6 text-accent" aria-hidden="true" />
-          <span className="sr-only sm:not-sr-only">GameQuest home</span>
+    <header className="gq-topbar sticky top-0 z-20 border-b border-[#DCD5C6] bg-[#F2EEE4]/90 backdrop-blur-md">
+      <div className="gq-topbar-inner mx-auto flex h-12 w-full max-w-[1480px] items-center gap-3 px-4 sm:px-6">
+        <Link
+          to="/"
+          aria-label="GameQuest home"
+          className="gq-mobile-brand flex min-h-11 min-w-11 items-center gap-2 font-heading font-bold md:hidden"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-[#C9F36D] text-[#111311]">
+            <Gamepad2 className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="sr-only sm:not-sr-only text-sm font-bold tracking-tight text-[#151713]">GameQuest</span>
         </Link>
 
         {showSearch && (
@@ -47,38 +51,49 @@ export function TopBar({ onOpenPalette }) {
               placeholder="Search games"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="h-11 w-full rounded-control border border-border bg-surface pl-9 pr-3 text-sm text-text placeholder:text-text-muted"
+              className="gq-search h-11 w-full rounded-control border border-[#DCD5C6] bg-white pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-2xs transition-colors focus:border-text focus:outline-none"
             />
           </form>
         )}
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="gq-top-actions ml-auto flex items-center gap-1.5">
           {onOpenPalette && (
-            <Button variant="ghost" onClick={onOpenPalette} aria-keyshortcuts="Control+K Meta+K" className="px-3">
-              {/* the name is the text, so what is seen (Ctrl K) is part of what is announced */}
-              <Command className="h-4 w-4" aria-hidden="true" />
+            <Button
+              variant="ghost"
+              onClick={onOpenPalette}
+              aria-keyshortcuts="Control+K Meta+K"
+              className="h-10 px-2.5 text-text hover:bg-white/60 transition-colors"
+            >
+              <Command className="h-4 w-4 text-text" aria-hidden="true" />
               <span className="sr-only">Quick search</span>
-              <kbd className="hidden rounded-control border border-border px-1.5 text-xs lg:inline">Ctrl K</kbd>
+              <kbd className="hidden rounded-control border border-[#DCD5C6] bg-white px-1.5 py-0.5 text-[11px] font-mono font-medium text-text-muted shadow-2xs lg:inline">Ctrl K</kbd>
             </Button>
           )}
+
           {user && (
             <Link
               to="/profile"
-              className="flex min-h-11 items-center gap-2 rounded-control px-2 text-sm text-text-muted hover:bg-surface-raised hover:text-text"
+              className="flex min-h-11 items-center gap-2 rounded-control px-2 py-1 text-sm font-medium text-text hover:bg-white/60 transition-colors"
             >
               <span
                 aria-hidden="true"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/20 text-text"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111311] text-[#C9F36D] text-xs font-bold"
               >
-                <User className="h-4 w-4" aria-hidden="true" />
+                {user.username ? user.username.charAt(0).toUpperCase() : <User className="h-4 w-4" aria-hidden="true" />}
               </span>
               <span className="sr-only">Your profile:</span>
-              <span className="hidden max-w-[10rem] truncate sm:inline">{user.username}</span>
+              <span className="hidden max-w-[10rem] truncate font-semibold sm:inline">{user.username}</span>
             </Link>
           )}
-          <Button variant="ghost" onClick={handleLogout} aria-label="Log out" className="px-3">
+
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            aria-label="Log out"
+            className="h-10 px-2.5 text-text hover:bg-white/60 transition-colors"
+          >
             <LogOut className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden lg:inline">Log out</span>
+            <span className="hidden text-xs font-semibold lg:inline">Log out</span>
           </Button>
         </div>
       </div>

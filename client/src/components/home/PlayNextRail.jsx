@@ -35,7 +35,7 @@ export function PlayNextCard({ item }) {
   // The link is the cover and the title: its name is its visible text (status, title, progress), never a different label.
   // The longer "why" sits under it as plain text, so it is not read out as part of the link's name.
   return (
-    <li className={CARD}>
+    <li className={`${CARD} gq-play-next-card`}>
       <div
         className="group flex h-full flex-col gap-2"
         onMouseEnter={() => previewGame(item)}
@@ -44,7 +44,7 @@ export function PlayNextCard({ item }) {
         onBlur={clearPreview}
       >
         <Link to={`/library/${item.entryId}`} className="flex flex-col gap-2 rounded-card">
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-transform group-hover:border-accent motion-safe:group-hover:-translate-y-0.5">
+          <div className="gq-play-next-cover relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-transform group-hover:border-accent motion-safe:group-hover:-translate-y-0.5">
             <CoverImage
               cover={item.cover}
               title={item.title}
@@ -121,7 +121,7 @@ export function PlayNextSection({ playNext }) {
   }
 
   return (
-    <ArtPanel aria-labelledby="play-next-title" art={items[0]} seed="home-next" className="flex flex-col gap-4 p-5">
+    <ArtPanel aria-labelledby="play-next-title" art={items[0]} seed="home-next" className="gq-editorial-panel gq-play-next-section flex flex-col gap-4 py-5">
       <div className="flex items-center justify-between gap-3">
         <h2 id="play-next-title" className="flex items-center gap-2 font-heading text-lg font-bold">
           <TrendingUp size={18} className="text-accent" aria-hidden="true" />

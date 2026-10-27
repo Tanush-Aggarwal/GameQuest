@@ -61,20 +61,20 @@ export function HomeHero({ username, dashboard, playNext }) {
 function HeroArtwork({ game }) {
   if (!game) return null;
   return (
-    <div className="hidden md:flex shrink-0 items-center justify-center" aria-hidden="true">
-      <div className="gq-hero-artwork relative w-44 sm:w-52 lg:w-60 aspect-[3/4] rounded-card overflow-hidden border border-black/10 bg-surface shadow-xl transition-all duration-300 hover:scale-[1.02]">
+    <div className="flex shrink-0 items-center justify-center self-center md:self-auto" aria-hidden="true">
+      <div className="gq-hero-artwork relative w-36 sm:w-52 lg:w-60 aspect-[3/4] rounded-card overflow-hidden border border-black/10 bg-surface shadow-xl transition-all duration-300 hover:scale-[1.02]">
         {game.cover ? (
           <CoverImage
             cover={game.cover}
             title={game.title ?? 'GameQuest'}
             alt=""
-            sizes="(min-width: 1024px) 240px, 208px"
+            sizes="(min-width: 1024px) 240px, (min-width: 640px) 208px, 144px"
             className="h-full w-full object-cover transition-transform duration-300"
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center bg-surface-raised">
-            <Gamepad2 className="h-10 w-10 text-text-muted mb-2" />
-            <span className="font-heading font-bold text-sm text-text line-clamp-2">{game.title || 'GameQuest'}</span>
+          <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center bg-surface-raised">
+            <Gamepad2 className="h-8 w-8 text-text-muted mb-2" />
+            <span className="font-heading font-bold text-xs sm:text-sm text-text line-clamp-2">{game.title || 'GameQuest'}</span>
           </div>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
@@ -159,7 +159,7 @@ function HeroBody({ dashboard, playNext }) {
                 <div>
                   <dt className="text-xs text-text-muted">Achievements</dt>
                   <dd className="flex items-center gap-1 font-semibold tabular-nums text-text">
-                    <Trophy className="h-4 w-4 text-[var(--secondary-accent)]" aria-hidden="true" />
+                    <Trophy className="h-4 w-4 text-secondary-accent" aria-hidden="true" />
                     {achievements.pct}% <span className="font-normal text-text-muted">({achievements.unlocked}/{achievements.total})</span>
                   </dd>
                 </div>

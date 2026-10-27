@@ -91,7 +91,7 @@ export function GameCard({ game, shared = true }) {
   return (
     <Link
       to={`/games/${game.slug}`}
-      className="gq-game-card group flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:bg-surface-raised"
+      className="gq-game-card group flex flex-col overflow-hidden rounded-card border border-border bg-surface"
     >
       <SharedCover slug={shared ? game.slug : null}>
         <GameCover game={game} />

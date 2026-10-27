@@ -19,6 +19,7 @@ const names = [
   'accent',
   'accent-fg',
   'accent-text',
+  'secondary-accent',
   'reward',
   'danger',
   'success',

@@ -23,9 +23,9 @@ export function RecommendationWidget() {
   const rec = data.items[0];
 
   return (
-    <ArtPanel as="div" art={rec.game} seed="home-recommendation" className="gq-editorial-panel gq-recommendation flex flex-col gap-3 p-4 rounded-card border border-[#DCD5C6] bg-surface shadow-2xs">
+    <ArtPanel as="div" art={rec.game} seed="home-recommendation" className="gq-editorial-panel gq-recommendation flex flex-col gap-3 p-4 rounded-card border border-border bg-surface shadow-2xs">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[var(--secondary-accent)]">
+        <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-secondary-accent">
           <Sparkles className="h-3.5 w-3.5" /> Recommendation
         </div>
         <Link

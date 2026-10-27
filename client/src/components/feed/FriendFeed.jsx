@@ -7,7 +7,7 @@ import { ActivityList } from './ActivityList.jsx';
 // "What my friends are playing": its own section on Home, so a failure here never blanks the page.
 export function FriendFeed() {
   return (
-    <ArtPanel aria-labelledby="friend-feed-title" seed="home-friends" className="gq-editorial-panel flex flex-col gap-3 p-4 rounded-card border border-[#DCD5C6] bg-surface shadow-2xs">
+    <ArtPanel aria-labelledby="friend-feed-title" seed="home-friends" className="gq-editorial-panel flex flex-col gap-3 p-4 rounded-card border border-border bg-surface shadow-2xs">
       <h2 id="friend-feed-title" className="text-base font-bold font-heading text-text">Friends’ activity</h2>
       <ActivityList
         loadPage={getFeed}

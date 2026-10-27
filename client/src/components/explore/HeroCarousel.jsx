@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Pause, Play, TrendingUp } from 'lucide-react';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 import { buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
@@ -66,20 +67,28 @@ export function HeroCarousel() {
       {/* The live region is this stable wrapper (a region that is re-created on every slide is not announced); only the
           art and the slide are keyed, so the controls below keep their identity, and keyboard focus, across slides. */}
       <div aria-live={auto ? 'off' : 'polite'}>
-        <BackdropHero key={game.id} as="div" art={game} seed={game.title} className="min-h-72 px-5 py-8 sm:px-8 sm:py-10">
-          <motion.div {...fade} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${count}`} className="flex max-w-xl flex-col gap-3">
-            <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted">
-              <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> Trending now
-            </p>
-            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{game.title}</h2>
-            <p className="text-sm text-text-muted">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>
-            {game.summary && <p className="line-clamp-2 text-sm text-text">{game.summary}</p>}
-            <div>
-              <Link to={`/games/${game.slug}`} aria-label={`View game: ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
-                View game
-              </Link>
+        <BackdropHero key={game.id} as="div" art={game} seed={game.title} className="gq-home-hero min-h-72 px-5 py-8 sm:px-8 sm:py-10">
+          <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <motion.div {...fade} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${count}`} className="flex max-w-xl flex-col gap-3">
+              <p className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-secondary-accent">
+                <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> Trending now
+              </p>
+              <h2 className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-text sm:text-4xl">{game.title}</h2>
+              <p className="text-sm font-medium text-text-muted">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>
+              {game.summary && <p className="line-clamp-2 text-sm text-text/90 leading-relaxed">{game.summary}</p>}
+              <div className="pt-1">
+                <Link to={`/games/${game.slug}`} aria-label={`View game: ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
+                  View game
+                </Link>
+              </div>
+            </motion.div>
+
+            <div className="hidden md:flex shrink-0 items-center justify-center" aria-hidden="true">
+              <div className="gq-hero-artwork relative w-40 sm:w-48 lg:w-56 aspect-[3/4] rounded-card overflow-hidden border border-black/10 bg-surface shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <CoverImage cover={game.cover} title={game.title} alt="" sizes="224px" className="h-full w-full object-cover" />
+              </div>
             </div>
-          </motion.div>
+          </div>
         </BackdropHero>
       </div>
 

@@ -13,7 +13,7 @@ export function UpcomingSessions() {
   const load = useCallback((signal) => listSessions({ limit: 3 }, { signal }), []);
   const { status, data, error, retry } = useAsync(load);
   return (
-    <ArtPanel aria-labelledby="upcoming-title" seed="home-sessions" className="gq-editorial-panel flex flex-col gap-3 p-4 rounded-card border border-[#DCD5C6] bg-surface shadow-2xs">
+    <ArtPanel aria-labelledby="upcoming-title" seed="home-sessions" className="gq-editorial-panel flex flex-col gap-3 p-4 rounded-card border border-border bg-surface shadow-2xs">
       <div className="flex items-center justify-between gap-3">
         <h2 id="upcoming-title" className="text-base font-bold font-heading text-text">Upcoming sessions</h2>
         <Link to="/sessions" className="text-xs font-semibold text-text hover:underline">All sessions</Link>

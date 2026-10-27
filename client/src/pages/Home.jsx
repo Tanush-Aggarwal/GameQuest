@@ -86,7 +86,7 @@ function StatTiles({ dashboard }) {
   return (
     <section aria-label="Your library at a glance" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {tiles.map(({ icon: Icon, label, value }) => (
-        <div key={label} className="flex items-center gap-3 rounded-card border border-[#DCD5C6] bg-surface p-4 shadow-2xs transition-shadow hover:shadow-xs">
+        <div key={label} className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 shadow-2xs transition-shadow hover:shadow-xs">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-surface-raised text-text">
             <Icon size={18} aria-hidden="true" />
           </span>
@@ -114,14 +114,14 @@ function BacklogHealth({ dashboard, backlogHealth }) {
   }));
 
   return (
-    <ArtPanel aria-labelledby="backlog-health-title" seed="home-backlog" className="gq-editorial-panel gq-backlog-panel flex flex-col gap-4 p-5 rounded-card border border-[#DCD5C6] bg-surface shadow-2xs">
+    <ArtPanel aria-labelledby="backlog-health-title" seed="home-backlog" className="gq-editorial-panel gq-backlog-panel flex flex-col gap-4 p-5 rounded-card border border-border bg-surface shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="backlog-health-title" className="font-bold flex items-center gap-2 font-heading text-base text-text">
           <Layers size={18} className="text-text" />
           Backlog Health & Velocity
         </h2>
         {h?.projectedClearMonths != null && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#C9F36D] px-3 py-1 text-xs font-bold text-[#111311]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-fg">
             <Hourglass className="h-3.5 w-3.5" />
             Clear backlog in ~{h.projectedClearMonths} months
           </span>

@@ -7,14 +7,14 @@ import { DESKTOP_NAV_ITEMS } from './navItems.js';
 export function SideRail() {
   return (
     <div
-      className="gq-side-rail fixed inset-y-0 left-0 z-30 hidden w-[72px] flex-col items-center border-r border-[#1E221E] bg-[#111311] py-4 md:flex"
+      className="gq-side-rail fixed inset-y-0 left-0 z-30 hidden w-[72px] flex-col items-center border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] py-4 md:flex"
     >
       <Link
         to="/"
         aria-label="GameQuest home"
         className="gq-brand flex h-12 w-12 items-center justify-center rounded-control transition-colors hover:bg-white/5"
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-control bg-[#C9F36D] text-[#111311] shadow-sm">
+        <span className="flex h-9 w-9 items-center justify-center rounded-control bg-accent text-accent-fg shadow-sm">
           <Gamepad2 className="h-5 w-5" aria-hidden="true" />
         </span>
       </Link>
@@ -30,8 +30,8 @@ export function SideRail() {
                   cn(
                     'gq-nav-link relative flex min-h-14 w-full flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium transition-colors',
                     isActive
-                      ? 'is-active text-[#C9F36D] font-semibold bg-white/[0.04]'
-                      : 'text-[#8E928B] hover:bg-white/[0.03] hover:text-[#F2EEE4]',
+                      ? 'is-active text-accent font-semibold bg-white/[0.04]'
+                      : 'text-[var(--sidebar-text)] hover:bg-white/[0.03] hover:text-bg',
                   )
                 }
               >
@@ -40,7 +40,7 @@ export function SideRail() {
                     {isActive && (
                       <span
                         aria-hidden="true"
-                        className="gq-nav-indicator absolute inset-y-2 left-0 w-[3px] rounded-r bg-[#C9F36D]"
+                        className="gq-nav-indicator absolute inset-y-2 left-0 w-[3px] rounded-r bg-accent"
                       />
                     )}
                     <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />

@@ -30,3 +30,7 @@ export function pickArt(pool, seed) {
   const list = wide.length ? wide : pool;
   return list.length ? list[hashOf(seed) % list.length] : null;
 }
+
+// Screenshots are stored at 1080p. A gallery thumbnail only needs the medium size; the lightbox shows the full one.
+export const screenshotThumb = (url) => (typeof url === 'string' ? url.replace('/t_1080p/', '/t_screenshot_med/') : null);
+export const screenshotFull = (url) => (typeof url === 'string' ? url.replace(/\/t_screenshot_(?:med|big|huge)\//, '/t_1080p/') : null);

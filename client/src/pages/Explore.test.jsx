@@ -274,11 +274,11 @@ describe('Game page', () => {
     renderAt('/games/hades');
     expect(await screen.findByRole('heading', { name: 'Hades' })).toBeInTheDocument();
 
-    const reviewsTab = screen.getByRole('button', { name: /Community Reviews/ });
+    const reviewsTab = screen.getByRole('tab', { name: /^Reviews/ });
     await userEvent.click(reviewsTab);
     expect(await screen.findByText('No reviews yet')).toBeInTheDocument();
 
-    const friendsTab = screen.getByRole('button', { name: /Friends Activity/ });
+    const friendsTab = screen.getByRole('tab', { name: 'Friends' });
     await userEvent.click(friendsTab);
     expect(await screen.findByText('No friends playing yet')).toBeInTheDocument();
   });

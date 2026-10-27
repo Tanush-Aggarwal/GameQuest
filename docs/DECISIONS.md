@@ -203,3 +203,10 @@ Format: date — decision — why.
 - **Command palette:** Ctrl/Cmd+K, Radix Dialog (`@radix-ui/react-dialog`, new dependency) with a hand-built combobox/listbox; lazy chunk (~14 kB gzip). Games and friends are searched on the server after 200 ms of no typing (`Promise.allSettled`, each source fails alone); collections load once on open and are filtered client-side. Radix only restores focus to a `Dialog.Trigger`, so the opener is remembered in a layout effect and focused on close.
 - **Motion:** pages fade/lift in and the previous page leaves (`AnimatePresence mode="popLayout"`), which lets a `layoutId` cover glide from a card to the game page. Everything is gated by `useMotionOk()` (`useReducedMotion`): with reduced motion pages swap instantly, covers carry no `layoutId` and the background switches without a fade.
 - **Full-bleed:** the hero is full width of the content column (edge to edge on phones), not the whole viewport; the ambient layer provides the page-wide effect.
+
+## 2026-10-27 — Claude Code — cinematic UI step 2: game page
+- **Structure:** `pages/Game.jsx` is now a thin loader; `components/game/` holds `GameHero` (shared `BackdropHero`, cover with the `SharedCover` layout id, developer/year, rating, time to beat, `PlatformPills`, one primary library action + Recommend/Schedule), `ScreenshotGallery` (grid + Radix Dialog lightbox), `MoreLikeThis` (shared `Rail`), `GameSections` (reviews/friends/time-to-beat, moved as is). Tabs are Radix Tabs (About / Your progress / Reviews / Friends); `@radix-ui/react-tabs` is a new dependency.
+- **One library entry per page:** `useLibraryEntry(gameId)` is called once in the page and shared by the hero control and the "Your progress" tab (before, the control loaded it privately). `GameLibraryPanel` now takes that state.
+- **Gold is for rewards only:** the community rating star in the hero uses the accent colour, not `--reward`.
+- **Lightbox focus:** like the palette, the thumbnail that opened it is remembered and focused on close (Radix only restores to a `Dialog.Trigger`).
+- **Screenshots** are stored at 1080p; thumbnails ask IGDB for `t_screenshot_med`.

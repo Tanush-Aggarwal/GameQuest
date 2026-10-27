@@ -1,6 +1,18 @@
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from '../middleware/auth.js';
+import { AuthError, ConflictError } from '../utils/errors.js';
 
-export function createAuthController({ authService, config }) {
+const GOOGLE_PATH = '/api/v1/auth/google';
+const STATE_COOKIE = 'gq_oauth_state';
+const STATE_TTL_MS = 10 * 60 * 1000;
+
+const sameState = (a, b) => {
+  const x = Buffer.from(String(a ?? ''));
+  const y = Buffer.from(String(b ?? ''));
+  return x.length > 0 && x.length === y.length && timingSafeEqual(x, y);
+};
+
+export function createAuthController({ authService, googleAdapter, config }) {
   // Secure in production. SameSite comes from config: Lax by default because production traffic
   // reaches the API through the client's own domain (Vercel rewrite), so cookies are first-party.
   const sameSite = config.cookieSameSite ?? 'lax';
@@ -28,7 +40,44 @@ export function createAuthController({ authService, config }) {
     res.clearCookie(REFRESH_COOKIE, { ...base, path: '/api/v1/auth' });
   }
 
+  const stateCookie = { httpOnly: true, secure: config.isProd, sameSite: 'lax', path: GOOGLE_PATH };
+  // The browser is mid-redirect, so failures go back to the login page as a short code the page words itself.
+  const backToLogin = (res, code) => res.redirect(`${config.clientOrigin}/login?error=${code}`);
+
   return {
+    providers(req, res) {
+      res.json({ google: Boolean(googleAdapter?.isConfigured()) });
+    },
+
+    googleStart(req, res) {
+      if (!googleAdapter?.isConfigured()) return backToLogin(res, 'google_unavailable');
+      const state = randomBytes(24).toString('hex');
+      res.cookie(STATE_COOKIE, state, { ...stateCookie, maxAge: STATE_TTL_MS });
+      return res.redirect(googleAdapter.buildAuthUrl({ state }));
+    },
+
+    async googleCallback(req, res) {
+      const expected = req.cookies?.[STATE_COOKIE];
+      res.clearCookie(STATE_COOKIE, stateCookie);
+      if (req.query.error) return backToLogin(res, 'google_cancelled');
+      if (!googleAdapter?.isConfigured()) return backToLogin(res, 'google_unavailable');
+      if (typeof req.query.code !== 'string' || !sameState(req.query.state, expected)) {
+        return backToLogin(res, 'google_state');
+      }
+      try {
+        const profile = await googleAdapter.exchangeCode(req.query.code);
+        const { accessToken, refreshToken } = await authService.loginWithGoogle(profile);
+        setSession(res, { accessToken, refreshToken });
+        return res.redirect(`${config.clientOrigin}/`);
+      } catch (err) {
+        // Never log the query string: the one-time code in it is a secret.
+        req.log?.warn({ err: { name: err.name, message: err.message } }, 'google sign-in failed');
+        if (err instanceof ConflictError) return backToLogin(res, 'google_email_exists');
+        if (err instanceof AuthError) return backToLogin(res, 'google_unverified');
+        return backToLogin(res, 'google_failed');
+      }
+    },
+
     async register(req, res) {
       const { user, ...tokens } = await authService.register(req.body);
       setSession(res, tokens);

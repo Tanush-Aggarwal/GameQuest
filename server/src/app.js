@@ -48,6 +48,7 @@ import { createHomeService } from './services/homeService.js';
 import { createNotificationService } from './services/notificationService.js';
 import { createAccountService } from './services/accountService.js';
 import { createRequirementsService } from './services/requirementsService.js';
+import { createGoogleAdapter } from './adapters/auth/google.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -75,6 +76,7 @@ export function createApp({
   notificationService: _notifSvc,
   accountService: _accountSvc,
   requirementsService: _reqSvc,
+  googleAdapter = createGoogleAdapter({ config }),
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -184,6 +186,7 @@ export function createApp({
       requirementsService,
       accountService,
       notificationService,
+      googleAdapter,
       LibraryEntry,
       config,
     }));

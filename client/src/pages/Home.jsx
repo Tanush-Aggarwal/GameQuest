@@ -227,7 +227,7 @@ function TrendingCard({ game }) {
 
 function AdventureCard() {
   const loadAdventure = useCallback((signal) => getNextAdventure({ signal }), []);
-  const { status, data, error, retry } = useAsync(loadAdventure);
+  const { status, data, retry } = useAsync(loadAdventure);
 
   if (status === 'loading') {
     return (

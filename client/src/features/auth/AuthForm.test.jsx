@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
@@ -9,11 +9,11 @@ import { AuthContext } from './AuthContext.jsx';
 // the collage behind the form; its own tests are in CoverCollage.test.jsx
 vi.mock('@/services/publicApi.js', () => ({ getPublicCovers: vi.fn().mockResolvedValue([]) }));
 
-function renderPage(Page, auth = {}) {
+function renderPage(Page, auth = {}, url = '/') {
   const value = { login: vi.fn(), register: vi.fn(), ...auth };
   render(
     <AuthContext.Provider value={value}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[url]}>
         <Page />
       </MemoryRouter>
     </AuthContext.Provider>,
@@ -57,6 +57,39 @@ describe('Login form', () => {
     await userEvent.type(screen.getByLabelText('Password'), 'whatever-1');
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/cannot reach the server/i);
+  });
+});
+
+describe('Continue with Google', () => {
+  it('is a link to the API that starts the Google flow, on both pages', () => {
+    for (const Page of [Login, Register]) {
+      const { unmount } = render(
+        <AuthContext.Provider value={{ login: vi.fn(), register: vi.fn() }}>
+          <MemoryRouter>
+            <Page />
+          </MemoryRouter>
+        </AuthContext.Provider>,
+      );
+      expect(screen.getByRole('link', { name: 'Continue with Google' }).getAttribute('href')).toMatch(/\/auth\/google$/);
+      unmount();
+    }
+  });
+
+  it('says the Terms and Privacy Policy apply', () => {
+    renderPage(Login);
+    const notice = within(screen.getByTestId('google-terms-notice'));
+    expect(notice.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');
+    expect(notice.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy');
+  });
+
+  it('shows why Google sign-in failed when the API sends people back with an error code', () => {
+    renderPage(Login, {}, '/login?error=google_email_exists');
+    expect(screen.getByRole('alert')).toHaveTextContent(/account with that email already exists/i);
+  });
+
+  it('shows nothing for an unknown error code', () => {
+    renderPage(Login, {}, '/login?error=whatever');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

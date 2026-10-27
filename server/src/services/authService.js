@@ -83,6 +83,49 @@ export function createAuthService({
     return { user: toPublicUser(user), ...(await issueTokens(user)) };
   }
 
+  // A free username from the Google name: letters, numbers and underscores, 3 to 24 characters, with a number
+  // added when it is taken (checked against usernameLower, the unique key).
+  async function freeUsername(name, email) {
+    const clean = (s) => String(s ?? '').replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+    let base = clean(name) || clean(email?.split('@')[0]);
+    if (base.length < 3) base = `${base}player`.slice(0, 24);
+    base = base.slice(0, 20);
+    for (let n = 0; n < 50; n += 1) {
+      const candidate = n === 0 ? base : `${base}${n + 1}`;
+      if (!(await User.findOne({ usernameLower: candidate.toLowerCase() }))) return candidate;
+    }
+    return `${base}${randomUUID().slice(0, 4)}`;
+  }
+
+  // Sign in (or sign up) with a verified Google profile. An email that already belongs to a password account is
+  // refused, never linked: GameQuest does not verify emails, so linking could give the account to whoever
+  // registered the address first.
+  async function loginWithGoogle({ sub, email, emailVerified, name }) {
+    if (!sub || !email || !emailVerified) throw new AuthError('Google did not confirm your email address');
+    const known = await User.findOne({ googleId: sub });
+    if (known) return { user: toPublicUser(known), ...(await issueTokens(known)) };
+    if (await User.findOne({ email })) {
+      throw new ConflictError('An account with this email already exists. Log in with your password.', { field: 'email' });
+    }
+    // A duplicate key here is a race: the same person's second tab got there first (sign them in), or someone took
+    // the username a moment ago (pick another once).
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const username = await freeUsername(name, email);
+        const user = await User.create({ username, usernameLower: username.toLowerCase(), email, googleId: sub });
+        return { user: toPublicUser(user), ...(await issueTokens(user)) };
+      } catch (err) {
+        if (!isDuplicateKey(err)) throw err;
+        const raced = await User.findOne({ googleId: sub });
+        if (raced) return { user: toPublicUser(raced), ...(await issueTokens(raced)) };
+        if (await User.findOne({ email })) {
+          throw new ConflictError('An account with this email already exists. Log in with your password.', { field: 'email' });
+        }
+      }
+    }
+    throw new ConflictError('Could not create your account. Please try again.');
+  }
+
   async function login({ email, password }) {
     const user = await User.findOne({ email }).select('+passwordHash');
     const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
@@ -140,5 +183,5 @@ export function createAuthService({
     }
   }
 
-  return { register, login, refresh, logout, getMe, verifyAccess };
+  return { register, login, loginWithGoogle, refresh, logout, getMe, verifyAccess };
 }

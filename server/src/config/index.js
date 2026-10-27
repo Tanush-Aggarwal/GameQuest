@@ -19,6 +19,9 @@ const envSchema = z.object({
   YOUTUBE_API_KEY: z.string().optional(),
   DISCORD_CLIENT_ID: z.string().optional(),
   DISCORD_CLIENT_SECRET: z.string().optional(),
+  // Optional: without them "Continue with Google" sends people back to the login page with a clear message.
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
   // Public URL of this API (used to build OAuth callback URLs). Defaults to localhost in development.
   PUBLIC_API_URL: z.string().url().optional(),
   // Cookies: the client proxies /api through its own domain in production, so Lax works and
@@ -58,6 +61,7 @@ export function loadConfig(env = process.env) {
     steam: { apiKey: e.STEAM_API_KEY || null },
     youtube: { apiKey: e.YOUTUBE_API_KEY || null },
     discord: { clientId: e.DISCORD_CLIENT_ID || null, clientSecret: e.DISCORD_CLIENT_SECRET || null },
+    google: { clientId: e.GOOGLE_CLIENT_ID || null, clientSecret: e.GOOGLE_CLIENT_SECRET || null },
     twitch: {
       clientId: e.TWITCH_CLIENT_ID || null,
       clientSecret: e.TWITCH_CLIENT_SECRET || null,

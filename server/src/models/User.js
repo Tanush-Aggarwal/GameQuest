@@ -7,7 +7,10 @@ const userSchema = new mongoose.Schema(
     // lowercase copy gives case-insensitive uniqueness while keeping the display casing
     usernameLower: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    // Absent for people who only ever sign in with Google.
+    passwordHash: { type: String, required: function needsPassword() { return !this.googleId; }, select: false },
+    // Google account id ("sub"), set on sign-up with Google.
+    googleId: { type: String, default: undefined },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     avatar: { type: String, default: null },
     bio: { type: String, trim: true, maxlength: 500, default: '' },
@@ -51,5 +54,7 @@ const userSchema = new mongoose.Schema(
 
 // One Steam account links to one GameQuest user (otherwise anyone could claim someone else's library).
 userSchema.index({ 'steam.steamId': 1 }, { unique: true, partialFilterExpression: { 'steam.steamId': { $type: 'string' } } });
+
+userSchema.index({ googleId: 1 }, { unique: true, partialFilterExpression: { googleId: { $type: 'string' } } });
 
 export const User = mongoose.models.User ?? mongoose.model('User', userSchema);

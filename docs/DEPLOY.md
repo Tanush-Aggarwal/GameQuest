@@ -62,6 +62,7 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
    | `STEAM_API_KEY` | optional (Steam sync) |
    | `YOUTUBE_API_KEY` | needed for trailers (without it no trailer is shown: videos are validated through the YouTube API). 10,000 free units a day; see README "Trailer quota". After deploying run `npm run trailers:refresh` once |
    | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | optional (Discord link) |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional (Continue with Google). Add `https://<your-vercel-domain>/api/v1/auth/google/callback` as an authorised redirect URI |
 
 4. **Create Web Service.** When the deploy is live, open `https://<your-service>.onrender.com/api/v1/health`.
    It should return JSON with `"status":"ok"`.

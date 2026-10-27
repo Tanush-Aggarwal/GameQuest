@@ -1,5 +1,6 @@
 import { registerSchema } from '@gamequest/shared';
 import { useAuth } from '@/hooks/useAuth.js';
+import { GoogleButton } from '@/components/auth/GoogleButton.jsx';
 import { AuthForm, AuthLink } from '@/features/auth/AuthForm.jsx';
 
 const FIELDS = [
@@ -13,6 +14,7 @@ export default function Register() {
   return (
     <AuthForm
       title="Create your account"
+      oauth={<GoogleButton />}
       submitLabel="Create account"
       fields={FIELDS}
       schema={registerSchema}

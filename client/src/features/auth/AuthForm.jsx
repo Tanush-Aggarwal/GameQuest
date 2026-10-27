@@ -15,10 +15,10 @@ function fieldErrorsFromZod(issues) {
 
 // Shared by the login and register pages: Zod validation (same schemas as the API), field
 // errors, a pending state and a form-level error for failures that aren't about one field.
-export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer, termsCheckbox }) {
+export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer, termsCheckbox, oauth = null, initialError = '' }) {
   const [values, setValues] = useState(() => Object.fromEntries(fields.map((f) => [f.name, ''])));
   const [errors, setErrors] = useState({});
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState(initialError);
   const [pending, setPending] = useState(false);
 
   async function handleSubmit(e) {
@@ -59,6 +59,16 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer,
       </div>
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-card border border-border bg-surface/95 p-6 shadow-2xl supports-[backdrop-filter]:bg-surface/70 supports-[backdrop-filter]:backdrop-blur-md">
         <h1 className="text-xl font-semibold">{title}</h1>
+        {oauth && (
+          <>
+            {oauth}
+            <div className="flex items-center gap-3 text-xs text-text-muted" aria-hidden="true">
+              <span className="h-px flex-1 bg-border" />
+              or use your email
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
         {fields.map((f) => (
           <FormField
             key={f.name}

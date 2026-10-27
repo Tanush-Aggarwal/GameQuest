@@ -272,3 +272,10 @@ Format: date — decision — why.
 - **Design token normalization:** Replaced hardcoded hex values in `TopBar.jsx`, `SideRail.jsx`, `Home.jsx`, `RecommendationWidget.jsx`, `UpcomingSessions.jsx`, and `FriendFeed.jsx` with CSS variables (`border-border`, `bg-accent`, `text-accent-fg`, `[var(--sidebar-bg)]`, etc.). Added `secondary-accent` to `tailwind.config.js` color names.
 - **HomeHero mobile art:** Made `HeroArtwork` responsive across all viewport sizes (`w-36 sm:w-52 lg:w-60`), ensuring mobile viewers receive a framed game poster rather than text over a cropped backdrop.
 
+
+## 2026-10-27 - Claude Code - Google sign-in (ported from the old project)
+- **Decision:** "Continue with Google" uses the server-side authorization-code flow: the API redirects to Google with a random `state` kept in a short-lived HTTP-only cookie, checks it on the callback, swaps the code for the profile (`adapters/auth/google.js`, plain fetch, no new dependency), then issues the same access and refresh cookies as a password login and redirects into the app. Failures redirect to `/login?error=<code>`.
+- **Why server-side:** the client secret and tokens never reach the browser, and the cookies stay first-party like every other sign-in.
+- **No linking by email:** if the verified Google email already belongs to a password account, sign-in is refused with a message to log in with the password. GameQuest does not verify emails, so linking could give an account to whoever registered the address first.
+- **Data model:** `User.googleId` (partial unique index, like `steam.steamId`); `passwordHash` is required only when there is no `googleId`. Google-only accounts cannot use password login. Terms: the button carries a "by continuing you agree" notice instead of a checkbox, so Google sign-ups do not set `termsAcceptedAt`.
+- **Setup is the owner's:** `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` go in `server/.env`; add `<origin>/api/v1/auth/google/callback` as an authorised redirect URI (docs/DEPLOY.md).

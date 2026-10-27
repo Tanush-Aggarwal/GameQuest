@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Pause, Play, TrendingUp } from 'lucide-react';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
-import { CoverImage } from '@/components/games/GameCard.jsx';
 import { buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
@@ -64,30 +63,23 @@ export function HeroCarousel() {
       }}
       className="flex flex-col gap-3"
     >
-      {/* The live region is this stable wrapper (a region that is re-created on every slide is not announced); only the
-          art and the slide are keyed, so the controls below keep their identity, and keyboard focus, across slides. */}
+      {/* The live region is this stable wrapper; keyed BackdropHero renders full strength backdrop art with dark scrim */}
       <div aria-live={auto ? 'off' : 'polite'}>
         <BackdropHero key={game.id} as="div" art={game} seed={game.title} className="gq-home-hero min-h-72 px-5 py-8 sm:px-8 sm:py-10">
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <motion.div {...fade} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${count}`} className="flex max-w-xl flex-col gap-3">
-              <p className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-secondary-accent">
+              <p className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--accent)]">
                 <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> Trending now
               </p>
-              <h2 className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-text sm:text-4xl">{game.title}</h2>
-              <p className="text-sm font-medium text-text-muted">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>
-              {game.summary && <p className="line-clamp-2 text-sm text-text/90 leading-relaxed">{game.summary}</p>}
+              <h2 className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">{game.title}</h2>
+              <p className="text-sm font-medium text-gray-300">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>
+              {game.summary && <p className="line-clamp-2 text-sm text-gray-200 leading-relaxed">{game.summary}</p>}
               <div className="pt-1">
                 <Link to={`/games/${game.slug}`} aria-label={`View game: ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
                   View game
                 </Link>
               </div>
             </motion.div>
-
-            <div className="hidden md:flex shrink-0 items-center justify-center" aria-hidden="true">
-              <div className="gq-hero-artwork relative w-40 sm:w-48 lg:w-56 aspect-[3/4] rounded-card overflow-hidden border border-black/10 bg-surface shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                <CoverImage cover={game.cover} title={game.title} alt="" sizes="224px" className="h-full w-full object-cover" />
-              </div>
-            </div>
           </div>
         </BackdropHero>
       </div>
@@ -97,31 +89,30 @@ export function HeroCarousel() {
           <button type="button" aria-label="Previous slide" onClick={() => go((i) => i - 1)} className={ICON_BUTTON}>
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div role="group" aria-label="Choose a slide" className="flex">
+          <div role="group" aria-label="Choose a slide" className="flex flex-wrap items-center gap-1.5">
             {slides.map((s, i) => (
               <button
                 key={s.id}
                 type="button"
-                aria-label={`Show ${s.title}`}
-                aria-current={i === index}
+                aria-label={`Slide ${i + 1}: ${s.title}`}
+                aria-pressed={i === index}
                 onClick={() => go(i)}
-                className="group flex h-11 w-8 items-center justify-center focus-visible:outline-none"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`h-2 rounded-full transition-all group-focus-visible:ring-2 group-focus-visible:ring-accent ${i === index ? 'w-6 bg-accent' : 'w-2 bg-text-muted'}`}
-                />
-              </button>
+                className={`h-2.5 rounded-full transition-all ${i === index ? 'w-8 bg-[var(--accent)]' : 'w-2.5 bg-border hover:bg-text-muted'}`}
+              />
             ))}
           </div>
           <button type="button" aria-label="Next slide" onClick={() => go((i) => i + 1)} className={ICON_BUTTON}>
             <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
-          {motionOk && (
-            <button type="button" aria-label={userPaused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setUserPaused((p) => !p)} className={ICON_BUTTON}>
-              {userPaused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
-            </button>
-          )}
+          <button
+            type="button"
+            aria-label={userPaused ? 'Resume auto-advance' : 'Pause auto-advance'}
+            aria-pressed={userPaused}
+            onClick={() => setUserPaused((p) => !p)}
+            className={ICON_BUTTON}
+          >
+            {userPaused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
+          </button>
         </div>
       )}
     </section>

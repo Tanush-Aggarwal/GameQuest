@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils.js';
 import { artImageUrl, artImageSrcSet, fallbackGradient } from '@/lib/art.js';
 
-// Text sits on the left over the page canvas, so the headline stays readable while the right side retains vivid game art;
-// the bottom fades into the page. (tailwind.test.js compiles these classes.)
-export const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-bg via-bg/90 to-bg/12';
-export const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-bg/80 via-bg/20 to-transparent';
+// Text sits on the left over a dark gradient scrim (black 85% to transparent over the left 55%),
+// ensuring the artwork retains full vividness without being washed out by any cream/ivory overlay.
+export const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-black/85 via-black/60 via-55% to-transparent';
+export const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-black/80 via-black/20 to-transparent';
 
 // Art wider than this (IGDB sometimes stores a logo strip or a banner, e.g. 1920x295) is no backdrop: it would be a black
 // band with nothing in it, so the hero moves on to the next candidate.
 export const MAX_BACKDROP_RATIO = 2.8;
 
-// A full-width cinematic header: the game's backdrop at its largest size behind a scrim, content on top.
+// A full-width cinematic header: the game's backdrop at its largest size behind a dark scrim, content on top.
 // `art` is { backdrop, cover } (or a URL). Candidates, in order: the backdrop, then the cover (blurred, so it reads as
 // colour); one that fails to load, or is too wide to be a backdrop, is skipped. With none left there is a gradient from
 // `seed`, never a flat box. The image is the likely largest paint of the page, so it loads eagerly with high priority.
@@ -35,7 +35,7 @@ export function BackdropHero({ art, seed = '', as: Tag = 'section', className, c
   return (
     <Tag
       data-hero={usable ? 'art' : 'gradient'}
-      className={cn('relative isolate overflow-hidden rounded-none border-y border-border bg-surface sm:rounded-card sm:border', className)}
+      className={cn('relative isolate overflow-hidden rounded-none border-y border-white/10 bg-[#111311] text-white sm:rounded-card sm:border', className)}
       {...rest}
     >
       <div

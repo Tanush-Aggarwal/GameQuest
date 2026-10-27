@@ -17,8 +17,9 @@
   position: relative;
   min-height: 20rem;
   border-radius: var(--radius-card) !important;
-  border: 1px solid var(--border) !important;
-  background-color: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: #111311 !important;
+  color: #ffffff !important;
 }
 
 .gq-game-hero {

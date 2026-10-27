@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
+import { getPublicStats } from '@/services/publicApi.js';
 
 const RING = { size: 68, stroke: 5 };
 
@@ -48,6 +49,7 @@ export function HomeHero({ username, dashboard, playNext }) {
 
 function HeroBody({ dashboard, playNext }) {
   const { preview, setBase, clearBase } = useAmbient();
+  const [stats, setStats] = useState(null);
   const resume = dashboard.data?.resumeCard ?? null;
   const first = playNext.data?.items?.[0] ?? null;
   const base = resume ?? first;
@@ -56,6 +58,18 @@ function HeroBody({ dashboard, playNext }) {
     setBase(base);
     return () => clearBase(base);
   }, [base, setBase, clearBase]);
+
+  useEffect(() => {
+    let active = true;
+    getPublicStats()
+      .then((data) => {
+        if (active) setStats(data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const loading = dashboard.status === 'loading' || (!resume && playNext.status === 'loading');
   if (loading) {
@@ -76,38 +90,38 @@ function HeroBody({ dashboard, playNext }) {
   const eyebrow = previewing ? 'Previewing' : isResume ? 'Continue playing' : 'Start with';
 
   return (
-    <div className="relative isolate overflow-hidden rounded-[14px] bg-[var(--bg)] min-h-[420px] lg:min-h-[460px] flex items-center">
-      {/* Background fantasy landscape artwork */}
+    <div className="relative isolate overflow-hidden rounded-[14px] bg-[#111311] border border-white/10 min-h-[420px] lg:min-h-[460px] flex items-center text-white shadow-2xl">
+      {/* Background artwork at full strength with dark left-side scrim */}
       <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
         <img
-          src="/assets/hero-fantasy.jpg"
+          src={game?.backdrop || '/assets/hero-fantasy.jpg'}
           alt=""
           className="absolute right-0 top-0 h-full w-full lg:w-[70%] object-cover object-right"
           loading="eager"
         />
-        {/* Smooth ivory fade from left to right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg)] via-[var(--bg)] via-35% to-transparent" />
-        {/* Bottom subtle blend into canvas */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--bg)] to-transparent" />
+        {/* Dark left-side gradient scrim behind text */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 via-55% to-transparent" />
+        {/* Subtle dark fade at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 to-transparent" />
       </div>
 
       {/* Hero content on left */}
       <div className="relative z-10 flex max-w-xl flex-col gap-5 px-6 py-10 sm:px-10 sm:py-12 lg:px-12">
         {/* Kicker */}
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)]">
+          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
             DISCOVER &middot; PLAY &middot; BELONG
           </span>
         </div>
 
         {/* Headline */}
-        <div className="font-heading text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-[var(--text)] sm:text-5xl lg:text-[3.5rem]">
+        <div className="font-heading text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
           GAMES ARE<br />
           BETTER <span className="italic text-[var(--accent)]">TOGETHER</span>
         </div>
 
         {/* Short description */}
-        <p className="max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
+        <p className="max-w-md text-sm leading-relaxed text-gray-200">
           Track your games, discover new worlds, connect with players and build your personal gaming universe.
         </p>
 
@@ -134,26 +148,32 @@ function HeroBody({ dashboard, playNext }) {
           {!game && (
             <Link
               to="/explore"
-              className="sr-only focus:not-sr-only inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] hover:text-text"
+              className="sr-only focus:not-sr-only inline-flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white"
             >
               Discover new games
             </Link>
           )}
         </div>
 
-        {/* Three compact statistic blocks */}
+        {/* Three compact statistic blocks from real public stats */}
         <div className="flex items-center gap-8 pt-3">
           <div>
-            <p className="text-xl font-bold tabular-nums text-[var(--text)]">10K+</p>
-            <p className="text-xs text-[var(--text-muted)]">Games Tracked</p>
+            <p className="text-xl font-bold tabular-nums text-white">
+              {stats?.games != null ? stats.games.toLocaleString() : '10K+'}
+            </p>
+            <p className="text-xs text-gray-400">Games Tracked</p>
           </div>
           <div>
-            <p className="text-xl font-bold tabular-nums text-[var(--text)]">25K+</p>
-            <p className="text-xs text-[var(--text-muted)]">Active Players</p>
+            <p className="text-xl font-bold tabular-nums text-white">
+              {stats?.players != null ? stats.players.toLocaleString() : '25K+'}
+            </p>
+            <p className="text-xs text-gray-400">Players</p>
           </div>
           <div>
-            <p className="text-xl font-bold tabular-nums text-[var(--text)]">100+</p>
-            <p className="text-xs text-[var(--text-muted)]">Game Communities</p>
+            <p className="text-xl font-bold tabular-nums text-white">
+              {stats?.collections != null ? stats.collections.toLocaleString() : '100+'}
+            </p>
+            <p className="text-xs text-gray-400">Public Collections</p>
           </div>
         </div>
 

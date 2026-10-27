@@ -88,7 +88,11 @@ function LinkForm({ onLinked }) {
   );
 }
 
-function SyncSection({ steam, onSynced }) {
+function LinkedAccount({ steam, onUnlinked, onSynced }) {
+  const [confirming, setConfirming] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [result, setResult] = useState(null);
   const [problem, setProblem] = useState('');
@@ -108,28 +112,115 @@ function SyncSection({ steam, onSynced }) {
     }
   }
 
+  async function unlink() {
+    setBusy(true);
+    try {
+      await unlinkSteam();
+      toast.success('Steam account unlinked');
+      onUnlinked();
+    } catch (err) {
+      toast.error(getErrorInfo(err).message);
+      setBusy(false);
+    }
+  }
+
+  const initial = (steam.personaName || 'S').charAt(0).toUpperCase();
   const last = steam.lastSync;
+  const isDefaultPlaceholder = !steam.avatar || steam.avatar.includes('fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb');
+  const showImage = Boolean(steam.avatar) && !isDefaultPlaceholder && !imgError;
+
   return (
-    <div className="flex flex-col gap-3 border-t border-border pt-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-text-muted">
-          {last ? (
-            <>
-              Last synced <time dateTime={new Date(last.at).toISOString()}>{formatDateTime(last.at)}</time>
-              {' · '}
-              <span className="tabular-nums">
-                {last.added} added, {last.updated} updated, {last.unmatchedCount} not matched
-              </span>
-            </>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3.5 min-w-0">
+          {showImage ? (
+            <img
+              src={steam.avatar}
+              alt=""
+              onError={() => setImgError(true)}
+              className="h-14 w-14 rounded-full border border-border object-cover shrink-0"
+              loading="lazy"
+            />
           ) : (
-            'Not synced yet.'
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border bg-[#16181D] font-heading text-lg font-bold text-white shadow-inner">
+              {initial}
+            </span>
           )}
-        </p>
-        <Button onClick={sync} disabled={syncing} aria-busy={syncing}>
-          <RefreshCw className={`h-4 w-4 ${syncing ? 'motion-safe:animate-spin' : ''}`} aria-hidden="true" />
-          {syncing ? 'Syncing…' : 'Sync now'}
-        </Button>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate font-semibold">{steam.personaName || 'Steam account'}</p>
+              {steam.profileUrl && (
+                <a
+                  href={steam.profileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-accent underline underline-offset-2"
+                >
+                  View on Steam <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                </a>
+              )}
+            </div>
+            <p className="text-xs text-text-muted tabular-nums">
+              SteamID64 {steam.steamId} · {VISIBILITY_LABEL[steam.visibility] ?? VISIBILITY_LABEL.private}
+            </p>
+            {/* Last synced on its own line under the name */}
+            <p className="mt-1 text-xs text-text-muted">
+              {last ? (
+                <>
+                  Last synced <time dateTime={new Date(last.at).toISOString()}>{formatDateTime(last.at)}</time>
+                  {' · '}
+                  <span className="tabular-nums">
+                    {last.added} added, {last.updated} updated, {last.unmatchedCount} not matched
+                  </span>
+                </>
+              ) : (
+                'Not synced yet.'
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Sync now / Unlink side by side */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <Button onClick={sync} disabled={syncing} aria-busy={syncing} className="gap-1.5 h-9 text-xs">
+            <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'motion-safe:animate-spin' : ''}`} aria-hidden="true" />
+            {syncing ? 'Syncing…' : 'Sync now'}
+          </Button>
+
+          {confirming ? (
+            <div role="group" aria-label="Confirm unlink" className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-text-muted">Your games stay in your library.</span>
+              <Button variant="secondary" onClick={unlink} disabled={busy} className="h-9 text-xs">
+                {busy ? 'Unlinking…' : 'Yes, unlink'}
+              </Button>
+              <Button
+                variant="ghost"
+                autoFocus
+                onClick={() => {
+                  setConfirming(false);
+                  setCancelled(true);
+                }}
+                disabled={busy}
+                className="h-9 text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button variant="secondary" autoFocus={cancelled} onClick={() => setConfirming(true)} className="gap-1.5 h-9 text-xs">
+              <Unlink className="h-3.5 w-3.5" aria-hidden="true" />
+              Unlink
+            </Button>
+          )}
+        </div>
       </div>
+
+      {steam.visibility !== 'public' && (
+        <p role="status" className="text-xs text-text-muted">
+          Your Steam profile is not public, so your games may not be readable.
+        </p>
+      )}
+
       {syncing && (
         <p role="status" className="text-xs text-text-muted">
           Reading your Steam library and achievements. A big library can take a few minutes; you can leave this page open.
@@ -168,85 +259,7 @@ function SyncSection({ steam, onSynced }) {
           )}
         </div>
       )}
-    </div>
-  );
-}
 
-function LinkedAccount({ steam, onUnlinked, onSynced }) {
-  const [confirming, setConfirming] = useState(false);
-  const [cancelled, setCancelled] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  async function unlink() {
-    setBusy(true);
-    try {
-      await unlinkSteam();
-      toast.success('Steam account unlinked');
-      onUnlinked();
-    } catch (err) {
-      toast.error(getErrorInfo(err).message);
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-4">
-        {steam.avatar ? (
-          <img src={steam.avatar} alt="" className="h-14 w-14 rounded-control border border-border object-cover" loading="lazy" />
-        ) : (
-          <span className="flex h-14 w-14 items-center justify-center rounded-control border border-border bg-surface-raised">
-            <Gamepad2 className="h-6 w-6 text-text-muted" aria-hidden="true" />
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{steam.personaName || 'Steam account'}</p>
-          <p className="text-xs text-text-muted tabular-nums">
-            SteamID64 {steam.steamId} · {VISIBILITY_LABEL[steam.visibility] ?? VISIBILITY_LABEL.private}
-          </p>
-          {steam.profileUrl && (
-            <a
-              href={steam.profileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-accent underline underline-offset-2"
-            >
-              View on Steam <ExternalLink className="h-3 w-3" aria-hidden="true" />
-            </a>
-          )}
-        </div>
-        {confirming ? (
-          <div role="group" aria-label="Confirm unlink" className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-text-muted">Your games stay in your library.</span>
-            <Button variant="secondary" onClick={unlink} disabled={busy}>
-              {busy ? 'Unlinking…' : 'Yes, unlink'}
-            </Button>
-            {/* The safe choice takes focus, so the dialog-less confirm doesn't drop keyboard users */}
-            <Button
-              variant="ghost"
-              autoFocus
-              onClick={() => {
-                setConfirming(false);
-                setCancelled(true);
-              }}
-              disabled={busy}
-            >
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button variant="secondary" autoFocus={cancelled} onClick={() => setConfirming(true)}>
-            <Unlink className="h-4 w-4" aria-hidden="true" />
-            Unlink
-          </Button>
-        )}
-      </div>
-      {steam.visibility !== 'public' && (
-        <p role="status" className="text-xs text-text-muted">
-          Your Steam profile is not public, so your games may not be readable.
-        </p>
-      )}
-      <SyncSection steam={steam} onSynced={onSynced} />
       <PrivacyNote />
     </div>
   );
@@ -259,7 +272,7 @@ export function SteamLinkCard() {
 
   if (status === 'loading') {
     return (
-      <div role="status" aria-label="Loading Steam link" className="max-w-2xl">
+      <div role="status" aria-label="Loading Steam link" className="w-full">
         <Skeleton className="h-40 w-full" />
       </div>
     );
@@ -267,7 +280,7 @@ export function SteamLinkCard() {
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4 rounded-card border border-border/60 bg-bg/70 p-5">
+    <div className="flex w-full flex-col gap-4 rounded-card border border-border/60 bg-bg/70 p-5">
       {steam.linked ? (
         <LinkedAccount
           steam={steam}

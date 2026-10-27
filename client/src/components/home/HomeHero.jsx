@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { getPublicStats } from '@/services/publicApi.js';
+import { getFeaturedGames } from '@/services/gamesApi.js';
+
+const SLIDE_MS = 7000;
+const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const RING = { size: 68, stroke: 5 };
 
@@ -50,6 +54,9 @@ export function HomeHero({ username, dashboard, playNext }) {
 function HeroBody({ dashboard, playNext }) {
   const { preview, setBase, clearBase } = useAmbient();
   const [stats, setStats] = useState(null);
+  const [slides, setSlides] = useState([]);
+  const [slide, setSlide] = useState(0);
+  const [paused, setPaused] = useState(false);
   const resume = dashboard.data?.resumeCard ?? null;
   const first = playNext.data?.items?.[0] ?? null;
   const base = resume ?? first;
@@ -71,6 +78,25 @@ function HeroBody({ dashboard, playNext }) {
     };
   }, []);
 
+  // Hero artwork: the real featured games (released, popular, with wide art), rotating like a console dashboard.
+  useEffect(() => {
+    let active = true;
+    getFeaturedGames({ limit: 5 })
+      .then((data) => {
+        if (active) setSlides((data?.items ?? []).filter((g) => g.backdrop));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (slides.length < 2 || paused || prefersReducedMotion()) return undefined;
+    const id = setInterval(() => setSlide((i) => (i + 1) % slides.length), SLIDE_MS);
+    return () => clearInterval(id);
+  }, [slides.length, paused]);
+
   const loading = dashboard.status === 'loading' || (!resume && playNext.status === 'loading');
   if (loading) {
     return (
@@ -90,15 +116,26 @@ function HeroBody({ dashboard, playNext }) {
   const eyebrow = previewing ? 'Previewing' : isResume ? 'Continue playing' : 'Start with';
 
   return (
-    <div className="relative isolate overflow-hidden rounded-[14px] bg-[#111311] border border-white/10 min-h-[420px] lg:min-h-[460px] flex items-center text-white shadow-2xl">
+    <div
+      className="relative isolate overflow-hidden rounded-[14px] bg-[#111311] border border-white/10 min-h-[420px] lg:min-h-[460px] flex items-center text-white shadow-2xl"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       {/* Background artwork at full strength with dark left-side scrim */}
       <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-        <img
-          src={game?.backdrop || '/assets/hero-fantasy.jpg'}
-          alt=""
-          className="absolute right-0 top-0 h-full w-full lg:w-[70%] object-cover object-right"
-          loading="eager"
-        />
+        {slides.length > 0
+          ? slides.map((g, i) => (
+              <img
+                key={g.id}
+                src={g.backdrop}
+                alt=""
+                className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 motion-reduce:transition-none ${i === slide ? 'opacity-100' : 'opacity-0'}`}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
+            ))
+          : <img src={game?.backdrop || '/assets/hero-fantasy.jpg'} alt="" className="absolute inset-0 h-full w-full object-cover object-center" loading="eager" />}
         {/* Dark left-side gradient scrim behind text */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 via-55% to-transparent" />
         {/* Subtle dark fade at bottom */}
@@ -159,19 +196,19 @@ function HeroBody({ dashboard, playNext }) {
         <div className="flex items-center gap-8 pt-3">
           <div>
             <p className="text-xl font-bold tabular-nums text-white">
-              {stats?.games != null ? stats.games.toLocaleString() : '10K+'}
+              {stats?.games != null ? stats.games.toLocaleString() : '—'}
             </p>
             <p className="text-xs text-gray-400">Games Tracked</p>
           </div>
           <div>
             <p className="text-xl font-bold tabular-nums text-white">
-              {stats?.players != null ? stats.players.toLocaleString() : '25K+'}
+              {stats?.players != null ? stats.players.toLocaleString() : '—'}
             </p>
             <p className="text-xs text-gray-400">Players</p>
           </div>
           <div>
             <p className="text-xl font-bold tabular-nums text-white">
-              {stats?.collections != null ? stats.collections.toLocaleString() : '100+'}
+              {stats?.collections != null ? stats.collections.toLocaleString() : '—'}
             </p>
             <p className="text-xs text-gray-400">Public Collections</p>
           </div>
@@ -200,12 +237,30 @@ function HeroBody({ dashboard, playNext }) {
         )}
       </div>
 
-      {/* Carousel dots indicator at bottom center */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10" aria-hidden="true">
-        <span className="h-1.5 w-6 rounded-full bg-white/70 shadow-xs" />
-        <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
-        <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
-      </div>
+      {/* Featured game label + working carousel dots */}
+      {slides[slide] && (
+        <Link
+          to={`/games/${slides[slide].slug}`}
+          className="absolute bottom-5 right-6 z-10 hidden max-w-[40%] truncate rounded-full bg-black/55 px-4 py-1.5 text-xs font-semibold text-white hover:bg-black/75 sm:block"
+        >
+          Featured: {slides[slide].title}
+          {slides[slide].rating != null && <span className="ml-2 text-[#F5A524]">★ {slides[slide].rating.toFixed(1)}</span>}
+        </Link>
+      )}
+      {slides.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
+          {slides.map((g, i) => (
+            <button
+              key={g.id}
+              type="button"
+              aria-label={`Show ${g.title}`}
+              aria-current={i === slide}
+              onClick={() => setSlide(i)}
+              className={`h-1.5 rounded-full transition-all ${i === slide ? 'w-6 bg-white/90' : 'w-1.5 bg-white/40 hover:bg-white/70'}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

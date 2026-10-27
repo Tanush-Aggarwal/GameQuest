@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 const VelocityChart = lazy(() => import('@/components/home/VelocityChart.jsx'));
 import { Link } from 'react-router-dom';
 import {
@@ -225,6 +225,28 @@ function TrendingCard({ game }) {
 
 // ── Right-Side Adventure & Community Panels ──────────────────────────────────
 
+function WideArt({ sources }) {
+  const list = [...new Set(sources.filter(Boolean))];
+  const [i, setI] = useState(0);
+  const src = list[i];
+  return (
+    <div className="absolute inset-0 -z-0" aria-hidden="true">
+      {src && (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-center"
+          loading="lazy"
+          onError={() => setI((n) => n + 1)}
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#161816]/95 via-[#161816]/75 via-50% to-[#161816]/10" />
+      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#161816]/80 to-transparent" />
+    </div>
+  );
+}
+
 function AdventureCard() {
   const loadAdventure = useCallback((signal) => getNextAdventure({ signal }), []);
   const { status, data, retry } = useAsync(loadAdventure);
@@ -250,25 +272,14 @@ function AdventureCard() {
     ? pick.reasons.slice(0, 3)
     : (game.genres?.length ? game.genres.slice(0, 3) : ['RPG', 'Adventure']);
   const summary = game.summary || game.storyline || 'Explore a vast world of wonders and uncover its hidden secrets.';
-  const artwork = game.heroImage || game.backdrop || game.cover;
   const isLibrary = pick.source === 'library';
   const ctaLink = isLibrary && pick.entryId ? `/library/${pick.entryId}` : `/games/${game.slug}`;
   const ctaText = isLibrary ? 'Continue in Library' : 'Add to Library';
 
   return (
     <div className="relative flex flex-col justify-between overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[200px] border border-white/10 shadow-xl">
-      {/* Background artwork on the right */}
-      <div className="absolute inset-0 -z-0">
-        {artwork && (
-          <img
-            src={artwork}
-            alt=""
-            className="absolute right-0 top-0 h-full w-[55%] object-cover object-right"
-            loading="lazy"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#161816] via-[#161816]/90 via-55% to-transparent" />
-      </div>
+      {/* Horizontal art across the whole card: first screenshot, then backdrop/artworks; skips any that fail */}
+      <WideArt sources={[game.screenshots?.[0], game.backdrop, ...(game.artworks ?? []), ...(game.screenshots ?? []).slice(1)]} />
 
       <div className="relative z-10 flex flex-col gap-2.5 max-w-[210px]">
         <div className="flex items-center gap-2">

@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PROFILE_PRIVACY, deleteAccountSchema } from '@gamequest/shared';
-import { deleteAccount } from '@/services/accountApi.js';
-import { Button, buttonVariants } from '@/components/ui/button.jsx';
+import { deleteAccount, getAccountSummary } from '@/services/accountApi.js';
+import { Button } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { FavouriteTiles, SLOT_COUNT } from '@/components/profile/FavouriteTiles.jsx';
@@ -43,8 +43,6 @@ const AVATAR_PRESETS = [
   { label: 'Mystic', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80' },
 ];
 
-// `profile` is the page's one profile (status, data, error, retry, update): the banner, the editor and the privacy
-// setting all read it, and a save updates it in place, so nothing reloads, remounts or loses focus.
 function EditProfileSection({ profile }) {
   const { status, data, error, retry, update } = profile;
 
@@ -56,6 +54,7 @@ function EditProfileSection({ profile }) {
 
 function ProfileEditor({ initialProfile, onSaved }) {
   const [avatar, setAvatar] = useState(initialProfile?.avatar ?? '');
+  const [showCustomUrl, setShowCustomUrl] = useState(() => Boolean(initialProfile?.avatar && !AVATAR_PRESETS.some((p) => p.url === initialProfile.avatar)));
   const [bio, setBio] = useState(initialProfile?.bio ?? '');
   // Four slots, each a game or empty. Saving keeps their order and drops the empty ones.
   const [slots, setSlots] = useState(() => Array.from({ length: SLOT_COUNT }, (_, i) => initialProfile?.favouriteGames?.[i] ?? null));
@@ -65,8 +64,6 @@ function ProfileEditor({ initialProfile, onSaved }) {
   const chosenIds = new Set(slots.filter(Boolean).map((g) => g.id));
   const filled = slots.filter(Boolean).length;
 
-  // Keyboard focus: whenever a tile's button is replaced (picker closed, game picked, game removed) the focused
-  // element disappears, so remember which slot's button should take focus and give it focus after the render.
   const tilesRef = useRef(null);
   const focusSlot = useRef(null);
   useEffect(() => {
@@ -76,13 +73,13 @@ function ProfileEditor({ initialProfile, onSaved }) {
     button?.focus();
   });
 
-  // Unsaved edits: a hint next to Save, and the browser's own "leave this page?" prompt.
   const saved = initialProfile ?? {};
   const savedIds = (saved.favouriteGames ?? []).slice(0, SLOT_COUNT).map((g) => g.id).join(',');
   const dirty =
     bio.trim() !== (saved.bio ?? '') ||
     (avatar.trim() || null) !== (saved.avatar ?? null) ||
     slots.filter(Boolean).map((g) => g.id).join(',') !== savedIds;
+
   useEffect(() => {
     if (!dirty) return undefined;
     const warn = (e) => {
@@ -98,22 +95,29 @@ function ProfileEditor({ initialProfile, onSaved }) {
   }
 
   function closePicker() {
-    focusSlot.current = openSlot; // back to the tile that opened it
+    focusSlot.current = openSlot;
     setOpenSlot(null);
   }
 
   function chooseFavourite(game) {
     setSlots((current) => current.map((g, i) => (i === openSlot ? game : g)));
     setAnnouncement(`Added ${game.title} to favourite ${openSlot + 1}`);
-    focusSlot.current = openSlot; // that tile is now filled: focus its remove button
+    focusSlot.current = openSlot;
     setOpenSlot(null);
   }
 
   function removeFavourite(index) {
     setAnnouncement(`Removed ${slots[index]?.title ?? 'game'} from favourites`);
     setSlots((current) => current.map((g, i) => (i === index ? null : g)));
-    focusSlot.current = index; // the slot is empty now: focus its add button
+    focusSlot.current = index;
   }
+
+  function handleDiscard() {
+    setAvatar(initialProfile?.avatar ?? '');
+    setBio(initialProfile?.bio ?? '');
+    setSlots(Array.from({ length: SLOT_COUNT }, (_, i) => initialProfile?.favouriteGames?.[i] ?? null));
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
@@ -134,49 +138,65 @@ function ProfileEditor({ initialProfile, onSaved }) {
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 rounded-card border border-border/60 bg-bg/70 p-5">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {/* Avatar Settings */}
         <div>
-          <label htmlFor="avatar-input" className="text-sm font-semibold mb-1 block">Avatar</label>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-accent/40 bg-surface-raised flex-shrink-0 flex items-center justify-center">
-              {avatar ? (
-                <img src={avatar} alt="Avatar preview" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              ) : (
-                <User className="h-8 w-8 text-text-muted" />
-              )}
-            </div>
-            <div className="flex-1 w-full space-y-2">
-              <input
-                id="avatar-input"
-                type="url"
-                value={avatar}
-                onChange={(e) => setAvatar(e.target.value)}
-                placeholder="https://example.com/avatar.jpg"
-                className="w-full min-h-11 rounded-control border border-border bg-bg px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-              />
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-text-muted mr-1">Presets:</span>
-                {AVATAR_PRESETS.map((p) => (
+          <label htmlFor="avatar-input" className="text-sm font-semibold mb-2 block">Avatar</label>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Preset avatar circles */}
+              {AVATAR_PRESETS.map((p) => {
+                const isSelected = avatar === p.url;
+                return (
                   <button
                     key={p.label}
                     type="button"
                     onClick={() => setAvatar(p.url)}
-                    className="min-h-11 rounded-full border border-border bg-surface-raised px-3 text-xs text-text-muted transition-colors hover:border-accent hover:text-text"
+                    aria-label={`Select ${p.label} avatar`}
+                    title={p.label}
+                    className={`group relative h-12 w-12 rounded-full overflow-hidden border-2 transition-all ${
+                      isSelected
+                        ? 'border-[#C8F135] ring-2 ring-[#C8F135]/40 scale-105'
+                        : 'border-border/60 hover:border-text-muted opacity-80 hover:opacity-100'
+                    }`}
                   >
-                    {p.label}
+                    <img src={p.url} alt={p.label} className="h-full w-full object-cover" />
                   </button>
-                ))}
-                {avatar && (
-                  <button
-                    type="button"
-                    onClick={() => setAvatar('')}
-                    className="min-h-11 rounded-full px-3 text-xs text-text-muted hover:text-text"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
+                );
+              })}
+
+              {avatar && (
+                <button
+                  type="button"
+                  onClick={() => setAvatar('')}
+                  className="rounded-full border border-border px-3 py-1 text-xs text-text-muted hover:text-text hover:bg-surface-raised transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowCustomUrl((s) => !s)}
+                className="text-xs font-semibold text-accent-text hover:underline inline-flex items-center gap-1"
+              >
+                {showCustomUrl ? 'Hide image URL field' : 'Use an image URL'}
+              </button>
+
+              {showCustomUrl && (
+                <div className="mt-2 flex flex-col gap-1.5 animate-in fade-in duration-200">
+                  <input
+                    id="avatar-input"
+                    type="url"
+                    value={avatar}
+                    onChange={(e) => setAvatar(e.target.value)}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="w-full min-h-11 rounded-control border border-border bg-bg px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -198,7 +218,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
           />
         </div>
 
-        {/* Favourite 4: compact cover-sized tiles, a picker opens for the slot you click */}
+        {/* Favourite 4: compact cover-sized tiles */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -221,17 +241,34 @@ function ProfileEditor({ initialProfile, onSaved }) {
           )}
         </div>
       </div>
-      <div className="flex items-center justify-end gap-3 border-t border-border pt-2">
-        {dirty && (
-          <span role="status" className="text-xs text-text-muted">
+
+      {/* Sticky Save Bar: appears only when something has changed */}
+      {dirty && (
+        <div className="sticky bottom-3 z-20 mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-[#16181D]/95 px-4 py-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <span role="status" className="flex items-center gap-2 text-xs font-semibold text-white">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
             Unsaved changes
           </span>
-        )}
-        <Button type="submit" disabled={saving}>
-          <Save className="h-4 w-4" aria-hidden="true" />
-          {saving ? 'Saving...' : 'Save Profile'}
-        </Button>
-      </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleDiscard}
+              className="text-xs text-text-muted hover:text-white"
+            >
+              Discard
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-110 text-xs font-bold"
+            >
+              <Save className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+              {saving ? 'Saving...' : 'Save Profile'}
+            </Button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
@@ -251,22 +288,22 @@ function PrivacySetting({ profile }) {
       toast.error(getErrorInfo(err).message);
     }
   }
-  if (status === 'loading') return <Skeleton className="h-16 w-full max-w-md" role="status" aria-label="Loading privacy" />;
+  if (status === 'loading') return <Skeleton className="h-16 w-full" role="status" aria-label="Loading privacy" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
   return (
-    <div className="flex max-w-md flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium">Who can see my profile</label>
+    <div className="flex w-full flex-col gap-1.5 rounded-card border border-border/60 bg-bg/70 p-5">
+      <label htmlFor={id} className="text-sm font-semibold text-text">Who can see my profile</label>
       <select
         id={id}
         value={current.user.privacy}
         onChange={(e) => change(e.target.value)}
-        className="min-h-11 rounded-control border border-border bg-surface px-3 text-sm text-text focus:outline-none focus:ring-1 focus:ring-accent"
+        className="min-h-11 w-full rounded-control border border-border bg-surface px-3 text-sm text-text focus:outline-none focus:ring-1 focus:ring-accent"
       >
         {PROFILE_PRIVACY.map((p) => (
           <option key={p} value={p}>{PRIVACY_LABELS[p]}</option>
         ))}
       </select>
-      <p className="text-xs text-text-muted">Games you hide from friends stay hidden at every level.</p>
+      <p className="text-xs text-text-muted mt-1">Games you hide from friends stay hidden at every level.</p>
     </div>
   );
 }
@@ -288,20 +325,28 @@ function BlockedPlayers() {
     }
   }
 
-  if (status === 'loading') return <Skeleton className="h-16 w-full max-w-md" role="status" aria-label="Loading blocked players" />;
+  if (status === 'loading') return <Skeleton className="h-16 w-full" role="status" aria-label="Loading blocked players" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
-  if (blocked.length === 0) return <p className="text-sm text-text-muted">You haven’t blocked anyone.</p>;
+  if (blocked.length === 0) {
+    return (
+      <div className="rounded-card border border-border/60 bg-bg/70 p-5">
+        <p className="text-sm text-text-muted">You haven’t blocked anyone.</p>
+      </div>
+    );
+  }
   return (
-    <ul className="flex max-w-md flex-col gap-2">
-      {blocked.map((u) => (
-        <li key={u.id} className="flex items-center justify-between gap-3 rounded-card border border-border bg-surface p-3">
-          <span className="font-medium text-sm">{u.username}</span>
-          <Button variant="secondary" onClick={() => unblock(u)} aria-label={`Unblock ${u.username}`}>
-            <ShieldOff className="h-4 w-4" aria-hidden="true" /> Unblock
-          </Button>
-        </li>
-      ))}
-    </ul>
+    <div className="rounded-card border border-border/60 bg-bg/70 p-5">
+      <ul className="flex w-full flex-col gap-2">
+        {blocked.map((u) => (
+          <li key={u.id} className="flex items-center justify-between gap-3 rounded-card border border-border bg-surface p-3">
+            <span className="font-medium text-sm">{u.username}</span>
+            <Button variant="secondary" onClick={() => unblock(u)} aria-label={`Unblock ${u.username}`}>
+              <ShieldOff className="h-4 w-4" aria-hidden="true" /> Unblock
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -337,24 +382,20 @@ function DeleteAccountSection({ username }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-card border border-danger/30 bg-danger/5 p-5">
-      <div>
-        <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-danger">
-          Danger Zone
-        </h3>
-        <p className="mt-1 text-xs text-text-muted">
-          Permanently delete your account, game library, reviews, collections, and activity. This action is irreversible.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-3 rounded-card border border-danger/20 bg-danger/5 p-4">
       {!open ? (
-        <Button
-          variant="secondary"
-          onClick={() => setOpen(true)}
-          className="w-fit border-danger/40 text-danger hover:bg-danger/10"
-        >
-          Delete account…
-        </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-xs text-text-muted leading-relaxed">
+            Permanently delete your account and all game data. This cannot be undone.
+          </p>
+          <Button
+            variant="secondary"
+            onClick={() => setOpen(true)}
+            className="w-fit shrink-0 border-danger/40 text-danger hover:bg-danger/10 text-xs h-9"
+          >
+            Delete account…
+          </Button>
+        </div>
       ) : (
         <form onSubmit={handleDelete} className="flex flex-col gap-3 rounded-control border border-danger/40 bg-surface p-4">
           <p className="text-xs text-text">
@@ -378,7 +419,7 @@ function DeleteAccountSection({ username }) {
             <Button
               type="submit"
               disabled={loading || confirmInput.trim() !== username}
-              className="bg-danger text-white hover:bg-danger/90 disabled:opacity-50"
+              className="bg-danger text-white hover:bg-danger/90 disabled:opacity-50 text-xs"
             >
               {loading ? 'Deleting…' : 'Permanently delete account'}
             </Button>
@@ -391,6 +432,7 @@ function DeleteAccountSection({ username }) {
                 setConfirmInput('');
                 setError('');
               }}
+              className="text-xs"
             >
               Cancel
             </Button>
@@ -401,13 +443,123 @@ function DeleteAccountSection({ username }) {
   );
 }
 
-// One settings section: a heading on game art, with the section's content inside.
 function SettingsSection({ id, title, seed, children }) {
   return (
     <ArtPanel aria-labelledby={id} seed={seed} className="flex flex-col gap-3 p-5">
-      <h2 id={id} className="text-lg font-semibold font-heading">{title}</h2>
+      <h2 id={id} className="text-lg font-semibold font-heading text-text">{title}</h2>
       {children}
     </ArtPanel>
+  );
+}
+
+function ProfileHeaderBanner({ user, banner, profileData }) {
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    getAccountSummary()
+      .then((res) => {
+        if (active) setSummary(res);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const username = user?.username;
+  const avatarUrl = profileData?.user?.avatar || user?.avatar;
+  const level = summary?.level ?? 1;
+  const xp = summary?.xp ?? 0;
+  const startXp = summary?.levelStartXp ?? 0;
+  const nextXp = summary?.nextLevelXp ?? 100;
+  const range = Math.max(1, nextXp - startXp);
+  const xpPct = Math.min(100, Math.max(0, Math.round(((xp - startXp) / range) * 100)));
+
+  return (
+    <BackdropHero
+      as="header"
+      art={banner}
+      seed="profile"
+      className="relative isolate overflow-hidden rounded-[14px] border border-white/10 bg-[#111311] p-6 text-white shadow-xl sm:p-8"
+    >
+      {/* Dark left scrim for maximum text contrast */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-black/90 via-black/75 via-60% to-transparent"
+      />
+
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Profile &amp; Settings
+            </h1>
+            <p className="mt-1 text-xs text-[#9AA3B2]">
+              Customize your public gamer identity and privacy settings
+            </p>
+          </div>
+          {user && (
+            <Link
+              to={`/u/${user.username}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/25 hover:border-white/30"
+            >
+              View my public profile <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          {/* Avatar (large, 88px, ring) */}
+          <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full bg-[#16181D] ring-2 ring-white/20 shadow-xl">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center font-heading text-3xl font-bold text-[var(--accent-fg)] bg-[var(--accent)]">
+                {username?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <h2 className="font-heading text-xl font-bold text-white sm:text-2xl truncate">
+              {username}
+            </h2>
+
+            {/* Level + thin XP progress bar */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-[var(--accent)] whitespace-nowrap">
+                Level {level}
+              </span>
+              <div
+                className="h-1.5 w-28 sm:w-36 rounded-full bg-white/20 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={xpPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Level XP progress"
+              >
+                <div
+                  className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
+                  style={{ width: `${xpPct}%` }}
+                />
+              </div>
+              <span className="text-[11px] tabular-nums text-[#9AA3B2] whitespace-nowrap">
+                {xp} / {nextXp} XP
+              </span>
+            </div>
+
+            {/* Member since */}
+            <p className="text-xs text-[#9AA3B2]">
+              Member since{' '}
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+                : '—'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </BackdropHero>
   );
 }
 
@@ -419,71 +571,64 @@ export default function Profile() {
   const [data, update] = useLayered(loaded.data);
   const profile = { status: loaded.status, data, error: loaded.error, retry: loaded.retry, update };
   const banner = data?.user?.favouriteGames?.[0]; // the first favourite game's art is the banner
+
   return (
     <section className="flex flex-col gap-6 pb-12">
-      <BackdropHero as="header" art={banner} seed="profile" className="px-5 py-8 sm:px-8 sm:py-10">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="font-heading text-2xl font-bold sm:text-4xl">Profile &amp; Settings</h1>
-            <p className="mt-1 text-sm text-text-muted">Customize your public gamer identity and privacy settings</p>
-          </div>
+      <ProfileHeaderBanner user={user} banner={banner} profileData={data} />
+
+      {/* Two-column layout on desktop (>=1024px) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)] lg:items-start">
+        {/* Left column (wider): Gamer identity & Steam */}
+        <div className="flex flex-col gap-6 min-w-0">
           {user && (
-            <Link to={`/u/${user.username}`} className={buttonVariants({ variant: 'secondary' })}>
-              View my public profile <ExternalLink className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+            <SettingsSection id="edit-profile-title" title="Gamer Identity" seed="profile-identity">
+              <EditProfileSection profile={profile} />
+            </SettingsSection>
+          )}
+
+          <SettingsSection id="steam-title" title="Steam" seed="profile-steam">
+            <SteamLinkCard />
+          </SettingsSection>
+        </div>
+
+        {/* Right column (narrower, sticky): Account information, Privacy, Blocked players, Delete account */}
+        <div className="flex flex-col gap-6 min-w-0 lg:sticky lg:top-20">
+          <SettingsSection id="account-title" title="Account Information" seed="profile-account">
+            <dl className="grid w-full gap-4 rounded-card border border-border/60 bg-bg/70 p-5 text-sm">
+              <div>
+                <dt className="text-xs font-medium text-text-muted">Username</dt>
+                <dd className="font-normal text-text mt-0.5">{user?.username}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-text-muted">Email</dt>
+                <dd className="font-normal text-text mt-0.5">{user?.email}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-text-muted">Member since</dt>
+                <dd className="font-normal text-text mt-0.5">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : '—'}
+                </dd>
+              </div>
+            </dl>
+          </SettingsSection>
+
+          {user && (
+            <SettingsSection id="privacy-title" title="Privacy" seed="profile-privacy">
+              <PrivacySetting profile={profile} />
+            </SettingsSection>
+          )}
+
+          <SettingsSection id="blocked-title" title="Blocked Players" seed="profile-blocked">
+            <BlockedPlayers />
+          </SettingsSection>
+
+          {user && (
+            <SettingsSection id="danger-title" title="Delete Account" seed="profile-danger">
+              <DeleteAccountSection username={user.username} />
+            </SettingsSection>
           )}
         </div>
-      </BackdropHero>
-      {/* Profile Details & Favourite Showcase Editor */}
-      {user && (
-        <SettingsSection id="edit-profile-title" title="Gamer Identity" seed="profile-identity">
-          <EditProfileSection profile={profile} />
-        </SettingsSection>
-      )}
-
-      {/* Account Info */}
-      <SettingsSection id="account-title" title="Account Information" seed="profile-account">
-        <dl className="grid max-w-md gap-4 rounded-card border border-border/60 bg-bg/70 p-5 text-sm">
-          <div>
-            <dt className="text-xs text-text-muted uppercase tracking-wider">Username</dt>
-            <dd className="font-medium mt-0.5">{user?.username}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-text-muted uppercase tracking-wider">Email</dt>
-            <dd className="font-medium mt-0.5">{user?.email}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-text-muted uppercase tracking-wider">Member Since</dt>
-            <dd className="font-medium mt-0.5">
-              {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : '—'}
-            </dd>
-          </div>
-        </dl>
-      </SettingsSection>
-
-      {/* Connected platforms */}
-      <SettingsSection id="steam-title" title="Steam" seed="profile-steam">
-        <SteamLinkCard />
-      </SettingsSection>
-
-      {/* Privacy Settings */}
-      {user && (
-        <SettingsSection id="privacy-title" title="Privacy" seed="profile-privacy">
-          <PrivacySetting profile={profile} />
-        </SettingsSection>
-      )}
-
-      {/* Blocked Players */}
-      <SettingsSection id="blocked-title" title="Blocked Players" seed="profile-blocked">
-        <BlockedPlayers />
-      </SettingsSection>
-
-      {/* Danger Zone: Delete Account */}
-      {user && (
-        <SettingsSection id="danger-title" title="Delete Account" seed="profile-danger">
-          <DeleteAccountSection username={user.username} />
-        </SettingsSection>
-      )}
+      </div>
     </section>
   );
 }

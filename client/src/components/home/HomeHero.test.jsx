@@ -78,18 +78,9 @@ describe('HomeHero', () => {
     expect(screen.getByRole('link', { name: /discover new games/i })).toBeInTheDocument();
   });
 
-  it('opens and closes the trailer modal for the featured game when Watch Trailer is clicked', async () => {
-    const user = userEvent.setup();
+  it('does not render a watch trailer button on the hero', () => {
     renderHero({ dashboard: ok({ resumeCard: resume }), playNext: ok({ items: [nextItem] }) });
-    const trailerBtn = screen.getByRole('button', { name: /watch trailer for hades/i });
-    expect(trailerBtn).toBeInTheDocument();
-
-    await user.click(trailerBtn);
-    expect(await screen.findByRole('dialog', { name: /hades trailer/i })).toBeInTheDocument();
-
-    const closeBtn = screen.getByRole('button', { name: /close trailer/i });
-    await user.click(closeBtn);
-    expect(screen.queryByRole('dialog', { name: /hades trailer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /watch trailer/i })).not.toBeInTheDocument();
   });
 });
 

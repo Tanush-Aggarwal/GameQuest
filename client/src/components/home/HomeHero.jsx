@@ -1,16 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Compass, Play, Trophy } from 'lucide-react';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
-import { TrailerModal } from '@/components/games/TrailerModal.jsx';
-
-function getGameSlug(game) {
-  if (!game) return '';
-  if (game.slug) return game.slug;
-  const title = (game.title || '').trim().toLowerCase();
-  return title.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
 
 const RING = { size: 68, stroke: 5 };
 
@@ -57,8 +48,6 @@ export function HomeHero({ username, dashboard, playNext }) {
 
 function HeroBody({ dashboard, playNext }) {
   const { preview, setBase, clearBase } = useAmbient();
-  const [trailerOpen, setTrailerOpen] = useState(false);
-  const triggerBtnRef = useRef(null);
   const resume = dashboard.data?.resumeCard ?? null;
   const first = playNext.data?.items?.[0] ?? null;
   const base = resume ?? first;
@@ -78,7 +67,6 @@ function HeroBody({ dashboard, playNext }) {
   }
 
   const game = preview ?? base;
-  const featuredSlug = getGameSlug(game);
   const previewing = Boolean(preview) && preview.entryId !== base.entryId;
   const isResume = !previewing && Boolean(resume);
   const progress = game?.manualProgress ?? 0;
@@ -143,26 +131,11 @@ function HeroBody({ dashboard, playNext }) {
             <span aria-hidden="true">&rarr;</span>
           </Link>
 
-          {game ? (
-            <button
-              ref={triggerBtnRef}
-              type="button"
-              tabIndex={-1}
-              onClick={() => setTrailerOpen(true)}
-              aria-label={`Watch trailer for ${game.title}`}
-              className="inline-flex items-center gap-2.5 text-sm font-semibold text-[var(--text)] hover:text-black transition-colors group cursor-pointer"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white/70 shadow-xs transition-transform group-hover:scale-105">
-                <Play className="h-4 w-4 fill-current ml-0.5" aria-hidden="true" />
-              </span>
-              <span>Watch Trailer</span>
-            </button>
-          ) : (
+          {!game && (
             <Link
               to="/explore"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] hover:text-text"
+              className="sr-only focus:not-sr-only inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] hover:text-text"
             >
-              <Compass className="h-4 w-4" aria-hidden="true" />
               Discover new games
             </Link>
           )}
@@ -213,16 +186,6 @@ function HeroBody({ dashboard, playNext }) {
         <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
         <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
       </div>
-
-      {game && featuredSlug && (
-        <TrailerModal
-          slug={featuredSlug}
-          title={game.title}
-          isOpen={trailerOpen}
-          onClose={() => setTrailerOpen(false)}
-          triggerRef={triggerBtnRef}
-        />
-      )}
     </div>
   );
 }

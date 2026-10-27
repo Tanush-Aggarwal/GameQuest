@@ -13,6 +13,7 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 17. Phase 4: cloud deploy (Atlas + Render + Vercel, then `npm run db:indexes`; see docs/DEPLOY.md)
 
 ## Done
+- Home Hero CTA: Removed the "Watch Trailer" button and modal trigger from the Home hero (`HomeHero.jsx`), keeping the primary "Explore Games ->" CTA button and statistics blocks clean. Updated `HomeHero.test.jsx`. All 381 client tests pass.
 - Data, Artwork, Recommendation & Trailer Modal Fix:
   1. Dynamic Trailer Modal & Stacking Context Fix: Fixed trailer opening Palworld regardless of intended game; bound dynamically to active preview, resume, or featured game slug. Solved modal overlap bug (where game cards overlapped modal dialog) by rendering via `createPortal(..., document.body)` with `fixed inset-0 z-[9999]`, locking `document.body.style.overflow = 'hidden'`, backdrop click dismiss, Escape key dismiss, and focus restoration to trigger element. Added unit tests in `TrailerModal.test.jsx`.
   2. Dynamic Home Recommendation: Replaced hardcoded Genshin card in `AdventureCard` with dynamic recommendation logic checking pending friend recommendations (`listInbox`), top genre affinity from `getDashboard`, or top-rated catalogue fallback.

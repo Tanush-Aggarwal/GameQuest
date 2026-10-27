@@ -13,6 +13,20 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 17. Phase 4: cloud deploy (Atlas + Render + Vercel, then `npm run db:indexes`; see docs/DEPLOY.md)
 
 ## Done
+- Game Detail Page Hub (`/games/:slug`) visual fidelity & theme fix:
+  1. Edge-to-Edge Dark Canvas: Entire page and canvas backdrop styled in `#0B0C0F` edge-to-edge, removing all cream panel borders and theme clashes. Dark variant top bar (`TopBar.jsx`) and bottom mobile tab bar (`BottomTabBar.jsx`) seamlessly integrated with `#0B0C0F`.
+  2. Compact Hero: Removed floating card border-radius; hero backdrop sits directly flush under TopBar, compact height (~560px max on desktop), removed stray "View screenshots" text link.
+  3. Single Centered Container: Aligned all lower sections (tabs, About, facts, time-to-beat, More Like This) within a `max-w-[1280px]` container with 32px side padding (16px on mobile), matching hero text alignment.
+  4. High-Contrast Typography & Metas: Set fact labels (Developer, Publisher, Release date, Genre, Modes, Platforms), time-to-beat labels, and section descriptions to high-contrast `#9AA3B2` / `#D1D5DB` (WCAG AA ≥ 4.5:1), with white headings.
+  5. Grouped Platform Families: Clean grouped platforms (`PC, PlayStation, Xbox, Switch, Mac, Mobile`) displayed in Facts and Hero instead of raw platform strings.
+  6. Compact Overview Screenshots & More Like This: Single "Screenshots" heading with "View all ->", compact 16:9 carousel with cycle arrows; "More like this" rail with white headings, single-line truncated titles, and lime hover accents.
+- Profile & Settings Page Polish (`/profile`):
+  1. Header Banner: Large 88px ringed avatar, username, Level N and thin lime XP progress bar (`xp` / `nextLevelXp`) from `GET /account/summary`, member-since, favourite game #1 backdrop with dark left scrim, and "View my public profile" link.
+  2. Responsive Two-Column Layout: Desktop (≥1024px) two-column layout with Gamer Identity + Steam on left, and sticky Account Information, Privacy, Blocked Players, and Delete Account on right; full-width responsive stack on mobile.
+  3. Gamer Identity & Avatar Presets: Preset avatars as round image buttons with lime ring on active selection, expandable "Use an image URL" field, bio counter, Favourite 4 tiles with top-right remove "×" buttons.
+  4. Sticky In-Card Save Bar: Clean bottom bar that appears dynamically on unsaved changes with "Unsaved changes", Discard, and Save Profile actions with success toast.
+  5. Connected Steam Card: Full-width card with Steam persona avatar (fallback to initial on dark circle, handling default placeholder hash), "Last synced" timestamp + counts on own line, and side-by-side Sync now & Unlink buttons.
+  6. Compact Danger Zone: Clean one-line Delete Account danger zone. All 377 client tests and 607 server tests pass.
 - Home Hero CTA: Removed the "Watch Trailer" button and modal trigger from the Home hero (`HomeHero.jsx`), keeping the primary "Explore Games ->" CTA button and statistics blocks clean. Updated `HomeHero.test.jsx`. All 381 client tests pass.
 - Data, Artwork, Recommendation & Trailer Modal Fix:
   1. Dynamic Trailer Modal & Stacking Context Fix: Fixed trailer opening Palworld regardless of intended game; bound dynamically to active preview, resume, or featured game slug. Solved modal overlap bug (where game cards overlapped modal dialog) by rendering via `createPortal(..., document.body)` with `fixed inset-0 z-[9999]`, locking `document.body.style.overflow = 'hidden'`, backdrop click dismiss, Escape key dismiss, and focus restoration to trigger element. Added unit tests in `TrailerModal.test.jsx`.

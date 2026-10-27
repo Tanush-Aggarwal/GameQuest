@@ -10,7 +10,9 @@ export function useAsync(load) {
 
   useEffect(() => {
     const controller = new AbortController();
-    load(controller.signal).then(
+    const promise = load(controller.signal);
+    if (!promise || typeof promise.then !== 'function') return;
+    promise.then(
       (data) => setResult({ load, attempt, data, error: null }),
       (err) => {
         if (controller.signal.aborted) return;

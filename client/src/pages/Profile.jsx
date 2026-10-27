@@ -17,6 +17,7 @@ import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { SteamLinkCard } from '@/components/steam/SteamLinkCard.jsx';
+import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
@@ -118,7 +119,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
   }
 
   return (
-    <form onSubmit={handleSave} className="flex flex-col gap-6 rounded-card border border-border bg-surface p-6">
+    <form onSubmit={handleSave} className="flex flex-col gap-6 rounded-card border border-border/60 bg-bg/70 p-5">
       <div className="flex flex-col gap-4">
         {/* Avatar Settings */}
         <div>
@@ -356,34 +357,43 @@ function BlockedPlayers() {
   );
 }
 
+// One settings section: a heading on game art, with the section's content inside.
+function SettingsSection({ id, title, seed, children }) {
+  return (
+    <ArtPanel aria-labelledby={id} seed={seed} className="flex flex-col gap-3 p-5">
+      <h2 id={id} className="text-lg font-semibold font-heading">{title}</h2>
+      {children}
+    </ArtPanel>
+  );
+}
+
 export default function Profile() {
   const { user } = useAuth();
   return (
-    <section className="flex flex-col gap-8 pb-12">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-heading">Profile & Settings</h1>
-          <p className="text-sm text-text-muted mt-0.5">Customize your public gamer identity and privacy settings</p>
-        </div>
-        {user && (
-          <Link to={`/u/${user.username}`} className={buttonVariants({ variant: 'secondary' })}>
-            View my public profile <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-          </Link>
-        )}
-      </div>
+    <section className="flex flex-col gap-6 pb-12">
+      <ArtHeader
+        title="Profile & Settings"
+        subtitle="Customize your public gamer identity and privacy settings"
+        seed="profile"
+        actions={
+          user && (
+            <Link to={`/u/${user.username}`} className={buttonVariants({ variant: 'secondary' })}>
+              View my public profile <ExternalLink className="h-3.5 w-3.5 ml-1.5" aria-hidden="true" />
+            </Link>
+          )
+        }
+      />
 
       {/* Profile Details & Favourite Showcase Editor */}
       {user && (
-        <section aria-labelledby="edit-profile-title" className="flex flex-col gap-3">
-          <h2 id="edit-profile-title" className="text-lg font-semibold font-heading">Gamer Identity</h2>
+        <SettingsSection id="edit-profile-title" title="Gamer Identity" seed="profile-identity">
           <EditProfileSection username={user.username} />
-        </section>
+        </SettingsSection>
       )}
 
       {/* Account Info */}
-      <section aria-labelledby="account-title" className="flex flex-col gap-3">
-        <h2 id="account-title" className="text-lg font-semibold font-heading">Account Information</h2>
-        <dl className="grid max-w-md gap-4 rounded-card border border-border bg-surface p-6 text-sm">
+      <SettingsSection id="account-title" title="Account Information" seed="profile-account">
+        <dl className="grid max-w-md gap-4 rounded-card border border-border/60 bg-bg/70 p-5 text-sm">
           <div>
             <dt className="text-xs text-text-muted uppercase tracking-wider">Username</dt>
             <dd className="font-medium mt-0.5">{user?.username}</dd>
@@ -399,27 +409,24 @@ export default function Profile() {
             </dd>
           </div>
         </dl>
-      </section>
+      </SettingsSection>
 
       {/* Connected platforms */}
-      <section aria-labelledby="steam-title" className="flex flex-col gap-3">
-        <h2 id="steam-title" className="text-lg font-semibold font-heading">Steam</h2>
+      <SettingsSection id="steam-title" title="Steam" seed="profile-steam">
         <SteamLinkCard />
-      </section>
+      </SettingsSection>
 
       {/* Privacy Settings */}
       {user && (
-        <section aria-labelledby="privacy-title" className="flex flex-col gap-3">
-          <h2 id="privacy-title" className="text-lg font-semibold font-heading">Privacy</h2>
+        <SettingsSection id="privacy-title" title="Privacy" seed="profile-privacy">
           <PrivacySetting username={user.username} />
-        </section>
+        </SettingsSection>
       )}
 
       {/* Blocked Players */}
-      <section aria-labelledby="blocked-title" className="flex flex-col gap-3">
-        <h2 id="blocked-title" className="text-lg font-semibold font-heading">Blocked Players</h2>
+      <SettingsSection id="blocked-title" title="Blocked Players" seed="profile-blocked">
         <BlockedPlayers />
-      </section>
+      </SettingsSection>
     </section>
   );
 }

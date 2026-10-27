@@ -1,12 +1,13 @@
 import { Users } from 'lucide-react';
 import { EmptyState } from '@/components/ui/states.jsx';
+import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { getFeed } from '@/services/socialApi.js';
 import { ActivityList } from './ActivityList.jsx';
 
-// "What my friends are playing" — its own section on Home, so a failure here never blanks the page.
+// "What my friends are playing": its own section on Home, so a failure here never blanks the page.
 export function FriendFeed() {
   return (
-    <section aria-labelledby="friend-feed-title" className="flex flex-col gap-3">
+    <ArtPanel aria-labelledby="friend-feed-title" seed="home-friends" className="flex flex-col gap-3 p-5">
       <h2 id="friend-feed-title" className="text-lg font-semibold font-heading">Friends’ activity</h2>
       <ActivityList
         loadPage={getFeed}
@@ -18,6 +19,6 @@ export function FriendFeed() {
           )
         }
       />
-    </section>
+    </ArtPanel>
   );
 }

@@ -4,6 +4,7 @@ import { Layers, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
+import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { CollectionForm } from '@/components/collections/CollectionForm.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
@@ -36,14 +37,17 @@ export default function Collections() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Collections</h1>
-        {!creating && (
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="h-4 w-4" aria-hidden="true" /> New collection
-          </Button>
-        )}
-      </div>
+      <ArtHeader
+        title="Collections"
+        seed="collections"
+        actions={
+          !creating && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" /> New collection
+            </Button>
+          )
+        }
+      />
 
       {creating && <CollectionForm submitLabel="Create collection" onSubmit={handleCreate} onCancel={() => setCreating(false)} />}
 

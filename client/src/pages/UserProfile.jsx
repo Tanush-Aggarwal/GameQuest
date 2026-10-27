@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ActivityList } from '@/components/feed/ActivityList.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -164,7 +165,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
   if (!games.length && !isSelf) return null;
 
   return (
-    <section aria-labelledby="favourites-title" className="flex flex-col gap-3">
+    <ArtPanel aria-labelledby="favourites-title" art={games[0]} seed="profile-favourites" className="flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <h2 id="favourites-title" className="text-lg font-semibold font-heading flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
@@ -219,7 +220,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
           ))}
         </div>
       )}
-    </section>
+    </ArtPanel>
   );
 }
 
@@ -254,7 +255,7 @@ function TrophyShelf({ stats }) {
   if (!trophies.length) return null;
 
   return (
-    <section aria-labelledby="trophies-title" className="flex flex-col gap-3">
+    <ArtPanel aria-labelledby="trophies-title" seed="profile-trophies" className="flex flex-col gap-3 p-5">
       <h2 id="trophies-title" className="text-lg font-semibold font-heading flex items-center gap-2">
         <Trophy className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
         Trophies & Milestones
@@ -263,7 +264,7 @@ function TrophyShelf({ stats }) {
         {trophies.map((t) => (
           <div
             key={t.title}
-            className="flex items-center gap-3 rounded-card border border-border bg-surface p-3"
+            className="flex items-center gap-3 rounded-card border border-border/60 bg-bg/70 p-3"
           >
             <div
               className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border"
@@ -278,7 +279,7 @@ function TrophyShelf({ stats }) {
           </div>
         ))}
       </div>
-    </section>
+    </ArtPanel>
   );
 }
 

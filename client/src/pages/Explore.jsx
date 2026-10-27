@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { GameCard, GameCardSkeleton } from '@/components/games/GameCard.jsx';
 import { DiscoveryShelf } from '@/components/games/DiscoveryShelf.jsx';
+import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { getErrorInfo } from '@/services/api.js';
 import { searchGames } from '@/services/gamesApi.js';
 
@@ -141,13 +142,11 @@ export default function Explore() {
 
   return (
     <section className="flex flex-col gap-6 pb-12">
-      {/* Title */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold font-heading">Explore Catalog</h1>
-        <p className="text-sm text-text-muted">
-          Discover new releases, legendary classics, and find your next game.
-        </p>
-      </div>
+      <ArtHeader
+        title="Explore Catalog"
+        subtitle="Discover new releases, legendary classics, and find your next game."
+        seed="explore"
+      />
 
       {/* Search Input */}
       <div className="relative max-w-xl">

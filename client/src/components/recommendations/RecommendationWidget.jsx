@@ -1,4 +1,5 @@
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles } from 'lucide-react';
@@ -14,7 +15,7 @@ export function RecommendationWidget() {
   const rec = data.items[0];
 
   return (
-    <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--accent)]/30 bg-[var(--surface)] p-4 shadow-sm">
+    <ArtPanel as="div" art={rec.game} seed="home-recommendation" className="flex flex-col gap-2 border-accent/30 p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--reward)]">
           <Sparkles className="h-4 w-4" /> Recommendation for you
@@ -47,6 +48,6 @@ export function RecommendationWidget() {
           )}
         </div>
       </div>
-    </div>
+    </ArtPanel>
   );
 }

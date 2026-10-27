@@ -4,6 +4,7 @@ import { CalendarDays, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
+import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { SessionRow } from '@/components/sessions/SessionRow.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -34,15 +35,16 @@ export default function Sessions() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Sessions</h1>
-          <p className="text-sm text-text-muted">Times shown in your timezone ({viewerTimeZone()}).</p>
-        </div>
-        <Link to="/sessions/new" className={buttonVariants()}>
-          <Plus className="h-4 w-4" aria-hidden="true" /> Schedule a session
-        </Link>
-      </div>
+      <ArtHeader
+        title="Sessions"
+        subtitle={`Times shown in your timezone (${viewerTimeZone()}).`}
+        seed="sessions"
+        actions={
+          <Link to="/sessions/new" className={buttonVariants()}>
+            <Plus className="h-4 w-4" aria-hidden="true" /> Schedule a session
+          </Link>
+        }
+      />
 
       {status === 'loading' && (
         <div className="flex flex-col gap-3" role="status" aria-label="Loading sessions">

@@ -4,6 +4,11 @@ import { vi } from 'vitest';
 import { AuthContext } from '@/features/auth/AuthContext.jsx';
 import { routes } from './routes.jsx';
 
+
+// The shell loads game art for section backgrounds; these tests are about routing, so give it nothing.
+vi.mock('@/services/gamesApi.js', async (orig) => ({ ...(await orig()), searchGames: vi.fn().mockResolvedValue({ items: [] }) }));
+vi.mock('@/services/libraryApi.js', async (orig) => ({ ...(await orig()), listLibrary: vi.fn().mockResolvedValue({ items: [], counts: {} }) }));
+
 const user = { id: '1', username: 'neo', email: 'neo@example.com', role: 'user', createdAt: '2026-01-01T00:00:00Z' };
 
 function renderAt(path, auth) {

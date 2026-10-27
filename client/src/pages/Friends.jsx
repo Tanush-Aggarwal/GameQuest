@@ -6,6 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
+import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -244,12 +245,15 @@ export default function Friends() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Friends</h1>
-        <Link to="/sessions" className={buttonVariants({ variant: 'secondary' })}>
-          <CalendarDays className="h-4 w-4" aria-hidden="true" /> Sessions
-        </Link>
-      </div>
+      <ArtHeader
+        title="Friends"
+        seed="friends"
+        actions={
+          <Link to="/sessions" className={buttonVariants({ variant: 'secondary' })}>
+            <CalendarDays className="h-4 w-4" aria-hidden="true" /> Sessions
+          </Link>
+        }
+      />
       <nav aria-label="Friends sections" className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map(([key, label]) => (
           <button

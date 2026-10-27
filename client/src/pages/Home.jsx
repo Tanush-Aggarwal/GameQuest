@@ -26,6 +26,8 @@ import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { buttonVariants } from '@/components/ui/button.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -40,15 +42,15 @@ export default function Home() {
 
   return (
     <section className="flex flex-col gap-6 pb-12">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold font-heading">Welcome back, {user?.username}</h1>
-        <Link
-          to="/explore"
-          className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
-        >
-          <Compass className="h-3.5 w-3.5" /> Discover new games
-        </Link>
-      </div>
+      <ArtHeader
+        title={`Welcome back, ${user?.username}`}
+        seed="home"
+        actions={
+          <Link to="/explore" className={buttonVariants({ variant: 'secondary' })}>
+            <Compass className="h-4 w-4" aria-hidden="true" /> Discover new games
+          </Link>
+        }
+      />
 
       {/* Resume card */}
       <ResumeCard dashboard={dashboard} />
@@ -83,9 +85,12 @@ function ResumeCard({ dashboard }) {
   if (!card) return null;
 
   return (
-    <Link
+    <ArtPanel
+      as={Link}
       to={`/library/${card.entryId}`}
-      className="flex gap-4 p-4 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors group"
+      art={card}
+      seed="home-resume"
+      className="group flex gap-4 p-4 transition-colors hover:border-accent"
     >
       {card.cover && (
         <CoverImage cover={card.cover} title={card.title} alt={card.title} compact className="w-16 h-20 rounded-lg flex-shrink-0" />
@@ -107,7 +112,7 @@ function ResumeCard({ dashboard }) {
         {card.note && <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-1 italic">&ldquo;{card.note}&rdquo;</p>}
       </div>
       <ChevronRight size={18} className="text-[var(--text-muted)] self-center group-hover:text-[var(--accent)] transition-colors flex-shrink-0" />
-    </Link>
+    </ArtPanel>
   );
 }
 
@@ -123,7 +128,7 @@ function StatTiles({ dashboard }) {
       </div>
     );
   }
-  if (dashboard.status === 'error') return <ErrorState title="Couldn't load stats" retry={dashboard.retry} />;
+  if (dashboard.status === 'error') return <ErrorState message="Couldn't load your stats." onRetry={dashboard.retry} />;
   const d = dashboard.data ?? {};
   const tiles = [
     { icon: Gamepad2, label: 'Playing', value: d.statusCounts?.playing ?? 0, color: 'var(--status-playing)' },
@@ -132,15 +137,17 @@ function StatTiles({ dashboard }) {
     { icon: Clock, label: 'Hours logged', value: d.totalHours ?? 0, color: 'var(--accent)' },
   ];
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {tiles.map(({ icon: Icon, label, value, color }) => (
-        <div key={label} className="flex flex-col gap-1 p-4 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)]">
-          <Icon size={18} style={{ color }} />
-          <p className="text-2xl font-bold tabular-nums font-heading">{value}</p>
-          <p className="text-xs text-[var(--text-muted)]">{label}</p>
-        </div>
-      ))}
-    </div>
+    <ArtPanel aria-label="Your library at a glance" seed="home-stats" className="p-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {tiles.map(({ icon: Icon, label, value, color }) => (
+          <div key={label} className="flex flex-col gap-1 rounded-card border border-border/60 bg-bg/70 p-4">
+            <Icon size={18} style={{ color }} aria-hidden="true" />
+            <p className="font-heading text-2xl font-bold tabular-nums">{value}</p>
+            <p className="text-xs text-text-muted">{label}</p>
+          </div>
+        ))}
+      </div>
+    </ArtPanel>
   );
 }
 
@@ -162,7 +169,7 @@ function PlayNextSection({ playNext }) {
         </div>
       )}
 
-      {playNext.status === 'error' && <ErrorState title="Couldn't load recommendations" retry={playNext.retry} />}
+      {playNext.status === 'error' && <ErrorState message="Couldn't load your suggestions." onRetry={playNext.retry} />}
 
       {playNext.status === 'success' && !playNext.data?.items?.length && (
         <EmptyState
@@ -241,12 +248,12 @@ function BacklogHealth({ dashboard, backlogHealth }) {
   }));
 
   return (
-    <div className="p-5 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] flex flex-col gap-4">
+    <ArtPanel aria-labelledby="backlog-health-title" seed="home-backlog" className="flex flex-col gap-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-semibold flex items-center gap-2 font-heading">
+        <h2 id="backlog-health-title" className="font-semibold flex items-center gap-2 font-heading">
           <Layers size={18} className="text-[var(--accent)]" />
           Backlog Health & Velocity
-        </h3>
+        </h2>
         {h?.projectedClearMonths != null && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
             <Hourglass className="h-3.5 w-3.5" />
@@ -340,6 +347,6 @@ function BacklogHealth({ dashboard, backlogHealth }) {
           </div>
         </div>
       )}
-    </div>
+    </ArtPanel>
   );
 }

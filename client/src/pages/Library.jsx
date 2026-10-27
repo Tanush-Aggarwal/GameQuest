@@ -19,6 +19,7 @@ import { CoverImage, GameCardSkeleton, GameCover } from '@/components/games/Game
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { MoveStatusSelect } from '@/components/library/MoveStatusSelect.jsx';
 import { SteamBadge } from '@/components/steam/SteamBadge.jsx';
+import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { otherPlatforms, steamOwnership } from '@/lib/steam.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -265,13 +266,15 @@ export default function Library() {
 
   return (
     <section className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold font-heading">Library</h1>
-        <Link to="/collections" className={buttonVariants({ variant: 'secondary' })}>
-          <Layers className="h-4 w-4" aria-hidden="true" /> Collections
-        </Link>
-      </div>
+      <ArtHeader
+        title="Library"
+        seed="library"
+        actions={
+          <Link to="/collections" className={buttonVariants({ variant: 'secondary' })}>
+            <Layers className="h-4 w-4" aria-hidden="true" /> Collections
+          </Link>
+        }
+      />
 
       {/* Status Tabs */}
       <nav aria-label="Library status" className="flex gap-2 overflow-x-auto pb-1">

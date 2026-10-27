@@ -5,6 +5,8 @@ import { vi } from 'vitest';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
+vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn().mockResolvedValue({ items: [] }) }));
+vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn().mockResolvedValue({ items: [] }) }));
 
 const { AuthContext } = await import('@/features/auth/AuthContext.jsx');
 const { SideRail } = await import('./SideRail.jsx');

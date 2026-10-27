@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
+import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { listSessions } from '@/services/sessionsApi.js';
 import { SessionRow } from './SessionRow.jsx';
@@ -12,7 +13,7 @@ export function UpcomingSessions() {
   const load = useCallback((signal) => listSessions({ limit: 3 }, { signal }), []);
   const { status, data, error, retry } = useAsync(load);
   return (
-    <section aria-labelledby="upcoming-title" className="flex flex-col gap-3">
+    <ArtPanel aria-labelledby="upcoming-title" seed="home-sessions" className="flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 id="upcoming-title" className="text-lg font-semibold font-heading">Upcoming sessions</h2>
         <Link to="/sessions" className="text-sm text-accent underline">All sessions</Link>
@@ -29,6 +30,6 @@ export function UpcomingSessions() {
           ))}
         </ul>
       )}
-    </section>
+    </ArtPanel>
   );
 }

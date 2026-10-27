@@ -5,7 +5,7 @@ import { ResponseBadge } from './responses.jsx';
 
 export function SessionRow({ session }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-3">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border/70 bg-bg/70 p-3">
       <div className="flex min-w-0 flex-col gap-1">
         <Link to={`/sessions/${session.id}`} className="line-clamp-1 font-semibold hover:underline">
           {session.title}

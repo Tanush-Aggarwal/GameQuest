@@ -77,12 +77,13 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     if (lastLogDoc) {
       const playingEntry = all.find((e) => String(e.gameId) === String(lastLogDoc.gameId));
       if (playingEntry) {
-        const game = await Game.findOne({ _id: lastLogDoc.gameId }).select('title cover').lean();
+        const game = await Game.findOne({ _id: lastLogDoc.gameId }).select('title cover backdrop').lean();
         resumeCard = {
           entryId: String(playingEntry._id),
           gameId: String(playingEntry.gameId),
           title: game?.title ?? 'Unknown',
           cover: game?.cover ?? null,
+          backdrop: game?.backdrop ?? null,
           lastPlayedAt: lastLogDoc.date,
           minutesLastSession: lastLogDoc.minutes,
           note: lastLogDoc.note ?? '',
@@ -115,7 +116,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     for (const g of doneGames) for (const genre of g.genres ?? []) preferredGenres[genre] = (preferredGenres[genre] ?? 0) + 1;
 
     const candidateIds = allEntries.map((e) => e.gameId);
-    const games = await Game.find({ _id: { $in: candidateIds } }).select('title cover genres timeToBeat').lean();
+    const games = await Game.find({ _id: { $in: candidateIds } }).select('title cover backdrop genres timeToBeat').lean();
     const gameById = Object.fromEntries(games.map((g) => [String(g._id), g]));
 
     const now = Date.now();
@@ -132,6 +133,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
         gameId: String(entry.gameId),
         title: game.title ?? 'Unknown',
         cover: game.cover ?? null,
+        backdrop: game.backdrop ?? null,
         status: entry.status,
         manualProgress: entry.manualProgress ?? 0,
         timeToBeatMain: game.timeToBeat?.main ?? null,

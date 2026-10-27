@@ -267,7 +267,7 @@ export function SteamLinkCard() {
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4 rounded-card border border-border bg-surface p-6">
+    <div className="flex max-w-2xl flex-col gap-4 rounded-card border border-border/60 bg-bg/70 p-5">
       {steam.linked ? (
         <LinkedAccount
           steam={steam}

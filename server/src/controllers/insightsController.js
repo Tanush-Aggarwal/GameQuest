@@ -5,8 +5,7 @@ export function createInsightsController({ insightsService }) {
   }
 
   async function playNext(req, res) {
-    const { limit } = req.query;
-    const data = await insightsService.getPlayNext(req.auth.userId, { limit: limit ? Number(limit) : 5 });
+    const data = await insightsService.getPlayNext(req.auth.userId, { limit: req.query.limit }); // validated, default 5
     res.json(data);
   }
 

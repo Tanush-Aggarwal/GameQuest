@@ -73,7 +73,7 @@ export function describe(item) {
 function ActivityRow({ item, showActor }) {
   const { icon: Icon, body } = describe(item);
   return (
-    <li className="flex items-start gap-3 rounded-card border border-border bg-surface p-3">
+    <li className="flex items-start gap-3 rounded-card border border-border/70 bg-bg/70 p-3">
       <Icon className="mt-0.5 h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
       <div className="min-w-0 flex-1 text-sm text-text-muted">
         {showActor && (

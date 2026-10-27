@@ -244,9 +244,9 @@ function ProfileEditor({ initialProfile, onSaved }) {
 
       {/* Sticky Save Bar: appears only when something has changed */}
       {dirty && (
-        <div className="sticky bottom-3 z-20 mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-[#16181D]/95 px-4 py-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150">
-          <span role="status" className="flex items-center gap-2 text-xs font-semibold text-white">
-            <span className="h-2 w-2 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+        <div className="sticky bottom-3 z-20 mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-border bg-surface-raised/95 px-4 py-3 shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <span role="status" className="flex items-center gap-2 text-xs font-semibold text-text">
+            <span className="h-2 w-2 rounded-full bg-[var(--secondary-accent)]" aria-hidden="true" />
             Unsaved changes
           </span>
           <div className="flex items-center gap-2">
@@ -254,14 +254,14 @@ function ProfileEditor({ initialProfile, onSaved }) {
               type="button"
               variant="ghost"
               onClick={handleDiscard}
-              className="text-xs text-text-muted hover:text-white"
+              className="text-xs text-text-muted hover:text-text hover:bg-surface"
             >
               Discard
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className="bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-110 text-xs font-bold"
+              className="bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-105 text-xs font-bold shadow-sm"
             >
               <Save className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
               {saving ? 'Saving...' : 'Save Profile'}

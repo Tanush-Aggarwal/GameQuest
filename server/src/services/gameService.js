@@ -1,4 +1,5 @@
 import { NotFoundError } from '../utils/errors.js';
+import { normalizeTimeToBeat } from '../utils/timeToBeat.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -9,7 +10,11 @@ export function toUpsertUpdate(game, at) {
   // IGDB having no cover/backdrop must not wipe art filled in from another source (Steam CDN).
   for (const field of ['cover', 'backdrop']) if (!$set[field]) delete $set[field];
   for (const [key, value] of Object.entries(externalIds ?? {})) $set[`externalIds.${key}`] = value;
-  if (timeToBeat) for (const [key, value] of Object.entries(timeToBeat)) $set[`timeToBeat.${key}`] = value;
+  if (timeToBeat) {
+    const { lowConfidence, ...clean } = normalizeTimeToBeat(timeToBeat, game);
+    void lowConfidence; // derived on read, not stored
+    for (const [key, value] of Object.entries(clean)) $set[`timeToBeat.${key}`] = value;
+  }
   // The slug is part of public URLs, so it is fixed when the game is first cached.
   return { $set, $setOnInsert: { slug } };
 }
@@ -43,7 +48,8 @@ export const toGameDto = (g) => {
     platforms: g.platforms ?? [],
     storyline: g.storyline ?? '',
     releaseDate: g.releaseDate ?? null,
-    timeToBeat: { main: g.timeToBeat?.main ?? null, extras: g.timeToBeat?.extras ?? null, full: g.timeToBeat?.full ?? null },
+    // Read-time clean-up too, so rows written before the mapping fix (main/extras swapped) display correctly.
+    timeToBeat: normalizeTimeToBeat(g.timeToBeat, g, { legacySwap: true }),
     totalRating: g.totalRating ?? null,
     totalRatingCount: g.totalRatingCount ?? 0,
     popularity: g.popularity ?? 0,
@@ -141,6 +147,7 @@ export function createGameService({
     if (platform) filter.platforms = platform;
     if (maxHours || minHours) {
       filter['timeToBeat.main'] = { ...(minHours && { $gte: minHours }), ...(maxHours && { $lte: maxHours }) };
+      filter['timeToBeat.endless'] = { $ne: true }; // games with no ending never count as "short" or "long"
     }
     if (minRating || sort === 'rating') filter.totalRating = { $gte: minRating ?? 1 }; // a rating sort leaves out unrated games
     if (releasedAfter || releasedBefore) {

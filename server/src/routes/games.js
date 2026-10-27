@@ -1,13 +1,15 @@
 import { Router } from 'express';
-import { gameSearchQuerySchema, gameSlugParamsSchema, trailerReportSchema } from '@gamequest/shared';
+import { featuredQuerySchema, gameSearchQuerySchema, gameSlugParamsSchema, trailerReportSchema } from '@gamequest/shared';
+import { createHomeController } from '../controllers/homeController.js';
 import { validate } from '../middleware/validate.js';
 import { createRequireAuth } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
 import { createGameController } from '../controllers/gameController.js';
 
-export function createGamesRouter({ authService, gameService, trailerService }) {
+export function createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService }) {
   const router = Router();
   const controller = createGameController({ gameService, trailerService });
+  const home = createHomeController({ homeService, requirementsService });
 
   // Search and stale-game refreshes can fan out to IGDB, so they share their own bucket (client debounces typing).
   const searchLimiter = createRateLimiter({ max: 300 });
@@ -25,6 +27,8 @@ export function createGamesRouter({ authService, gameService, trailerService }) 
 
   router.use(createRequireAuth(authService));
   router.get('/', listLimiter, validate(gameSearchQuerySchema, 'query'), controller.search);
+  // Before '/:slug' so "featured" is never read as a slug.
+  if (homeService) router.get('/featured', browseLimiter, validate(featuredQuerySchema, 'query'), home.featured);
   router.get('/:slug', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.get);
   router.get('/:slug/trailer', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.getTrailers);
   router.post(
@@ -35,6 +39,9 @@ export function createGamesRouter({ authService, gameService, trailerService }) 
     controller.reportTrailer,
   );
   router.get('/:slug/friends', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.getFriends);
+  if (requirementsService) {
+    router.get('/:slug/requirements', searchLimiter, validate(gameSlugParamsSchema, 'params'), home.requirements);
+  }
 
   return router;
 }

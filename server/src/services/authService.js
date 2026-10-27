@@ -62,7 +62,7 @@ export function createAuthService({
     }
   }
 
-  async function register({ username, email, password }) {
+  async function register({ username, email, password, acceptTerms }) {
     const usernameLower = username.toLowerCase();
     const existing = await User.findOne({ $or: [{ email }, { usernameLower }] });
     if (existing) {
@@ -72,7 +72,7 @@ export function createAuthService({
     const passwordHash = await bcrypt.hash(password, bcryptRounds);
     let user;
     try {
-      user = await User.create({ username, usernameLower, email, passwordHash });
+      user = await User.create({ username, usernameLower, email, passwordHash, ...(acceptTerms === true && { termsAcceptedAt: new Date() }) });
     } catch (err) {
       if (isDuplicateKey(err)) {
         const field = Object.keys(err.keyPattern ?? {})[0]?.startsWith('email') ? 'email' : 'username';

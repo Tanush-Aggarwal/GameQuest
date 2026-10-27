@@ -44,6 +44,10 @@ import { MediaCache } from './models/MediaCache.js';
 import { createArtService } from './services/artService.js';
 import { createYoutubeAdapter } from './adapters/content/youtube.js';
 import { createTrailerService } from './services/trailerService.js';
+import { createHomeService } from './services/homeService.js';
+import { createNotificationService } from './services/notificationService.js';
+import { createAccountService } from './services/accountService.js';
+import { createRequirementsService } from './services/requirementsService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
@@ -67,6 +71,10 @@ export function createApp({
   steamSyncService: _steamSyncSvc,
   youtubeAdapter = createYoutubeAdapter({ config }),
   trailerService: _trailerSvc,
+  homeService: _homeSvc,
+  notificationService: _notifSvc,
+  accountService: _accountSvc,
+  requirementsService: _reqSvc,
   eventBus = createEventBus({ logger }),
 }) {
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -116,6 +124,33 @@ export function createApp({
       eventBus,
       logger,
     });
+  const homeService =
+    _homeSvc ?? createHomeService({ Game, User, Collection, Review, LibraryEntry, insightsService });
+  const notificationService =
+    _notifSvc ?? createNotificationService({ User, Friendship, Recommendation, GameSession, Rsvp, Game });
+  const accountService =
+    _accountSvc ??
+    createAccountService({
+      User,
+      RefreshToken,
+      LibraryEntry,
+      StatusHistory,
+      PlayLog,
+      JournalEntry,
+      Review,
+      Game,
+      Collection,
+      CollectionItem,
+      Friendship,
+      Block,
+      Activity,
+      GameSession,
+      Rsvp,
+      Recommendation,
+      notificationService,
+      logger,
+    });
+  const requirementsService = _reqSvc ?? createRequirementsService({ Game, MediaCache, steam: steamAdapter, logger });
   registerSubscribers({ eventBus, collectionService, activityService, recommendationService });
 
   const app = express();
@@ -145,6 +180,10 @@ export function createApp({
       steamService,
       steamSyncService,
       trailerService,
+      homeService,
+      requirementsService,
+      accountService,
+      notificationService,
       LibraryEntry,
       config,
     }));

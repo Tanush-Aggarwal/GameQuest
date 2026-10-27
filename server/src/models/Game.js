@@ -19,6 +19,8 @@ const gameSchema = new mongoose.Schema(
       main: { type: Number, default: null }, // hours
       extras: { type: Number, default: null },
       full: { type: Number, default: null },
+      samples: { type: Number, default: null }, // how many IGDB reports the numbers come from
+      endless: { type: Boolean, default: false }, // multiplayer-only / live service: nothing to beat
     },
     // Art: IGDB image ids resolved to full URLs by the adapter. `backdrop` is the best wide image
     // (artwork > screenshot) and is what hero/ambient views use.
@@ -59,6 +61,7 @@ gameSchema.index({ title: 'text', summary: 'text' }, { weights: { title: 10, sum
 gameSchema.index({ genres: 1, slug: 1 });
 gameSchema.index({ platforms: 1, slug: 1 });
 gameSchema.index({ 'timeToBeat.main': 1, slug: 1 });
+gameSchema.index({ 'timeToBeat.endless': 1 });
 gameSchema.index({ ratingAvg: -1, ratingCount: -1, slug: 1 });
 gameSchema.index({ releaseDate: -1, slug: 1 });
 // Default catalog order: most popular first, slug as the tiebreaker for cursor paging

@@ -14,7 +14,7 @@ const mediaCacheSchema = new mongoose.Schema(
     source: {
       type: String,
       required: true,
-      enum: ['youtube', 'twitch', 'speedrun', 'igdb', 'catalog-import', 'steam-art', 'trailers', 'trailer-dismissed', 'youtube-state'],
+      enum: ['youtube', 'twitch', 'speedrun', 'igdb', 'catalog-import', 'steam-art', 'trailers', 'trailer-dismissed', 'youtube-state', 'steam-requirements'],
     },
     payload: { type: mongoose.Schema.Types.Mixed, required: true },
     fetchedAt: { type: Date, default: Date.now },

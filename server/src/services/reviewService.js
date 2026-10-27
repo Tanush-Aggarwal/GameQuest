@@ -17,7 +17,7 @@ export const toReviewDto = (r, user) => ({
 // aggregate rather than trying to keep running sums in sync.
 // Native MongoDB aggregation pipelines do not cast strings to ObjectId in $match,
 // so gameId must be cast to ObjectId when valid.
-async function refreshGameRating(Game, Review, gameId) {
+export async function refreshGameRating(Game, Review, gameId) {
   const matchId = typeof gameId === 'string' && mongoose.Types.ObjectId.isValid(gameId)
     ? new mongoose.Types.ObjectId(gameId)
     : gameId;

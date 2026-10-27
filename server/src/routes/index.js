@@ -14,6 +14,7 @@ import { createRecommendationsRouter } from './recommendations.js';
 import { createSteamRouter } from './steam.js';
 import { createSyncRouter } from './sync.js';
 import { createRequireAuth } from '../middleware/auth.js';
+import { createAccountRouters } from './account.js';
 
 export function createRoutes({
   authService,
@@ -31,6 +32,10 @@ export function createRoutes({
   steamService,
   steamSyncService,
   trailerService,
+  homeService,
+  requirementsService,
+  accountService,
+  notificationService,
   LibraryEntry,
   config,
 }) {
@@ -40,11 +45,11 @@ export function createRoutes({
 
   router.get('/health', health);
   router.use('/auth', createAuthRouter({ authService, config }));
-  router.use('/public', createPublicRouter({ gameService }));
-  router.use('/games', createGamesRouter({ authService, gameService, trailerService }));
+  router.use('/public', createPublicRouter({ gameService, homeService }));
+  router.use('/games', createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService }));
   router.use('/library', createLibraryRouter({ authService, libraryService }));
   router.use('/library', createProgressRouter({ requireAuth, progressService }));
-  router.use('/insights', createInsightsRouter({ requireAuth, insightsService }));
+  router.use('/insights', createInsightsRouter({ requireAuth, insightsService, homeService }));
   router.use('/collections', createCollectionsRouter({ authService, collectionService }));
   router.use('/reviews', createReviewsRouter({ requireAuth, reviewService, LibraryEntry }));
   router.use('/friends', social.friends);
@@ -54,6 +59,11 @@ export function createRoutes({
   router.use('/sessions', createSessionsRouter({ authService, sessionService }));
   router.use('/steam', createSteamRouter({ authService, steamService }));
   router.use('/sync', createSyncRouter({ authService, steamSyncService }));
+  if (accountService && notificationService) {
+    const { account, notifications } = createAccountRouters({ authService, accountService, notificationService, config });
+    router.use('/account', account);
+    router.use('/notifications', notifications);
+  }
   if (recommendationService) {
     router.use('/recommendations', createRecommendationsRouter({ authService, recommendationService }));
   }

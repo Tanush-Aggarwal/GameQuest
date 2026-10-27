@@ -1,4 +1,5 @@
 import { LIBRARY_STATUSES, LIBRARY_TRANSITIONS } from '@gamequest/shared';
+import { planningHours, normalizeTimeToBeat } from '../utils/timeToBeat.js';
 import { ConflictError, NotFoundError, ValidationError } from '../utils/errors.js';
 import { toGameDto, withParentArt } from './gameService.js';
 
@@ -128,7 +129,7 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
       } else {
         const allMatching = await LibraryEntry.find(filter).lean();
         const allGameIds = allMatching.map((e) => e.gameId);
-        const gamesForSort = allGameIds.length ? await Game.find({ _id: { $in: allGameIds } }).select('title timeToBeat').lean() : [];
+        const gamesForSort = allGameIds.length ? await Game.find({ _id: { $in: allGameIds } }).select('title genres themes gameModes timeToBeat').lean() : [];
         const sortGameMap = new Map(gamesForSort.map((g) => [String(g._id), g]));
         const minutesPlayed = (e) => (e.ownerships ?? []).reduce((s, o) => s + (o.playtimeMin ?? 0), 0) + (e.loggedMinutes ?? 0);
 
@@ -143,8 +144,9 @@ export function createLibraryService({ LibraryEntry, StatusHistory, Game, eventB
           } else if (sort === 'progress') {
             diff = (b.manualProgress ?? 0) - (a.manualProgress ?? 0);
           } else if (sort === 'timeToBeat') {
-            const ttbA = sortGameMap.get(String(a.gameId))?.timeToBeat?.main ?? 999999;
-            const ttbB = sortGameMap.get(String(b.gameId))?.timeToBeat?.main ?? 999999;
+            const hoursOf = (g) => (g ? planningHours({ timeToBeat: normalizeTimeToBeat(g.timeToBeat, g, { legacySwap: true }) }) : null);
+            const ttbA = hoursOf(sortGameMap.get(String(a.gameId))) ?? 999999;
+            const ttbB = hoursOf(sortGameMap.get(String(b.gameId))) ?? 999999;
             diff = ttbA - ttbB;
           }
           if (diff !== 0) return diff;

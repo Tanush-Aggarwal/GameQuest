@@ -14,7 +14,8 @@
     "catalog:fix": "node --env-file-if-exists=.env scripts/fix-catalog.js",
     "trailers:refresh": "node --env-file-if-exists=.env scripts/refresh-trailers.js",
     "catalog:steam-art": "node --env-file-if-exists=.env scripts/steam-art.js",
-    "db:indexes": "node --env-file-if-exists=.env scripts/sync-indexes.js"
+    "db:indexes": "node --env-file-if-exists=.env scripts/sync-indexes.js",
+    "catalog:ttb": "node --env-file-if-exists=.env scripts/fix-time-to-beat.js"
   },
   "jest": {
     "testEnvironment": "node",

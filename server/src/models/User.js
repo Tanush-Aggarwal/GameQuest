@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema(
       digest: { type: Boolean, default: false },
     },
     // Linked Steam account. A SteamID64 is public information, so there is no secret to encrypt here.
+    // When the user last opened the notifications bell; anything newer counts as unread.
+    notificationsReadAt: { type: Date, default: null },
+    // When the user accepted the Terms and Privacy Policy (sent with registration).
+    termsAcceptedAt: { type: Date, default: null },
     steam: {
       steamId: { type: String, default: undefined },
       personaName: { type: String, default: undefined },

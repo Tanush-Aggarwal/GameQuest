@@ -4,6 +4,13 @@
  * Uses plain aggregation helpers injected for testability; no direct Mongoose imports.
  * scorePlayNext is a pure function so it's fast to unit-test without any DB.
  */
+import { normalizeTimeToBeat } from '../utils/timeToBeat.js';
+
+// Hours to plan with: cleaned main, else main + extras; null for endless games or no data.
+const planHours = (g) => {
+  const t = normalizeTimeToBeat(g?.timeToBeat, g ?? {}, { legacySwap: true });
+  return t.endless ? null : (t.main ?? t.extras);
+};
 // { unlocked, total, pct } for a platform achievement snapshot, or null when there is none to show.
 function achievementSummary(snapshot) {
   const { unlocked, total } = snapshot ?? {};
@@ -73,8 +80,8 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     const backlogGameIds = backlogEntries.map((e) => e.gameId);
     let backlogHours = null;
     if (backlogGameIds.length) {
-      const backlogGames = await Game.find({ _id: { $in: backlogGameIds } }).select('timeToBeat').lean();
-      const ttbTotal = backlogGames.reduce((s, g) => s + (g.timeToBeat?.main ?? 0), 0);
+      const backlogGames = await Game.find({ _id: { $in: backlogGameIds } }).select('title genres themes gameModes timeToBeat').lean();
+      const ttbTotal = backlogGames.reduce((s, g) => s + (planHours(g) ?? 0), 0);
       if (ttbTotal > 0) backlogHours = ttbTotal;
     }
 
@@ -131,7 +138,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     for (const g of doneGames) for (const genre of g.genres ?? []) preferredGenres[genre] = (preferredGenres[genre] ?? 0) + 1;
 
     const candidateIds = allEntries.map((e) => e.gameId);
-    const games = await Game.find({ _id: { $in: candidateIds } }).select('title slug cover backdrop heroImage bannerImage coverImage cardImage genres timeToBeat').lean();
+    const games = await Game.find({ _id: { $in: candidateIds } }).select('title slug cover backdrop heroImage bannerImage coverImage cardImage genres themes gameModes timeToBeat').lean();
     const gameById = Object.fromEntries(games.map((g) => [String(g._id), g]));
 
     const now = Date.now();
@@ -156,7 +163,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
         cardImage: game.cardImage ?? game.cover ?? game.backdrop ?? null,
         status: entry.status,
         manualProgress: entry.manualProgress ?? 0,
-        timeToBeatMain: game.timeToBeat?.main ?? null,
+        timeToBeatMain: planHours(game),
         score: score.total,
         reasons: score.reasons,
       })),
@@ -228,7 +235,7 @@ export function scorePlayNext(entry, game, preferredGenres = {}, now = Date.now(
   }
 
   // Shorter time to beat — prefer quick wins (0–20 pts).
-  const ttb = game.timeToBeat?.main;
+  const ttb = planHours(game);
   if (ttb != null) {
     const pts = ttb <= 5 ? 20 : ttb <= 10 ? 15 : ttb <= 20 ? 10 : ttb <= 40 ? 5 : 0;
     if (pts > 0) { total += pts; reasons.push(`~${ttb}h to beat`); }

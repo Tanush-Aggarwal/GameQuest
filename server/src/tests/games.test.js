@@ -66,7 +66,8 @@ describe('IGDB adapter', () => {
     });
     const igdb = createIgdbAdapter({ config: testConfig(withTwitch), fetchImpl, minIntervalMs: 0 });
     const [game] = await igdb.search('hades');
-    expect(game.timeToBeat).toEqual({ main: 20, extras: 10, full: 40 });
+    // hastily = main story, normally = main + extras, completely = completionist
+    expect(game.timeToBeat).toEqual({ main: 10, extras: 20, full: 40, samples: null });
     await igdb.search('hades');
     const tokenCalls = fetchImpl.mock.calls.filter(([u]) => String(u).includes('id.twitch.tv'));
     expect(tokenCalls).toHaveLength(1);

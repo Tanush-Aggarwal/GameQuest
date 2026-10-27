@@ -9,3 +9,4 @@ export * from './social.js';
 export * from './session.js';
 export * from './recommendation.js';
 export * from './steam.js';
+export * from './account.js';

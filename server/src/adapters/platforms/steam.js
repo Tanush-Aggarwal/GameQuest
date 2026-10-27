@@ -4,6 +4,31 @@ const API = 'https://api.steampowered.com';
 const TIMEOUT_MS = 20_000;
 const PROBE_TIMEOUT_MS = 5_000; // art is cosmetic: give up fast so a slow CDN never stalls a page or a sync
 const CDN ='https://cdn.cloudflare.steamstatic.com/steam/apps';
+const STORE = 'https://store.steampowered.com/api/appdetails';
+
+// Steam store requirement blocks are small HTML fragments ("<strong>OS:</strong> Windows 10<br>...").
+// Turns one into [{ label, value }] plain text, dropping tags and entities we do not need.
+const decode = (t) =>
+  t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+export function parseRequirementsHtml(html) {
+  if (typeof html !== 'string' || !html.trim()) return [];
+  const items = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .split('\n')
+    .map((line) => decode(line).replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .filter((line) => !/^(minimum|recommended):?$/i.test(line));
+  return items
+    .map((line) => {
+      const at = line.indexOf(':');
+      if (at > 0 && at < 40) return { label: line.slice(0, at).trim(), value: line.slice(at + 1).trim() };
+      return { label: null, value: line };
+    })
+    .filter((row) => row.value)
+    .slice(0, 20);
+}
 
 // Steam web API adapter. Only this module talks to Steam. The API key travels in the query string,
 // so errors are built from status codes and never from the request URL, and nothing here logs it.
@@ -131,6 +156,29 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
       if (cover && backdrop) return { cover, backdrop };
       const header = await exists('header.jpg');
       return { cover: cover ?? header, backdrop: backdrop ?? header };
+    },
+
+    // PC system requirements from the public store API (no key). null when the app is unknown or has none.
+    async getRequirements(appid) {
+      let res;
+      try {
+        res = await fetchImpl(`${STORE}?${new URLSearchParams({ appids: String(appid), l: 'english', cc: 'us' })}`, {
+          signal: AbortSignal.timeout(PROBE_TIMEOUT_MS * 2),
+        });
+      } catch {
+        throw new UpstreamError('Could not reach the Steam store. Try again in a moment.');
+      }
+      if (res.status === 429) throw new UpstreamError('The Steam store is rate limiting requests. Try again later.');
+      if (!res.ok) throw new UpstreamError(`The Steam store is unavailable right now (HTTP ${res.status}).`);
+      const body = await res.json().catch(() => null);
+      const entry = body?.[String(appid)];
+      if (!entry?.success || !entry.data) return null;
+      const pc = entry.data.pc_requirements;
+      // An app without requirements sends an empty array instead of an object.
+      const minimum = parseRequirementsHtml(pc?.minimum);
+      const recommended = parseRequirementsHtml(pc?.recommended);
+      if (!minimum.length && !recommended.length) return null;
+      return { minimum, recommended };
     },
 
     // Achievements for many games, `size` at a time. A game that fails is left out of `results`

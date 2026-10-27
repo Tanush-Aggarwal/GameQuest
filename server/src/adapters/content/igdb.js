@@ -1,5 +1,6 @@
 import { CATALOG_GAME_TYPES } from '@gamequest/shared';
 import { UpstreamError } from '../../utils/errors.js';
+import { fromIgdbRow } from '../../utils/timeToBeat.js';
 
 const TOKEN_URL = 'https://id.twitch.tv/oauth2/token';
 const API_URL = 'https://api.igdb.com/v4';
@@ -30,7 +31,6 @@ const GAME_FIELDS = [
   'external_games.external_game_source', // `category` is deprecated and no longer returned
   'external_games.uid',
 ].join(',');
-const HOUR = 3600;
 const PAGE_SIZE = 500; // IGDB's maximum page size
 const MAX_RETRIES = 5;
 const RETRYABLE = new Set([429, 502, 503, 504]);
@@ -38,7 +38,6 @@ const RETRYABLE = new Set([429, 502, 503, 504]);
 // Escapes a user string for use inside an Apicalypse double-quoted literal.
 const quote = (s) => `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 
-const toHours = (seconds) => (typeof seconds === 'number' && seconds > 0 ? Math.round((seconds / HOUR) * 10) / 10 : null);
 
 // IGDB external_game_source 1 = Steam (the older `category` field used the same id).
 const STEAM_SOURCE = 1;
@@ -180,11 +179,10 @@ export function createIgdbAdapter({
     if (!igdbIds.length) return new Map();
     const rows = await query(
       'game_time_to_beats',
-      `fields game_id,hastily,normally,completely; where game_id = (${igdbIds.join(',')}); limit ${Math.min(igdbIds.length, PAGE_SIZE)};`,
+      `fields game_id,hastily,normally,completely,count; where game_id = (${igdbIds.join(',')}); limit ${Math.min(igdbIds.length, PAGE_SIZE)};`,
     );
-    return new Map(
-      rows.map((r) => [r.game_id, { main: toHours(r.normally ?? r.hastily), extras: toHours(r.hastily), full: toHours(r.completely) }]),
-    );
+    // hastily = main story, normally = main + extras, completely = completionist (see utils/timeToBeat.js)
+    return new Map(rows.map((r) => [r.game_id, fromIgdbRow(r)]));
   }
 
   async function withTimeToBeat(games) {

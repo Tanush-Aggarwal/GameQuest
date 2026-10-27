@@ -19,6 +19,9 @@ export const registerSchema = z.object({
   username: usernameSchema,
   email: emailSchema,
   password: passwordSchema,
+  // The register form's "I agree to the Terms and Privacy Policy" box. Optional for older clients; when sent it must
+  // be true, and the time is stored on the account.
+  acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Accept the Terms and Privacy Policy to create an account' }) }).optional(),
 });
 
 export const loginSchema = z.object({

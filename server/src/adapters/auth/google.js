@@ -34,7 +34,12 @@ export function createGoogleAdapter({ config, fetchImpl = fetch }) {
     } catch {
       throw new UpstreamError('Could not reach Google.');
     }
-    if (!res.ok) throw new UpstreamError(`Google refused the request (HTTP ${res.status}).`);
+    if (!res.ok) {
+      // Google's error code (invalid_client, redirect_uri_mismatch, invalid_grant...) says what to fix and is not a secret.
+      const body = await res.json().catch(() => ({}));
+      const reason = typeof body.error === 'string' && /^[a-z_]{1,40}$/.test(body.error) ? `: ${body.error}` : '';
+      throw new UpstreamError(`Google refused the request (HTTP ${res.status}${reason}).`);
+    }
     try {
       return await res.json();
     } catch {

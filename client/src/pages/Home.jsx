@@ -15,25 +15,25 @@ import {
   Gamepad2,
   Hourglass,
   Layers,
-  TrendingUp,
   Trophy,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getBacklogHealth, getDashboard, getPlayNext } from '@/services/progressApi.js';
-import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
+import { ErrorState } from '@/components/ui/states.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { PlayNextSection } from '@/components/home/PlayNextRail.jsx';
 import { buttonVariants } from '@/components/ui/button.jsx';
 
 export default function Home() {
   const { user } = useAuth();
 
   const loadDashboard = useCallback((signal) => getDashboard({ signal }), []);
-  const loadPlayNext = useCallback((signal) => getPlayNext({}, { signal }), []);
+  const loadPlayNext = useCallback((signal) => getPlayNext({ limit: 8 }, { signal }), []);
   const loadBacklogHealth = useCallback((signal) => getBacklogHealth({ signal }), []);
 
   const dashboard = useAsync(loadDashboard);
@@ -148,71 +148,6 @@ function StatTiles({ dashboard }) {
         ))}
       </div>
     </ArtPanel>
-  );
-}
-
-// ── Play next ─────────────────────────────────────────────────────────────
-
-function PlayNextSection({ playNext }) {
-  return (
-    <div>
-      <h2 className="text-lg font-bold font-heading mb-3 flex items-center gap-2">
-        <TrendingUp size={18} className="text-[var(--accent)]" />
-        What to play next
-      </h2>
-
-      {playNext.status === 'loading' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 rounded-[var(--radius-card)] bg-[var(--surface)] animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {playNext.status === 'error' && <ErrorState message="Couldn't load your suggestions." onRetry={playNext.retry} />}
-
-      {playNext.status === 'success' && !playNext.data?.items?.length && (
-        <EmptyState
-          icon={Gamepad2}
-          title="Nothing to recommend yet"
-          description="Add games to your backlog and we'll suggest what to play next."
-          actionLabel="Find games"
-          actionTo="/explore"
-        />
-      )}
-
-      {playNext.status === 'success' && playNext.data?.items?.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {playNext.data.items.map((item) => (
-            <PlayNextCard key={item.entryId} item={item} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PlayNextCard({ item }) {
-  return (
-    <Link
-      to={`/library/${item.entryId}`}
-      className="flex gap-3 p-3 rounded-[var(--radius-card)] bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-colors group"
-    >
-      {item.cover ? (
-        <CoverImage cover={item.cover} title={item.title} alt={item.title} compact className="w-12 h-16 rounded-lg flex-shrink-0" />
-      ) : (
-        <div className="w-12 h-16 rounded-lg bg-[var(--surface-raised)] flex-shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">{item.title}</p>
-        {item.timeToBeatMain && (
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">~{item.timeToBeatMain}h to beat</p>
-        )}
-        {item.reasons?.length > 0 && (
-          <p className="text-xs text-[var(--accent)] mt-1 line-clamp-2">{item.reasons[0]}</p>
-        )}
-      </div>
-    </Link>
   );
 }
 

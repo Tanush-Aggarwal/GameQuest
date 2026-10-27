@@ -30,3 +30,13 @@
     }
   }
 }
+
+@layer utilities {
+  /* Horizontal rails scroll by touch, buttons and keyboard focus; the bar itself is just noise. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

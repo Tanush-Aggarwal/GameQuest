@@ -57,6 +57,28 @@ describe('insights: game art for the Home sections', () => {
       manualProgress: 40,
     });
   });
+
+  it('the resume card carries playtime and the achievement summary (null without a snapshot)', async () => {
+    const s = setupInsights();
+    const game = await s.mkGame('Hades');
+    await s.LibraryEntry.create({
+      userId: 'u1',
+      gameId: game._id,
+      status: 'playing',
+      loggedMinutes: 120,
+      achievements: { unlocked: 12, total: 48 },
+    });
+    await s.PlayLog.create({ userId: 'u1', gameId: game._id, date: '2026-10-26', minutes: 90 });
+    const { resumeCard } = await s.service.getDashboard('u1');
+    expect(resumeCard.playtimeMinutes).toBeGreaterThanOrEqual(120);
+    expect(resumeCard.achievements).toEqual({ unlocked: 12, total: 48, pct: 25 });
+
+    const bare = setupInsights();
+    const g2 = await bare.mkGame('Other');
+    await bare.LibraryEntry.create({ userId: 'u1', gameId: g2._id, status: 'playing', achievements: { unlocked: null, total: null } });
+    await bare.PlayLog.create({ userId: 'u1', gameId: g2._id, date: '2026-10-26', minutes: 5 });
+    expect((await bare.service.getDashboard('u1')).resumeCard.achievements).toBeNull();
+  });
 });
 
 describe('GET /api/v1/insights/play-next', () => {

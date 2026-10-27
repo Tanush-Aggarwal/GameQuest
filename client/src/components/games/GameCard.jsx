@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useMotionOk } from '@/lib/motion.js';
 
 /**
  * Normalises cover URLs so that IGDB images render in high resolution (2x retina / 1080p).
@@ -72,6 +74,18 @@ export function GameCover({ game, className = '', compact = false }) {
   );
 }
 
+// A cover that glides to the same game's cover on the page you navigate to (a framer layoutId shared by the card and
+// the game page hero). No glide, and no layout tracking at all, when the viewer prefers reduced motion.
+export function SharedCover({ slug, className = '', children }) {
+  const motionOk = useMotionOk();
+  if (!motionOk || !slug) return <div className={className}>{children}</div>;
+  return (
+    <motion.div layoutId={`cover-${slug}`} data-shared-cover={slug} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
 export function GameCard({ game }) {
   const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
   return (
@@ -79,7 +93,9 @@ export function GameCard({ game }) {
       to={`/games/${game.slug}`}
       className="group flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:bg-surface-raised"
     >
-      <GameCover game={game} />
+      <SharedCover slug={game.slug}>
+        <GameCover game={game} />
+      </SharedCover>
       <div className="flex flex-col gap-1 p-3">
         <h3 className="line-clamp-2 text-sm font-semibold">{game.title}</h3>
         <p className="text-xs text-text-muted">{[year, game.genres[0]].filter(Boolean).join(' · ') || 'Game'}</p>

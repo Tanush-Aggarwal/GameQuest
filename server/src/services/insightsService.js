@@ -4,6 +4,13 @@
  * Uses plain aggregation helpers injected for testability; no direct Mongoose imports.
  * scorePlayNext is a pure function so it's fast to unit-test without any DB.
  */
+// { unlocked, total, pct } for a platform achievement snapshot, or null when there is none to show.
+function achievementSummary(snapshot) {
+  const { unlocked, total } = snapshot ?? {};
+  if (!(total > 0) || unlocked == null) return null;
+  return { unlocked, total, pct: Math.round((unlocked / total) * 100) };
+}
+
 export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game }) {
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -88,6 +95,9 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
           minutesLastSession: lastLogDoc.minutes,
           note: lastLogDoc.note ?? '',
           manualProgress: playingEntry.manualProgress ?? 0,
+          playtimeMinutes: effectiveMinutes(playingEntry),
+          // null until a platform sync supplies a snapshot (or for games without achievements)
+          achievements: achievementSummary(playingEntry.achievements),
         };
       }
     }

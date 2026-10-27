@@ -52,6 +52,14 @@ describe('design tokens in Tailwind', () => {
     expect(css).toMatch(/\.to-bg\\\/70\s*\{[^}]*color-mix\(in srgb, var\(--bg\) calc\(0\.7 \* 100%\)/);
   });
 
+  it('the hero scrims are generated (side gradient over --bg, fade to the page at the bottom)', async () => {
+    const css = await compile('bg-gradient-to-r from-bg via-bg/75 to-bg/10 bg-gradient-to-t via-transparent to-transparent');
+    expect(css).toMatch(/\.from-bg\s*\{[^}]*var\(--bg\)/);
+    expect(css).toMatch(/\.via-bg\\\/75\s*\{[^}]*color-mix\(in srgb, var\(--bg\) calc\(0\.75 \* 100%\)/);
+    expect(css).toMatch(/\.to-bg\\\/10\s*\{[^}]*color-mix\(in srgb, var\(--bg\) calc\(0\.1 \* 100%\)/);
+    expect(css).toMatch(/\.bg-gradient-to-t\s*\{[^}]*linear-gradient/);
+  });
+
   it('every colour the UI uses is a token, and none is a raw palette value', () => {
     const colors = config.theme.extend.colors;
     expect(Object.keys(colors)).toEqual(expect.arrayContaining(['bg', 'surface', 'surface-raised', 'border', 'text', 'text-muted', 'accent', 'reward']));

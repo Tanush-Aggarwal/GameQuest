@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Gamepad2, TrendingUp } from 'lucide-react';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { useAmbient } from '@/components/art/ambientContext.js';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -27,6 +28,7 @@ function RailSkeleton() {
 // One suggestion: a large cover, then why it was picked. The reasons are shown in full as chips (they were a
 // single clipped line before), because "why this game" is the point of the section.
 export function PlayNextCard({ item }) {
+  const { previewGame, clearPreview } = useAmbient();
   const whyId = `why-${item.entryId}`;
   const progress = item.status === 'playing' && item.manualProgress > 0 ? item.manualProgress : 0;
   // "~12h to beat" is already shown under the title, so it is not repeated as a chip
@@ -39,6 +41,10 @@ export function PlayNextCard({ item }) {
         to={`/library/${item.entryId}`}
         aria-label={name}
         aria-describedby={reasons.length ? whyId : undefined}
+        onMouseEnter={() => previewGame(item)}
+        onFocus={() => previewGame(item)}
+        onMouseLeave={clearPreview}
+        onBlur={clearPreview}
         className="group flex h-full flex-col gap-2 rounded-card"
       >
         <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-transform group-hover:border-accent motion-safe:group-hover:-translate-y-0.5">

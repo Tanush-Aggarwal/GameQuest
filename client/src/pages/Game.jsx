@@ -14,7 +14,7 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
-import { GameCover, getHighResCover } from '@/components/games/GameCard.jsx';
+import { GameCover, SharedCover, getHighResCover } from '@/components/games/GameCard.jsx';
 import { TrailerPlayer } from '@/components/games/TrailerPlayer.jsx';
 import { GameLibraryPanel } from '@/components/library/GameLibraryPanel.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
@@ -270,9 +270,9 @@ export default function Game() {
           {/* Hero Header */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start">
             {/* Crisp High-Res Poster */}
-            <div className="w-48 sm:w-56 shrink-0 overflow-hidden rounded-card border border-border shadow-2xl bg-surface">
+            <SharedCover slug={game.slug} className="w-48 sm:w-56 shrink-0 overflow-hidden rounded-card border border-border shadow-2xl bg-surface">
               <GameCover game={game} />
-            </div>
+            </SharedCover>
 
             {/* Title & Metadata */}
             <div className="flex flex-1 flex-col gap-4">

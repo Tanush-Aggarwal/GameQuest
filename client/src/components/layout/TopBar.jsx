@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Gamepad2, LogOut, Search } from 'lucide-react';
+import { Command, Gamepad2, LogOut, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth.js';
 import { Button } from '@/components/ui/button.jsx';
 
 // The slim bar across the top: game search, and who you are. Navigation lives in the side rail (desktop)
 // and the bottom tab bar (mobile); the logo only shows here on mobile, where there is no rail.
-export function TopBar() {
+export function TopBar({ onOpenPalette }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -53,6 +53,12 @@ export function TopBar() {
         )}
 
         <div className="ml-auto flex items-center gap-1">
+          {onOpenPalette && (
+            <Button variant="ghost" onClick={onOpenPalette} aria-label="Quick search" aria-keyshortcuts="Control+K Meta+K" className="px-3">
+              <Command className="h-4 w-4" aria-hidden="true" />
+              <kbd className="hidden rounded-control border border-border px-1.5 text-xs lg:inline">Ctrl K</kbd>
+            </Button>
+          )}
           {user && (
             <Link
               to="/profile"

@@ -5,6 +5,7 @@
 // only needs the regular size. Other hosts (Steam CDN) have a single size.
 export function artImageUrl(url, kind = 'backdrop') {
   if (typeof url !== 'string' || !url) return null;
+  if (kind === 'hero') return url; // a full-width hero keeps the largest size the catalog stored
   if (kind === 'backdrop') return url.replace('/t_1080p/', '/t_screenshot_big/');
   return url.replace('/t_cover_big_2x/', '/t_cover_big/');
 }

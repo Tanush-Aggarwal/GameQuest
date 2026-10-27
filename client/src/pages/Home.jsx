@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import {
   AreaChart,
   Area,
@@ -9,9 +8,7 @@ import {
   YAxis,
 } from 'recharts';
 import {
-  ChevronRight,
   Clock,
-  Compass,
   Gamepad2,
   Hourglass,
   Layers,
@@ -24,10 +21,9 @@ import { ErrorState } from '@/components/ui/states.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
-import { CoverImage } from '@/components/games/GameCard.jsx';
-import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { PlayNextSection } from '@/components/home/PlayNextRail.jsx';
-import { buttonVariants } from '@/components/ui/button.jsx';
+import { HomeHero } from '@/components/home/HomeHero.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -42,18 +38,7 @@ export default function Home() {
 
   return (
     <section className="flex flex-col gap-6 pb-12">
-      <ArtHeader
-        title={`Welcome back, ${user?.username}`}
-        seed="home"
-        actions={
-          <Link to="/explore" className={buttonVariants({ variant: 'secondary' })}>
-            <Compass className="h-4 w-4" aria-hidden="true" /> Discover new games
-          </Link>
-        }
-      />
-
-      {/* Resume card */}
-      <ResumeCard dashboard={dashboard} />
+      <HomeHero username={user?.username} dashboard={dashboard} playNext={playNext} />
 
       {/* Recommended for you */}
       <RecommendationWidget />
@@ -73,46 +58,6 @@ export default function Home() {
       {/* Backlog health with Recharts */}
       <BacklogHealth dashboard={dashboard} backlogHealth={backlogHealth} />
     </section>
-  );
-}
-
-// ── Resume card ─────────────────────────────────────────────────────────────
-
-function ResumeCard({ dashboard }) {
-  if (dashboard.status === 'loading') return <div className="h-32 rounded-[var(--radius-card)] bg-[var(--surface)] animate-pulse" />;
-  if (dashboard.status === 'error') return null; // silent: resume card is bonus UX
-  const card = dashboard.data?.resumeCard;
-  if (!card) return null;
-
-  return (
-    <ArtPanel
-      as={Link}
-      to={`/library/${card.entryId}`}
-      art={card}
-      seed="home-resume"
-      className="group flex gap-4 p-4 transition-colors hover:border-accent"
-    >
-      {card.cover && (
-        <CoverImage cover={card.cover} title={card.title} alt={card.title} compact className="w-16 h-20 rounded-lg flex-shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">Continue playing</p>
-        <h2 className="font-bold font-heading text-lg truncate">{card.title}</h2>
-
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full bg-[var(--border)]">
-            <div
-              className="h-full rounded-full bg-[var(--accent)] transition-all"
-              style={{ width: `${card.manualProgress}%` }}
-            />
-          </div>
-          <span className="text-xs text-[var(--text-muted)] tabular-nums">{card.manualProgress}%</span>
-        </div>
-
-        {card.note && <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-1 italic">&ldquo;{card.note}&rdquo;</p>}
-      </div>
-      <ChevronRight size={18} className="text-[var(--text-muted)] self-center group-hover:text-[var(--accent)] transition-colors flex-shrink-0" />
-    </ArtPanel>
   );
 }
 

@@ -22,6 +22,7 @@ import { ActivityList } from '@/components/feed/ActivityList.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
+import { TILE } from '@/components/profile/FavouriteTiles.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -172,58 +173,53 @@ function FavouriteShowcase({ games = [], isSelf }) {
           Favourite 4 Showcase
         </h2>
         {isSelf && (
-          <Link to="/profile" className="text-xs text-accent hover:underline">
+          <Link to="/profile" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline">
             Manage favourites
           </Link>
         )}
       </div>
 
       {games.length === 0 ? (
-        <div className="rounded-card border border-dashed border-border bg-surface/50 p-6 text-center">
-          <p className="text-sm text-text-muted mb-3">Showcase your all-time favourite games on your profile.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-border bg-bg/50 px-4 py-3">
+          <p className="text-sm text-text-muted">Showcase your all-time favourite games on your profile.</p>
           <Link to="/profile" className={buttonVariants({ variant: 'secondary' })}>
             Pick your favourite games
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <ul className="flex flex-wrap gap-3">
           {games.map((game) => (
-            <Link
-              key={game.id}
-              to={`/games/${game.slug}`}
-              className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-all hover:border-accent hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="aspect-[3/4] w-full overflow-hidden bg-surface-raised relative">
-                <CoverImage
-                  cover={game.cover}
-                  title={game.title}
-                  alt={game.title}
-                  className="h-full w-full transition-transform duration-300 group-hover:scale-105"
-                />
-                {game.ratingAvg != null && (
-                  <div className="absolute top-2 right-2 rounded-full bg-black/75 px-2 py-0.5 backdrop-blur text-[11px] font-semibold text-[var(--reward)] flex items-center gap-1 shadow">
-                    ★ {game.ratingAvg.toFixed(1)}
-                  </div>
-                )}
-              </div>
-              <div className="p-3">
-                <p className="font-semibold text-xs truncate group-hover:text-accent transition-colors" title={game.title}>
+            <li key={game.id} className={TILE}>
+              <Link to={`/games/${game.slug}`} className="group flex flex-col gap-1.5">
+                <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised transition-colors group-hover:border-accent">
+                  <CoverImage
+                    cover={game.cover}
+                    title={game.title}
+                    alt=""
+                    compact
+                    className="h-full w-full transition-transform duration-300 motion-safe:group-hover:scale-105"
+                  />
+                  {game.ratingAvg > 0 && (
+                    <span className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full bg-bg px-2 py-0.5 text-xs font-semibold text-reward">
+                      <span aria-hidden="true">★</span>
+                      <span>
+                        {game.ratingAvg.toFixed(1)}
+                        <span className="sr-only"> out of 5</span>
+                      </span>
+                    </span>
+                  )}
+                </span>
+                <span className="line-clamp-2 text-xs font-medium leading-snug group-hover:text-accent" title={game.title}>
                   {game.title}
-                </p>
-                {game.genres?.length > 0 && (
-                  <p className="text-[11px] text-text-muted mt-0.5 truncate">
-                    {game.genres.slice(0, 2).join(' · ')}
-                  </p>
-                )}
-              </div>
-            </Link>
+                </span>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </ArtPanel>
   );
 }
-
 function TrophyShelf({ stats }) {
   if (!stats) return null;
 

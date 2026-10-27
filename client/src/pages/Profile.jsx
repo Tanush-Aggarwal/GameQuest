@@ -1,28 +1,25 @@
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ExternalLink,
-  Plus,
   Save,
-  Search,
   ShieldOff,
   Sparkles,
   User,
-  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PROFILE_PRIVACY } from '@gamequest/shared';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
-import { CoverImage } from '@/components/games/GameCard.jsx';
+import { FavouriteTiles, SLOT_COUNT } from '@/components/profile/FavouriteTiles.jsx';
+import { FavouritePicker } from '@/components/profile/FavouritePicker.jsx';
 import { SteamLinkCard } from '@/components/steam/SteamLinkCard.jsx';
 import { ArtHeader, ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
-import { searchGames } from '@/services/gamesApi.js';
 import {
   getProfile,
   listBlocked,
@@ -57,49 +54,63 @@ function EditProfileSection({ username }) {
 function ProfileEditor({ initialProfile, onSaved }) {
   const [avatar, setAvatar] = useState(initialProfile?.avatar ?? '');
   const [bio, setBio] = useState(initialProfile?.bio ?? '');
-  const [favourites, setFavourites] = useState(initialProfile?.favouriteGames ?? []);
+  // Four slots, each a game or empty. Saving keeps their order and drops the empty ones.
+  const [slots, setSlots] = useState(() => Array.from({ length: SLOT_COUNT }, (_, i) => initialProfile?.favouriteGames?.[i] ?? null));
+  const [openSlot, setOpenSlot] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const chosenIds = new Set(slots.filter(Boolean).map((g) => g.id));
+  const filled = slots.filter(Boolean).length;
 
-  // Search for favourite games
-  const [query, setQuery] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
+  // Keyboard focus: whenever a tile's button is replaced (picker closed, game picked, game removed) the focused
+  // element disappears, so remember which slot's button should take focus and give it focus after the render.
+  const tilesRef = useRef(null);
+  const focusSlot = useRef(null);
+  useEffect(() => {
+    if (focusSlot.current === null) return;
+    const button = tilesRef.current?.querySelector(`[data-slot-action="${focusSlot.current}"]`);
+    focusSlot.current = null;
+    button?.focus();
+  });
 
-  async function handleSearch(q) {
-    setQuery(q);
-    if (q.trim().length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    setSearching(true);
-    try {
-      const res = await searchGames({ q: q.trim(), limit: 6 });
-      setSearchResults(res.items ?? []);
-    } catch {
-      // silent in quick search
-    } finally {
-      setSearching(false);
-    }
+  // Unsaved edits: a hint next to Save, and the browser's own "leave this page?" prompt.
+  const saved = initialProfile ?? {};
+  const savedIds = (saved.favouriteGames ?? []).slice(0, SLOT_COUNT).map((g) => g.id).join(',');
+  const dirty =
+    bio.trim() !== (saved.bio ?? '') ||
+    (avatar.trim() || null) !== (saved.avatar ?? null) ||
+    slots.filter(Boolean).map((g) => g.id).join(',') !== savedIds;
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const warn = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  function openPicker(index) {
+    setOpenSlot(index);
   }
 
-  function addFavourite(game) {
-    if (favourites.length >= 4) {
-      toast.error('You can showcase up to 4 favourite games');
-      return;
-    }
-    if (favourites.some((g) => g.id === game.id)) {
-      toast.info('Game already in your favourites');
-      return;
-    }
-    setFavourites([...favourites, game]);
-    setQuery('');
-    setSearchResults([]);
+  function closePicker() {
+    focusSlot.current = openSlot; // back to the tile that opened it
+    setOpenSlot(null);
   }
 
-  function removeFavourite(gameId) {
-    setFavourites(favourites.filter((g) => g.id !== gameId));
+  function chooseFavourite(game) {
+    setSlots((current) => current.map((g, i) => (i === openSlot ? game : g)));
+    setAnnouncement(`Added ${game.title} to favourite ${openSlot + 1}`);
+    focusSlot.current = openSlot; // that tile is now filled: focus its remove button
+    setOpenSlot(null);
   }
 
+  function removeFavourite(index) {
+    setAnnouncement(`Removed ${slots[index]?.title ?? 'game'} from favourites`);
+    setSlots((current) => current.map((g, i) => (i === index ? null : g)));
+    focusSlot.current = index; // the slot is empty now: focus its add button
+  }
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
@@ -107,7 +118,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
       await updateProfile({
         avatar: avatar.trim() || null,
         bio: bio.trim(),
-        favouriteGames: favourites.map((g) => g.id),
+        favouriteGames: slots.filter(Boolean).map((g) => g.id),
       });
       toast.success('Profile updated successfully');
       if (onSaved) onSaved();
@@ -184,98 +195,35 @@ function ProfileEditor({ initialProfile, onSaved }) {
           />
         </div>
 
-        {/* Favourite 4 Games */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
+        {/* Favourite 4: compact cover-sized tiles, a picker opens for the slot you click */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <span className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-[var(--reward)]" />
+              <span className="flex items-center gap-1.5 text-sm font-semibold">
+                <Sparkles className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
                 Favourite 4 Showcase
               </span>
-              <p className="text-xs text-text-muted mt-0.5">Pick up to 4 games to feature on your profile showcase</p>
+              <p className="mt-0.5 text-xs text-text-muted">Pick up to 4 games to feature on your profile</p>
             </div>
-            <span className="text-xs font-medium text-text-muted">{favourites.length}/4</span>
+            <span className="text-xs font-medium tabular-nums text-text-muted">{filled}/{SLOT_COUNT}</span>
           </div>
 
-          {/* Slots */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            {[0, 1, 2, 3].map((idx) => {
-              const game = favourites[idx];
-              if (game) {
-                return (
-                  <div key={game.id} className="group relative aspect-[3/4] rounded-card border border-border overflow-hidden bg-surface-raised">
-                    <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-full w-full" />
-                    <button
-                      type="button"
-                      onClick={() => removeFavourite(game.id)}
-                      className="absolute top-1.5 right-1.5 rounded-full bg-black/80 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                      aria-label={`Remove ${game.title}`}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                      <p className="text-[11px] font-semibold text-white truncate">{game.title}</p>
-                    </div>
-                  </div>
-                );
-              }
-              return (
-                <div
-                  key={`empty-${idx}`}
-                  className="aspect-[3/4] rounded-card border border-dashed border-border bg-bg flex flex-col items-center justify-center p-3 text-center text-text-muted"
-                >
-                  <Plus className="h-6 w-6 text-border mb-1" />
-                  <span className="text-[11px]">Slot {idx + 1}</span>
-                </div>
-              );
-            })}
+          <div ref={tilesRef}>
+            <FavouriteTiles slots={slots} openSlot={openSlot} onOpen={openPicker} onRemove={removeFavourite} />
           </div>
+          <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
 
-          {/* Search to add */}
-          {favourites.length < 4 && (
-            <div className="relative">
-              <div className="flex items-center rounded-control border border-border bg-bg px-3 focus-within:ring-1 focus-within:ring-accent">
-                <Search className="h-4 w-4 text-text-muted mr-2 flex-shrink-0" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Search catalog to add a favourite game..."
-                  className="w-full min-h-11 bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
-                />
-              </div>
-
-              {/* Suggestions dropdown */}
-              {searchResults.length > 0 && (
-                <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-card border border-border bg-surface-raised shadow-xl p-1">
-                  {searchResults.map((game) => (
-                    <button
-                      key={game.id}
-                      type="button"
-                      onClick={() => addFavourite(game)}
-                      className="flex w-full items-center gap-3 rounded-control p-2 text-left hover:bg-surface text-sm transition-colors"
-                    >
-                      <CoverImage cover={game.cover} title={game.title} compact className="h-10 w-8 rounded flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-xs truncate">{game.title}</p>
-                        {game.genres?.length > 0 && (
-                          <p className="text-[11px] text-text-muted truncate">{game.genres.join(', ')}</p>
-                        )}
-                      </div>
-                      <Plus className="h-4 w-4 text-accent flex-shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              )}
-              {searching && (
-                <p className="text-xs text-text-muted mt-1 px-1">Searching...</p>
-              )}
-            </div>
+          {openSlot !== null && (
+            <FavouritePicker slot={openSlot} chosenIds={chosenIds} onPick={chooseFavourite} onClose={closePicker} />
           )}
         </div>
       </div>
-
-      <div className="flex justify-end pt-2 border-t border-border">
+      <div className="flex items-center justify-end gap-3 border-t border-border pt-2">
+        {dirty && (
+          <span role="status" className="text-xs text-text-muted">
+            Unsaved changes
+          </span>
+        )}
         <Button type="submit" disabled={saving}>
           <Save className="h-4 w-4" aria-hidden="true" />
           {saving ? 'Saving...' : 'Save Profile'}

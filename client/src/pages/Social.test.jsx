@@ -301,7 +301,9 @@ describe('UserProfile', () => {
     renderAt('/u/alex');
     expect(await screen.findByText('Favourite 4 Showcase')).toBeInTheDocument();
     expect(screen.getByText('Celeste')).toBeInTheDocument();
-    expect(screen.getByText('★ 4.8')).toBeInTheDocument();
+    // the rating is read as "4.8 out of 5"; the star is decoration
+    expect(screen.getByText('4.8', { exact: false, selector: 'span' })).toHaveTextContent('4.8 out of 5');
+    expect(screen.getByText('Celeste').closest('a')).toHaveAttribute('href', expect.stringContaining('/games/'));
     expect(screen.getByText(/Indie & deckbuilder enthusiast/)).toBeInTheDocument();
     expect(screen.getByText('Trophies & Milestones')).toBeInTheDocument();
     expect(screen.getByText('Veteran Collector')).toBeInTheDocument();

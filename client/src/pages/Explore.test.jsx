@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
 
 vi.mock('@/services/gamesApi.js', () => ({ searchGames: vi.fn(), getGame: vi.fn(), getGameFriends: vi.fn().mockResolvedValue([]), getTrailers: vi.fn().mockResolvedValue([]) }));
@@ -23,15 +23,17 @@ const game = (slug, title) => ({
   timeToBeat: { main: 20, extras: null, full: null },
 });
 
-const renderAt = (path) =>
-  render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/games/:slug" element={<Game />} />
-      </Routes>
-    </MemoryRouter>,
+const renderAt = (path) => {
+  const router = createMemoryRouter(
+    [
+      { path: '/explore', element: <Explore /> },
+      { path: '/games/:slug', element: <Game /> },
+    ],
+    { initialEntries: [path] },
   );
+  render(<RouterProvider router={router} />);
+  return { router };
+};
 
 const { listLibrary } = await import('@/services/libraryApi.js');
 const { listReviewsForGame } = await import('@/services/reviewApi.js');
@@ -117,6 +119,24 @@ describe('Explore', () => {
     expect(await screen.findByRole('link', { name: /Beta/ })).toBeInTheDocument();
     expect(mainCalls().at(-1)).toEqual(expect.objectContaining({ cursor: 'a' }));
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+  });
+});
+
+describe('Explore search box follows the URL', () => {
+  it('shows the new query when the URL changes from outside, and does not undo it', async () => {
+    mockCatalog({ main: { items: [game('a', 'Alpha')], nextCursor: null, warnings: [] } });
+    const { router } = renderAt('/explore?q=mario');
+    const box = await screen.findByRole('searchbox', { name: 'Search games' });
+    expect(box).toHaveValue('mario');
+
+    await act(async () => {
+      await router.navigate('/explore?q=zelda');
+    });
+    expect(await screen.findByRole('searchbox', { name: 'Search games' })).toHaveValue('zelda');
+    // the debounce must not write the old text back into the URL
+    await new Promise((r) => setTimeout(r, 450));
+    expect(router.state.location.search).toBe('?q=zelda');
+    expect(mainCalls().at(-1)).toEqual(expect.objectContaining({ q: 'zelda' }));
   });
 });
 

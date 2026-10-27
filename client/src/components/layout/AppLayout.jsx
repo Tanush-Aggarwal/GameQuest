@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
-import { TopNav } from './TopNav.jsx';
+import { SideRail } from './SideRail.jsx';
+import { TopBar } from './TopBar.jsx';
 import { BottomTabBar } from './BottomTabBar.jsx';
 
 export function PageSkeleton() {
@@ -13,6 +14,8 @@ export function PageSkeleton() {
   );
 }
 
+// Desktop: a 72 px rail on the left, a slim bar on top, the page in between. Mobile: the slim bar on top
+// and the tab bar at the bottom.
 export function AppLayout() {
   return (
     <div className="min-h-screen">
@@ -22,12 +25,15 @@ export function AppLayout() {
       >
         Skip to content
       </a>
-      <TopNav />
-      <main id="main" className="mx-auto max-w-6xl px-4 pb-24 pt-6 md:pb-10">
-        <Suspense fallback={<PageSkeleton />}>
-          <Outlet />
-        </Suspense>
-      </main>
+      <SideRail />
+      <div className="md:pl-[72px]">
+        <TopBar />
+        <main id="main" className="mx-auto max-w-6xl px-4 pb-24 pt-6 md:pb-10">
+          <Suspense fallback={<PageSkeleton />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
       <BottomTabBar />
     </div>
   );

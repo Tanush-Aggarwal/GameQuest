@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
 import { AuthContext } from '@/features/auth/AuthContext.jsx';
@@ -40,11 +40,17 @@ describe('route guards', () => {
   it('renders protected pages for signed-in users, with both navs', async () => {
     renderAt('/library', { status: 'authenticated', user });
     expect(await screen.findByRole('heading', { name: 'Library' })).toBeInTheDocument();
-    // top nav + mobile tab bar each expose the five destinations
+    // side rail (desktop) + bottom tab bar (mobile): each is a "Main" nav, one is hidden by CSS at any width
     const navs = screen.getAllByRole('navigation', { name: 'Main' });
     expect(navs).toHaveLength(2);
     for (const label of ['Home', 'Library', 'Explore', 'Friends', 'Profile']) {
       expect(screen.getAllByRole('link', { name: label })).toHaveLength(2);
+    }
+    // the rail also has the two destinations that do not fit in the five mobile tabs
+    const [rail, tabs] = navs; // DOM order: rail first
+    for (const label of ['Collections', 'Sessions']) {
+      expect(within(rail).getAllByRole('link', { name: label })).toHaveLength(1);
+      expect(within(tabs).queryByRole('link', { name: label })).not.toBeInTheDocument();
     }
     expect(screen.getAllByRole('link', { name: 'Library' }).every((l) => l.getAttribute('aria-current') === 'page')).toBe(true);
   });

@@ -57,6 +57,13 @@ export default function Explore() {
   const selectedGenre = params.get('genre') ?? 'all';
 
   const [text, setText] = useState(q);
+  // When the URL's query changes from outside (back/forward, a link), show it in the box. The box's own
+  // debounced writes come back equal to `text`, so they never reset what the user is typing.
+  const [seenQ, setSeenQ] = useState(q);
+  if (q !== seenQ) {
+    setSeenQ(q);
+    if (text.trim() !== q) setText(q);
+  }
   const [state, setState] = useState({
     status: 'loading',
     items: [],

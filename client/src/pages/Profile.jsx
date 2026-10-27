@@ -8,7 +8,8 @@ import {
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { PROFILE_PRIVACY } from '@gamequest/shared';
+import { PROFILE_PRIVACY, deleteAccountSchema } from '@gamequest/shared';
+import { deleteAccount } from '@/services/accountApi.js';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -304,6 +305,102 @@ function BlockedPlayers() {
   );
 }
 
+function DeleteAccountSection({ username }) {
+  const { logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [confirmInput, setConfirmInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleDelete(e) {
+    e.preventDefault();
+    setError('');
+    const parsed = deleteAccountSchema.safeParse({ confirmUsername: confirmInput });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message || 'Invalid username');
+      return;
+    }
+    if (confirmInput.trim() !== username) {
+      setError(`Username must match "${username}" exactly`);
+      return;
+    }
+    setLoading(true);
+    try {
+      await deleteAccount(confirmInput.trim());
+      toast.success('Your account has been deleted');
+      await logout();
+      window.location.href = '/login';
+    } catch (err) {
+      setError(getErrorInfo(err).message || 'Failed to delete account');
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4 rounded-card border border-danger/30 bg-danger/5 p-5">
+      <div>
+        <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-danger">
+          Danger Zone
+        </h3>
+        <p className="mt-1 text-xs text-text-muted">
+          Permanently delete your account, game library, reviews, collections, and activity. This action is irreversible.
+        </p>
+      </div>
+
+      {!open ? (
+        <Button
+          variant="secondary"
+          onClick={() => setOpen(true)}
+          className="w-fit border-danger/40 text-danger hover:bg-danger/10"
+        >
+          Delete account…
+        </Button>
+      ) : (
+        <form onSubmit={handleDelete} className="flex flex-col gap-3 rounded-control border border-danger/40 bg-surface p-4">
+          <p className="text-xs text-text">
+            To confirm deletion, type your username <strong className="font-mono text-danger">{username}</strong> below:
+          </p>
+          <input
+            type="text"
+            value={confirmInput}
+            onChange={(e) => setConfirmInput(e.target.value)}
+            placeholder={username}
+            autoFocus
+            aria-label="Confirm username to delete account"
+            className="rounded-control border border-border bg-bg px-3 py-2 text-sm text-text focus:border-danger focus:outline-none"
+          />
+          {error && (
+            <p role="alert" className="text-xs text-danger">
+              {error}
+            </p>
+          )}
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              type="submit"
+              disabled={loading || confirmInput.trim() !== username}
+              className="bg-danger text-white hover:bg-danger/90 disabled:opacity-50"
+            >
+              {loading ? 'Deleting…' : 'Permanently delete account'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={loading}
+              onClick={() => {
+                setOpen(false);
+                setConfirmInput('');
+                setError('');
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 // One settings section: a heading on game art, with the section's content inside.
 function SettingsSection({ id, title, seed, children }) {
   return (
@@ -380,6 +477,13 @@ export default function Profile() {
       <SettingsSection id="blocked-title" title="Blocked Players" seed="profile-blocked">
         <BlockedPlayers />
       </SettingsSection>
+
+      {/* Danger Zone: Delete Account */}
+      {user && (
+        <SettingsSection id="danger-title" title="Delete Account" seed="profile-danger">
+          <DeleteAccountSection username={user.username} />
+        </SettingsSection>
+      )}
     </section>
   );
 }

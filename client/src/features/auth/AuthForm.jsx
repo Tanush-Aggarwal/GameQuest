@@ -15,7 +15,7 @@ function fieldErrorsFromZod(issues) {
 
 // Shared by the login and register pages: Zod validation (same schemas as the API), field
 // errors, a pending state and a form-level error for failures that aren't about one field.
-export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer }) {
+export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer, termsCheckbox }) {
   const [values, setValues] = useState(() => Object.fromEntries(fields.map((f) => [f.name, ''])));
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -72,6 +72,34 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer 
             error={errors[f.name]}
           />
         ))}
+        {termsCheckbox && (
+          <div className="flex flex-col gap-1 py-1">
+            <label className="flex items-start gap-2.5 text-xs text-text-muted cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="acceptTerms"
+                checked={Boolean(values.acceptTerms)}
+                onChange={(e) => setValues((v) => ({ ...v, acceptTerms: e.target.checked ? true : undefined }))}
+                className="mt-0.5 h-4 w-4 rounded border-border bg-surface text-accent focus:ring-accent"
+              />
+              <span>
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" className="text-accent underline underline-offset-2">
+                  Terms
+                </Link>{' '}
+                and{' '}
+                <Link to="/privacy" target="_blank" className="text-accent underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+              </span>
+            </label>
+            {errors.acceptTerms && (
+              <p role="alert" className="text-xs text-danger">
+                {errors.acceptTerms}
+              </p>
+            )}
+          </div>
+        )}
         {formError && (
           <p role="alert" className="text-sm text-danger">
             {formError}

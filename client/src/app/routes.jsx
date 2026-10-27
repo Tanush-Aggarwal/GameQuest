@@ -18,9 +18,12 @@ const UserProfile = lazy(() => import('@/pages/UserProfile.jsx'));
 const Sessions = lazy(() => import('@/pages/Sessions.jsx'));
 const SessionNew = lazy(() => import('@/pages/SessionNew.jsx'));
 const Session = lazy(() => import('@/pages/Session.jsx'));
+const Legal = lazy(() => import('@/pages/Legal.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
 export const routes = [
+  { path: '/terms', element: <Legal type="terms" /> },
+  { path: '/privacy', element: <Legal type="privacy" /> },
   {
     element: <PublicOnlyRoute />,
     children: [

@@ -83,4 +83,21 @@ describe('Register form', () => {
     expect(await screen.findByLabelText('Password')).toHaveAttribute('aria-invalid', 'true');
     expect(value.register).not.toHaveBeenCalled();
   });
+
+  it('submits acceptTerms: true when the checkbox is checked', async () => {
+    const value = renderPage(Register);
+    await userEvent.type(screen.getByLabelText('Username'), 'neo_1');
+    await userEvent.type(screen.getByLabelText('Email'), 'neo@example.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'valid-password-1');
+    await userEvent.click(screen.getByRole('checkbox', { name: /terms/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    await waitFor(() =>
+      expect(value.register).toHaveBeenCalledWith({
+        username: 'neo_1',
+        email: 'neo@example.com',
+        password: 'valid-password-1',
+        acceptTerms: true,
+      }),
+    );
+  });
 });

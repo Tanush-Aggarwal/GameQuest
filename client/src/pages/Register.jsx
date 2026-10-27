@@ -16,6 +16,7 @@ export default function Register() {
       submitLabel="Create account"
       fields={FIELDS}
       schema={registerSchema}
+      termsCheckbox={true}
       onSubmit={register}
       footer={
         <>

@@ -13,7 +13,7 @@ const CARD = 'w-40 shrink-0 snap-start sm:w-48';
 
 function RailSkeleton() {
   return (
-    <div role="status" aria-label="Loading suggestions" className="flex gap-4 overflow-hidden pb-2">
+    <div role="status" aria-label="Loading suggestions" className="flex min-h-[22rem] gap-4 overflow-hidden pb-2 sm:min-h-[26rem]">
       {Array.from({ length: 5 }, (_, i) => (
         <div key={i} className={CARD} aria-hidden="true">
           <div className="aspect-[3/4] w-full animate-pulse rounded-card bg-surface-raised" />
@@ -29,47 +29,48 @@ function RailSkeleton() {
 // single clipped line before), because "why this game" is the point of the section.
 export function PlayNextCard({ item }) {
   const { previewGame, clearPreview } = useAmbient();
-  const whyId = `why-${item.entryId}`;
   const progress = item.status === 'playing' && item.manualProgress > 0 ? item.manualProgress : 0;
   // "~12h to beat" is already shown under the title, so it is not repeated as a chip
   const reasons = (item.reasons ?? []).filter((r) => !(item.timeToBeatMain != null && /to beat$/.test(r)));
-  // A short, complete name for the link; the reasons are attached as its description instead of being read as its name.
-  const name = [item.title, STATUS_META[item.status]?.label, progress ? `${progress}% done` : null].filter(Boolean).join(', ');
+  // The link is the cover and the title: its name is its visible text (status, title, progress), never a different label.
+  // The longer "why" sits under it as plain text, so it is not read out as part of the link's name.
   return (
     <li className={CARD}>
-      <Link
-        to={`/library/${item.entryId}`}
-        aria-label={name}
-        aria-describedby={reasons.length ? whyId : undefined}
+      <div
+        className="group flex h-full flex-col gap-2"
         onMouseEnter={() => previewGame(item)}
         onFocus={() => previewGame(item)}
         onMouseLeave={clearPreview}
         onBlur={clearPreview}
-        className="group flex h-full flex-col gap-2 rounded-card"
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-transform group-hover:border-accent motion-safe:group-hover:-translate-y-0.5">
-          <CoverImage
-            cover={item.cover}
-            title={item.title}
-            alt=""
-            sizes="(min-width: 640px) 192px, 160px"
-            className="h-full w-full"
-          />
-          {/* solid pill: the status colours must keep 4.5:1 even over a white cover */}
-          <span className="absolute left-2 top-2 rounded-full bg-bg px-2 py-1">
-            <StatusBadge status={item.status} />
-          </span>
-          {progress > 0 && (
-            <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2 bg-bg/80">
-              <div className="h-full bg-accent" style={{ width: `${progress}%` }} />
-            </div>
-          )}
-        </div>
+        <Link to={`/library/${item.entryId}`} className="flex flex-col gap-2 rounded-card">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-transform group-hover:border-accent motion-safe:group-hover:-translate-y-0.5">
+            <CoverImage
+              cover={item.cover}
+              title={item.title}
+              alt=""
+              sizes="(min-width: 640px) 192px, 160px"
+              className="h-full w-full"
+            />
+            {/* solid pill: the status colours must keep 4.5:1 even over a white cover */}
+            <span className="absolute left-2 top-2 rounded-full bg-bg px-2 py-1">
+              <StatusBadge status={item.status} />
+            </span>
+            {progress > 0 && (
+              <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2 bg-bg/80">
+                <div className="h-full bg-accent" style={{ width: `${progress}%` }} />
+              </div>
+            )}
+          </div>
+          <p className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-accent">
+            {item.title}
+            {progress > 0 && <span className="sr-only">, {progress}% done</span>}
+          </p>
+        </Link>
         <div className="flex min-w-0 flex-col gap-2">
-          <p className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-accent">{item.title}</p>
           {item.timeToBeatMain != null && <p className="text-xs tabular-nums text-text-muted">~{item.timeToBeatMain}h to beat</p>}
           {reasons.length > 0 && (
-            <ul id={whyId} aria-label={`Why ${item.title}`} className="flex flex-wrap gap-1">
+            <ul aria-label={`Why ${item.title}`} className="flex flex-wrap gap-1">
               {reasons.map((reason) => (
                 <li key={reason} className="rounded-full border border-border/70 bg-bg/70 px-2 py-0.5 text-xs leading-snug text-text">
                   {reason}
@@ -78,11 +79,10 @@ export function PlayNextCard({ item }) {
             </ul>
           )}
         </div>
-      </Link>
+      </div>
     </li>
   );
 }
-
 // "What to play next" as a rail of large covers on the first suggestion's art. `playNext` is a useAsync result.
 export function PlayNextSection({ playNext }) {
   const rail = useRef(null);

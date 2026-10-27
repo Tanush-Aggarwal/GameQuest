@@ -181,7 +181,7 @@ function PickScoreCard({ scoreData, loading }) {
         </div>
         <div className="h-8 w-px bg-[var(--border)]" />
         <div className="flex flex-col items-center">
-          <span className="font-bold tabular-nums text-lg text-[var(--accent)]">{acceptRate}%</span>
+          <span className="font-bold tabular-nums text-lg text-accent">{acceptRate}%</span>
           <span className="text-xs text-[var(--text-muted)]">Accept Rate</span>
         </div>
         <div className="h-8 w-px bg-[var(--border)]" />
@@ -230,7 +230,7 @@ function RecommendationCard({ item, isInbox, onRespond, onDelete }) {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Link
               to={game ? `/games/${game.slug}` : '#'}
-              className="text-base font-bold font-heading hover:text-[var(--accent)] transition-colors truncate"
+              className="text-base font-bold font-heading hover:text-accent transition-colors truncate"
             >
               {game?.title ?? 'Unknown Game'}
             </Link>
@@ -242,7 +242,7 @@ function RecommendationCard({ item, isInbox, onRespond, onDelete }) {
                   ? 'bg-[var(--success)]/15 text-[var(--success)] border border-[var(--success)]/30'
                   : item.status === 'declined'
                   ? 'bg-[var(--danger)]/15 text-[var(--danger)] border border-[var(--danger)]/30'
-                  : 'bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30'
+                  : 'bg-[var(--accent)]/15 text-accent border border-[var(--accent)]/30'
               }`}
             >
               {item.status}

@@ -3,6 +3,7 @@ import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { listInbox } from '@/services/recommendationsApi.js';
 
@@ -10,6 +11,14 @@ export function RecommendationWidget() {
   const load = useCallback((signal) => listInbox({ status: 'pending', limit: 1 }, { signal }), []);
   const { status, data } = useAsync(load);
 
+  // while it loads, a block of the loaded height holds the place, so what is below does not jump down when it arrives
+  if (status === 'loading') {
+    return (
+      <div role="status" aria-label="Loading recommendation">
+        <Skeleton className="h-[6.25rem] w-full rounded-card" />
+      </div>
+    );
+  }
   if (status !== 'success' || !data?.items?.length) return null;
 
   const rec = data.items[0];
@@ -17,12 +26,12 @@ export function RecommendationWidget() {
   return (
     <ArtPanel as="div" art={rec.game} seed="home-recommendation" className="flex flex-col gap-2 border-accent/30 p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--reward)]">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
           <Sparkles className="h-4 w-4" /> Recommendation for you
         </div>
         <Link
           to="/friends?tab=recommendations"
-          className="flex items-center gap-0.5 text-xs font-medium text-[var(--accent)] hover:underline"
+          className="flex items-center gap-0.5 text-xs font-medium text-accent hover:underline"
         >
           View all <ChevronRight className="h-3.5 w-3.5" />
         </Link>

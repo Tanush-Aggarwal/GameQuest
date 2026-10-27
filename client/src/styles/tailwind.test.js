@@ -70,6 +70,15 @@ describe('design tokens in Tailwind', () => {
     expect(css).toMatch(/@supports \(backdrop-filter: var\(--tw\)\)\s*\{\s*\.supports-\\\[backdrop-filter\\\]\\:bg-surface\\\/70/);
   });
 
+  it('accent is the brand colour for fills and borders, and the readable lighter one for text', async () => {
+    const css = await compile('text-accent bg-accent border-accent text-accent-fg hover:text-accent bg-accent/15');
+    expect(css).toMatch(/\.text-accent\s*\{[^}]*var\(--accent-text\)/);
+    expect(css).toMatch(/\.bg-accent\s*\{[^}]*var\(--accent\)/);
+    expect(css).toMatch(/\.border-accent\s*\{[^}]*var\(--accent\)/);
+    expect(css).toMatch(/\.text-accent-fg\s*\{[^}]*var\(--accent-fg\)/);
+    expect(css).toMatch(/\.bg-accent\\\/15\s*\{[^}]*color-mix\(in srgb, var\(--accent\) calc\(0\.15/);
+  });
+
   it('every colour the UI uses is a token, and none is a raw palette value', () => {
     const colors = config.theme.extend.colors;
     expect(Object.keys(colors)).toEqual(expect.arrayContaining(['bg', 'surface', 'surface-raised', 'border', 'text', 'text-muted', 'accent', 'reward']));

@@ -154,7 +154,7 @@ describe('opening the palette from the app shell', () => {
     const u = userEvent.setup();
     renderShell();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    const trigger = screen.getByRole('button', { name: 'Quick search' });
+    const trigger = screen.getByRole('button', { name: /^Quick search/ });
     trigger.focus();
     await u.keyboard('{Control>}k{/Control}');
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe('opening the palette from the app shell', () => {
 
   it('the Quick search button opens it too', async () => {
     renderShell();
-    await userEvent.click(screen.getByRole('button', { name: 'Quick search' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Quick search/ }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 });

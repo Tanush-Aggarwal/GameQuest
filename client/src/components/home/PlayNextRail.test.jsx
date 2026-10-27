@@ -45,24 +45,25 @@ describe('PlayNextSection', () => {
     const rail = screen.getByRole('list', { name: 'Suggested games' });
     const cards = within(rail).getAllByRole('link');
     expect(cards.map((c) => c.getAttribute('href'))).toEqual(['/library/e1', '/library/e2']);
+    const firstCard = within(rail).getAllByRole('listitem')[0];
 
     // every reason is its own visible chip, none clipped to a single line
-    const why = within(cards[0]).getByRole('list', { name: 'Why Game 1' });
+    const why = within(firstCard).getByRole('list', { name: 'Why Game 1' });
     expect(within(why).getAllByRole('listitem').map((l) => l.textContent)).toEqual(['Matches your taste (RPG)', 'Waiting 40 days']);
     expect(why.className).toMatch(/flex-wrap/);
     // the time to beat is shown once, under the title, not repeated as a chip
-    expect(within(cards[0]).getAllByText('~12h to beat')).toHaveLength(1);
+    expect(within(firstCard).getAllByText('~12h to beat')).toHaveLength(1);
   });
 
-  it('gives each link a short, complete name and describes it with the reasons', () => {
+  it('names each link by what it shows (status, title, progress), with the reasons beside it rather than inside its name', () => {
     renderRail(state('success', [item(1, { status: 'playing', manualProgress: 40, reasons: ['40% already done', 'Waiting 40 days'] }), item(2)]));
-    const first = screen.getByRole('link', { name: 'Game 1, Playing, 40% done' });
-    const why = within(first).getByRole('list', { name: 'Why Game 1' });
-    expect(first).toHaveAccessibleDescription('40% already done Waiting 40 days');
-    expect(first.getAttribute('aria-describedby')).toBe(why.id);
-    expect(screen.getByRole('link', { name: 'Game 2, Backlog' })).toBeInTheDocument();
+    const first = screen.getByRole('link', { name: 'Playing Game 1, 40% done' }); // no aria-label: the name is the visible text
+    expect(first).not.toHaveAttribute('aria-label');
+    const why = screen.getByRole('list', { name: 'Why Game 1' });
+    expect(first).not.toContainElement(why); // the long "why" is not read out as part of the link
+    expect(first.closest('li')).toContainElement(why);
+    expect(screen.getByRole('link', { name: 'Backlog Game 2' })).toBeInTheDocument();
   });
-
   it('is a rail of covers: wide cards, a snap-scrolling row, 3:4 covers', () => {
     renderRail(state('success', [item(1), item(2)]));
     const rail = screen.getByRole('list', { name: 'Suggested games' });
@@ -95,10 +96,9 @@ describe('PlayNextSection', () => {
 
   it('copes with a suggestion that has no reasons, no time to beat or no cover', () => {
     renderRail(state('success', [item(1, { reasons: [], timeToBeatMain: null, cover: null })]));
-    const card = screen.getByRole('link', { name: 'Game 1, Backlog' });
-    expect(within(card).queryByRole('list', { name: /Why/ })).not.toBeInTheDocument();
-    expect(card).not.toHaveAttribute('aria-describedby');
-    expect(within(card).queryByText(/to beat/)).not.toBeInTheDocument();
+    const card = screen.getByRole('link', { name: 'Backlog Game 1' });
+    expect(screen.queryByRole('list', { name: /Why/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/to beat/)).not.toBeInTheDocument();
     expect(within(card).getAllByText('Game 1').length).toBeGreaterThan(0); // title text, and the generated cover shows it too
   });
 

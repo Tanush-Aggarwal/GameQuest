@@ -1,12 +1,6 @@
-import { useCallback } from 'react';
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { lazy, Suspense, useCallback } from 'react';
+// Recharts is the largest dependency on this page and only draws one chart, so it loads on demand.
+const VelocityChart = lazy(() => import('@/components/home/VelocityChart.jsx'));
 import {
   Clock,
   Gamepad2,
@@ -18,6 +12,8 @@ import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getBacklogHealth, getDashboard, getPlayNext } from '@/services/progressApi.js';
 import { ErrorState } from '@/components/ui/states.jsx';
+import { Skeleton } from '@/components/ui/skeleton.jsx';
+import { SectionBoundary } from '@/components/ui/SectionBoundary.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
@@ -65,11 +61,10 @@ export default function Home() {
 
 function StatTiles({ dashboard }) {
   if (dashboard.status === 'loading') {
+    // the same height as the loaded panel, so nothing below moves when the numbers arrive
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-20 rounded-[var(--radius-card)] bg-[var(--surface)] animate-pulse" />
-        ))}
+      <div role="status" aria-label="Loading your library at a glance">
+        <Skeleton className="h-[8.25rem] w-full rounded-card" />
       </div>
     );
   }
@@ -98,24 +93,6 @@ function StatTiles({ dashboard }) {
 
 // ── Backlog health ──────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }) {
-  if (active && payload && payload.length) {
-    const formattedMonth = label ? new Date(`${label}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : label;
-    return (
-      <div className="rounded-card border border-border bg-surface p-2.5 shadow-xl text-xs space-y-1">
-        <p className="font-semibold text-text mb-1">{formattedMonth}</p>
-        {payload.map((entry) => (
-          <p key={entry.name} className="flex items-center gap-2 font-medium" style={{ color: entry.color }}>
-            <span className="capitalize">{entry.name}:</span>
-            <span className="tabular-nums font-bold">{entry.value}</span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-}
-
 function BacklogHealth({ dashboard, backlogHealth }) {
   const d = dashboard.data;
   const h = backlogHealth.data;
@@ -131,7 +108,7 @@ function BacklogHealth({ dashboard, backlogHealth }) {
     <ArtPanel aria-labelledby="backlog-health-title" seed="home-backlog" className="flex flex-col gap-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="backlog-health-title" className="font-semibold flex items-center gap-2 font-heading">
-          <Layers size={18} className="text-[var(--accent)]" />
+          <Layers size={18} className="text-accent" />
           Backlog Health & Velocity
         </h2>
         {h?.projectedClearMonths != null && (
@@ -191,39 +168,11 @@ function BacklogHealth({ dashboard, backlogHealth }) {
           </div>
 
           <div className="h-44 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--status-completed)" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="var(--status-completed)" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="formattedMonth" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
-                <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="added"
-                  stroke="var(--accent)"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorAdded)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="completed"
-                  stroke="var(--status-completed)"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorCompleted)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <SectionBoundary message="Couldn’t load the chart.">
+              <Suspense fallback={<div role="status" aria-label="Loading chart" className="h-full w-full" />}>
+                <VelocityChart chartData={chartData} />
+              </Suspense>
+            </SectionBoundary>
           </div>
         </div>
       )}

@@ -1,0 +1,795 @@
+[
+  {
+    "name": "login",
+    "url": "/login",
+    "width": 375,
+    "file": "login-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Log in"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "failed": [
+      "401 http://localhost:4001/api/v1/auth/me",
+      "401 http://localhost:4001/api/v1/auth/refresh"
+    ]
+  },
+  {
+    "name": "register",
+    "url": "/register",
+    "width": 375,
+    "file": "register-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Create your account"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "failed": [
+      "401 http://localhost:4001/api/v1/auth/me",
+      "401 http://localhost:4001/api/v1/auth/refresh"
+    ]
+  },
+  {
+    "name": "login",
+    "url": "/login",
+    "width": 768,
+    "file": "login-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Log in"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "failed": [
+      "401 http://localhost:4001/api/v1/auth/me",
+      "401 http://localhost:4001/api/v1/auth/refresh"
+    ]
+  },
+  {
+    "name": "register",
+    "url": "/register",
+    "width": 768,
+    "file": "register-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Create your account"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "failed": [
+      "401 http://localhost:4001/api/v1/auth/me",
+      "401 http://localhost:4001/api/v1/auth/refresh"
+    ]
+  },
+  {
+    "name": "login",
+    "url": "/login",
+    "width": 1440,
+    "file": "login-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Log in"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "failed": [
+      "401 http://localhost:4001/api/v1/auth/me",
+      "401 http://localhost:4001/api/v1/auth/refresh"
+    ]
+  },
+  {
+    "name": "register",
+    "url": "/register",
+    "width": 1440,
+    "file": "register-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Create your account"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "failed": [
+      "401 http://localhost:4001/api/v1/auth/me",
+      "401 http://localhost:4001/api/v1/auth/refresh"
+    ]
+  },
+  {
+    "name": "home",
+    "url": "/",
+    "width": 375,
+    "file": "home-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Welcome back, demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library",
+    "url": "/library",
+    "width": 375,
+    "file": "library-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Library"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "explore",
+    "url": "/explore",
+    "width": 375,
+    "file": "explore-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Explore Catalog"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "collections",
+    "url": "/collections",
+    "width": 375,
+    "file": "collections-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Collections"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "friends",
+    "url": "/friends",
+    "width": 375,
+    "file": "friends-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Friends"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "profile",
+    "url": "/profile",
+    "width": 375,
+    "file": "profile-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Profile & Settings"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "public-profile",
+    "url": "/u/demo",
+    "width": 375,
+    "file": "public-profile-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "sessions",
+    "url": "/sessions",
+    "width": 375,
+    "file": "sessions-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Sessions"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "session-new",
+    "url": "/sessions/new",
+    "width": 375,
+    "file": "session-new-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Schedule a session"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "not-found",
+    "url": "/this-page-does-not-exist",
+    "width": 375,
+    "file": "not-found-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Page not found"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library-entry",
+    "url": "/library/6adfdc83cdc320f845764c8b",
+    "width": 375,
+    "file": "library-entry-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "game",
+    "url": "/games/wuthering-waves",
+    "width": 375,
+    "file": "game-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "collection",
+    "url": "/collections/6adfbc8a128c903d861a4536",
+    "width": 375,
+    "file": "collection-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Massive RPGs"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "session",
+    "url": "/sessions/6adfa9275007f8b6abd6bf39",
+    "width": 375,
+    "file": "session-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Hades night"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "home",
+    "url": "/",
+    "width": 768,
+    "file": "home-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Welcome back, demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library",
+    "url": "/library",
+    "width": 768,
+    "file": "library-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Library"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "explore",
+    "url": "/explore",
+    "width": 768,
+    "file": "explore-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Explore Catalog"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "collections",
+    "url": "/collections",
+    "width": 768,
+    "file": "collections-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Collections"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "friends",
+    "url": "/friends",
+    "width": 768,
+    "file": "friends-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Friends"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "profile",
+    "url": "/profile",
+    "width": 768,
+    "file": "profile-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Profile & Settings"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "public-profile",
+    "url": "/u/demo",
+    "width": 768,
+    "file": "public-profile-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "sessions",
+    "url": "/sessions",
+    "width": 768,
+    "file": "sessions-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Sessions"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "session-new",
+    "url": "/sessions/new",
+    "width": 768,
+    "file": "session-new-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Schedule a session"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "not-found",
+    "url": "/this-page-does-not-exist",
+    "width": 768,
+    "file": "not-found-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Page not found"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library-entry",
+    "url": "/library/6adfdc83cdc320f845764c8b",
+    "width": 768,
+    "file": "library-entry-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "game",
+    "url": "/games/wuthering-waves",
+    "width": 768,
+    "file": "game-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "collection",
+    "url": "/collections/6adfbc8a128c903d861a4536",
+    "width": 768,
+    "file": "collection-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Massive RPGs"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "session",
+    "url": "/sessions/6adfa9275007f8b6abd6bf39",
+    "width": 768,
+    "file": "session-768.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Hades night"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "home",
+    "url": "/",
+    "width": 1440,
+    "file": "home-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Welcome back, demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library",
+    "url": "/library",
+    "width": 1440,
+    "file": "library-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Library"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "explore",
+    "url": "/explore",
+    "width": 1440,
+    "file": "explore-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Explore Catalog"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "collections",
+    "url": "/collections",
+    "width": 1440,
+    "file": "collections-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Collections"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "friends",
+    "url": "/friends",
+    "width": 1440,
+    "file": "friends-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Friends"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "profile",
+    "url": "/profile",
+    "width": 1440,
+    "file": "profile-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Profile & Settings"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "public-profile",
+    "url": "/u/demo",
+    "width": 1440,
+    "file": "public-profile-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "sessions",
+    "url": "/sessions",
+    "width": 1440,
+    "file": "sessions-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Sessions"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "session-new",
+    "url": "/sessions/new",
+    "width": 1440,
+    "file": "session-new-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Schedule a session"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "not-found",
+    "url": "/this-page-does-not-exist",
+    "width": 1440,
+    "file": "not-found-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Page not found"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library-entry",
+    "url": "/library/6adfdc83cdc320f845764c8b",
+    "width": 1440,
+    "file": "library-entry-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "game",
+    "url": "/games/wuthering-waves",
+    "width": 1440,
+    "file": "game-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "collection",
+    "url": "/collections/6adfbc8a128c903d861a4536",
+    "width": 1440,
+    "file": "collection-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Massive RPGs"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "session",
+    "url": "/sessions/6adfa9275007f8b6abd6bf39",
+    "width": 1440,
+    "file": "session-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Hades night"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "palette-open",
+    "url": "/",
+    "width": 375,
+    "file": "palette-open-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Welcome back, demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library-quick-menu",
+    "url": "/library",
+    "width": 375,
+    "file": "library-quick-menu-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Library"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "lightbox-open",
+    "url": "/games/wuthering-waves",
+    "width": 375,
+    "file": "lightbox-open-375.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "palette-open",
+    "url": "/",
+    "width": 1440,
+    "file": "palette-open-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Welcome back, demo"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "library-quick-menu",
+    "url": "/library",
+    "width": 1440,
+    "file": "library-quick-menu-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Library"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  },
+  {
+    "name": "lightbox-open",
+    "url": "/games/wuthering-waves",
+    "width": 1440,
+    "file": "lightbox-open-1440.jpg",
+    "title": "GameQuest",
+    "h1": [
+      "Wuthering Waves"
+    ],
+    "overflowX": 0,
+    "brokenImages": [],
+    "console": [],
+    "failed": []
+  }
+]

@@ -30,7 +30,7 @@ export function GameHero({ game, entryState, onRecommend }) {
               <div>
                 <dt className="sr-only">Community rating</dt>
                 <dd className="flex items-center gap-1 font-semibold tabular-nums">
-                  <Star className="h-4 w-4 fill-accent text-accent" aria-hidden="true" />
+                  <Star className="h-4 w-4 fill-accent stroke-accent" aria-hidden="true" />
                   {game.ratingAvg.toFixed(1)}
                   <span className="font-normal text-text-muted">({game.ratingCount})</span>
                 </dd>

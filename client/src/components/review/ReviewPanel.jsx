@@ -170,7 +170,7 @@ function ReviewCard({ review, isOwn, onEdit, onDelete }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{review.username ?? 'Unknown'}</span>
-          {isOwn && <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--accent)] text-white">You</span>}
+          {isOwn && <span className="text-xs px-1.5 py-0.5 rounded bg-accent text-accent-fg">You</span>}
           <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map((n) => (
               <Star

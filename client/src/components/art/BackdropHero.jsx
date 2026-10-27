@@ -7,15 +7,31 @@ import { artImageUrl, fallbackGradient } from '@/lib/art.js';
 export const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-bg via-bg/75 to-bg/10';
 export const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-bg via-transparent to-transparent';
 
+// Art wider than this (IGDB sometimes stores a logo strip or a banner, e.g. 1920x295) is no backdrop: it would be a black
+// band with nothing in it, so the hero moves on to the next candidate.
+export const MAX_BACKDROP_RATIO = 2.8;
+
 // A full-width cinematic header: the game's backdrop at its largest size behind a scrim, content on top.
-// `art` is { backdrop, cover } (or a URL); with no usable art there is a gradient from `seed`, never a flat box.
-// The image is the likely largest paint of the page, so it loads eagerly with high priority.
+// `art` is { backdrop, cover } (or a URL). Candidates, in order: the backdrop, then the cover (blurred, so it reads as
+// colour); one that fails to load, or is too wide to be a backdrop, is skipped. With none left there is a gradient from
+// `seed`, never a flat box. The image is the likely largest paint of the page, so it loads eagerly with high priority.
 export function BackdropHero({ art, seed = '', as: Tag = 'section', className, children, ...rest }) {
   const own = typeof art === 'string' ? { backdrop: art } : art;
-  const url = artImageUrl(own?.backdrop, 'hero') ?? artImageUrl(own?.cover, 'cover');
-  const [failedUrl, setFailedUrl] = useState(null);
-  const usable = Boolean(url) && failedUrl !== url;
+  const backdropUrl = artImageUrl(own?.backdrop, 'hero');
+  const coverUrl = artImageUrl(own?.cover, 'cover');
+  const [rejected, setRejected] = useState(() => new Set());
+  const reject = (u) => setRejected((s) => (s.has(u) ? s : new Set(s).add(u)));
+  const url = [backdropUrl, coverUrl].find((u) => u && !rejected.has(u)) ?? null;
+  const usable = Boolean(url);
   const [loadedUrl, setLoadedUrl] = useState(null);
+  // true when the picture can be shown; a too-wide backdrop is rejected instead
+  const accept = (img) => {
+    if (url === backdropUrl && img.naturalHeight > 0 && img.naturalWidth / img.naturalHeight > MAX_BACKDROP_RATIO) {
+      reject(url);
+      return;
+    }
+    setLoadedUrl(url);
+  };
   return (
     <Tag
       data-hero={usable ? 'art' : 'gradient'}
@@ -27,18 +43,18 @@ export function BackdropHero({ art, seed = '', as: Tag = 'section', className, c
           <img
             key={url}
             ref={(el) => {
-              if (el?.complete && el.naturalWidth > 0) setLoadedUrl(url);
+              if (el?.complete && el.naturalWidth > 0) accept(el);
             }}
             src={url}
             alt=""
             fetchPriority="high"
             decoding="async"
-            onLoad={() => setLoadedUrl(url)}
-            onError={() => setFailedUrl(url)}
+            onLoad={(e) => accept(e.currentTarget)}
+            onError={() => reject(url)}
             className={cn(
               'h-full w-full object-cover motion-safe:transition-opacity motion-safe:duration-500',
               loadedUrl === url ? 'opacity-100' : 'opacity-0',
-              !own?.backdrop && 'scale-125 blur-2xl',
+              url === coverUrl && 'scale-125 blur-2xl',
             )}
           />
         ) : (

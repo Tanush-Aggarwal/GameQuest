@@ -1,0 +1,3 @@
+# GameQuest is a signed-in app: there is nothing for a crawler in the API.
+User-agent: *
+Disallow: /api/

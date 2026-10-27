@@ -254,3 +254,7 @@ Key production env vars on Render:
 - **Smart collections are safe by construction** — rules compile only from a whitelist of fields, operators and value types; nothing a user types becomes a Mongo key or operator.
 - **Times are UTC** — stored and sent as UTC, formatted in the viewer's timezone in the client.
 - **External sources fail alone** — `Promise.allSettled`; a failing IGDB lookup becomes a warning next to cached results.
+
+## UI audit
+
+Screenshots of every page at 375 / 768 / 1440 px are in `docs/screenshots/`. They, the axe-core accessibility scan, the keyboard walk and the Lighthouse runs come from repeatable scripts: see `scripts/ui-audit/README.md`.

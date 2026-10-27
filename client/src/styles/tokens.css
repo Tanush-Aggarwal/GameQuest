@@ -7,8 +7,9 @@
   --text: #f1f2f7;
   --text-muted: #a3a8bd;
 
-  --accent: #7c5cff;
-  --accent-fg: #ffffff;
+  --accent: #7c5cff; /* fills, borders, rings */
+  --accent-fg: #05050a; /* text ON an accent fill: 4.7:1 (white on #7c5cff is only 4.35:1, under AA) */
+  --accent-text: #a592ff; /* accent as TEXT or a link on a dark surface: 6.2:1 or better (#7c5cff itself is 3.7-4.4:1) */
   --reward: #ffc14d; /* gold: quests, trophies and XP only */
 
   /* status */

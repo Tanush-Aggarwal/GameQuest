@@ -309,9 +309,9 @@ export default function Library() {
         }
       />
 
-      {/* Sticky filter bar: status tabs with counts, then search, platform, genre, sort and view */}
+      {/* Filter bar (sticky from md up: stacked on a phone it would cover a third of the screen): status tabs with counts, then search, platform, genre, sort and view */}
       {!libraryEmpty && (
-        <div className="sticky top-12 z-10 -mx-4 flex flex-col gap-3 border-b border-border bg-bg/90 px-4 py-3 backdrop-blur">
+        <div className="z-10 -mx-4 flex flex-col gap-3 md:sticky md:top-12 border-b border-border bg-bg/90 px-4 py-3 backdrop-blur">
           <nav aria-label="Library status" className="scrollbar-none flex gap-2 overflow-x-auto">
             {TABS.map((t) => {
               const active = t === tab;

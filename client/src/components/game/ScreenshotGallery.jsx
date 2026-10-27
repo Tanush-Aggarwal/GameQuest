@@ -31,9 +31,9 @@ export function ScreenshotGallery({ title, screenshots = [] }) {
 
   return (
     <section aria-labelledby="shots-title" className="flex flex-col gap-2">
-      <h3 id="shots-title" className="font-heading text-sm font-semibold uppercase tracking-wide text-text-muted">
+      <h2 id="shots-title" className="font-heading text-sm font-semibold uppercase tracking-wide text-text-muted">
         Screenshots
-      </h3>
+      </h2>
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {shots.slice(0, MAX_THUMBS).map((url, i) => (
           <li key={url}>

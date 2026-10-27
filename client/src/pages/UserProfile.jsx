@@ -351,12 +351,13 @@ export default function UserProfile() {
               {/* Stat Tiles */}
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {STAT_LABELS.map(([key, label, Icon]) => (
-                  <div key={key} className="rounded-card border border-border bg-surface p-3.5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                      <dt className="text-xs text-text-muted">{label}</dt>
-                      <Icon className="h-4 w-4 text-text-muted" aria-hidden="true" />
-                    </div>
-                    <dd className="text-2xl font-bold font-heading tabular-nums text-text">{profile.stats[key]}</dd>
+                  <div key={key} className="flex flex-col justify-between rounded-card border border-border bg-surface p-3.5">
+                    {/* dt and dd are direct children of the div that groups them, as a description list requires */}
+                    <dt className="mb-2 flex items-center justify-between text-xs text-text-muted">
+                      {label}
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </dt>
+                    <dd className="font-heading text-2xl font-bold tabular-nums text-text">{profile.stats[key]}</dd>
                   </div>
                 ))}
               </dl>

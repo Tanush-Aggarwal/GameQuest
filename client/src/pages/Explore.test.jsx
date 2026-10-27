@@ -386,7 +386,7 @@ describe('Explore trending carousel', () => {
     const region = await screen.findByRole('region', { name: 'Trending games' });
     expect(region).toHaveAttribute('aria-roledescription', 'carousel');
     expect(within(region).getByRole('heading', { level: 2, name: 'Trending 1' })).toBeInTheDocument();
-    expect(within(region).getByRole('link', { name: 'View Trending 1' })).toHaveAttribute('href', '/games/t1');
+    expect(within(region).getByRole('link', { name: 'View game: Trending 1' })).toHaveAttribute('href', '/games/t1');
     expect(within(region).getByRole('group', { name: '1 of 5' })).toBeInTheDocument();
     const dots = within(within(region).getByRole('group', { name: 'Choose a slide' })).getAllByRole('button');
     expect(dots.map((d) => d.getAttribute('aria-label'))).toEqual(['Show Trending 1', 'Show Trending 2', 'Show Trending 3', 'Show Trending 4', 'Show Trending 5']);

@@ -19,9 +19,9 @@ export function TimeToBeatCard({ timeToBeat }) {
     <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
       <div className="flex items-center gap-2">
         <Clock className="h-4 w-4 text-accent" aria-hidden="true" />
-        <h3 className="font-heading text-sm font-semibold tracking-wide uppercase text-text-muted">
+        <h2 className="font-heading text-sm font-semibold tracking-wide uppercase text-text-muted">
           Time to Beat
-        </h3>
+        </h2>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {tiers.map((t) => (
@@ -48,7 +48,7 @@ function StarRating({ rating }) {
         <Star
           key={star}
           aria-hidden="true"
-          className={`h-4 w-4 ${star <= rating ? 'fill-accent text-accent' : 'fill-border text-border'}`}
+          className={`h-4 w-4 ${star <= rating ? 'fill-accent stroke-accent' : 'fill-border text-border'}`}
         />
       ))}
     </div>
@@ -76,7 +76,7 @@ export function ReviewsSection({ gameId }) {
     return (
       <div className="rounded-card border border-dashed border-border p-8 text-center">
         <MessageSquare className="mx-auto h-8 w-8 text-text-muted/60" aria-hidden="true" />
-        <h3 className="mt-2 text-sm font-semibold">No reviews yet</h3>
+        <h2 className="mt-2 text-sm font-semibold">No reviews yet</h2>
         <p className="mt-1 text-xs text-text-muted">
           Add this game to your library to write the first review!
         </p>
@@ -131,7 +131,7 @@ export function FriendsSection({ slug }) {
     return (
       <div className="rounded-card border border-dashed border-border p-8 text-center">
         <Users className="mx-auto h-8 w-8 text-text-muted/60" aria-hidden="true" />
-        <h3 className="mt-2 text-sm font-semibold">No friends playing yet</h3>
+        <h2 className="mt-2 text-sm font-semibold">No friends playing yet</h2>
         <p className="mt-1 text-xs text-text-muted">
           None of your friends have this in their library. Use Recommend above to tell them about it!
         </p>

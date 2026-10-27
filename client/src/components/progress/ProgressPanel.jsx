@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import * as Tabs from '@radix-ui/react-tabs';
 import { Plus, Trash2, BookOpen, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -8,30 +9,33 @@ import { setProgress, logSession, listLogs, deleteLog, addJournalEntry, listJour
 
 // Full progress panel shown on the library-entry page: slider, play log, journal.
 export function ProgressPanel({ entryId, status, initialProgress = 0 }) {
-  const [activeTab, setActiveTab] = useState('progress');
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
-      <div className="flex border-b border-[var(--border)]">
+    <Tabs.Root defaultValue="progress" className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)]">
+      <Tabs.List aria-label="Progress, sessions and journal" className="flex border-b border-[var(--border)]">
         {[['progress', 'Progress'], ['sessions', 'Sessions'], ['journal', 'Journal']].map(([id, label]) => (
-          <button
+          <Tabs.Trigger
             key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${activeTab === id ? 'text-[var(--accent)] border-b-2 border-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
-            aria-selected={activeTab === id}
+            value={id}
+            className="min-h-11 flex-1 border-b-2 border-transparent py-2.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text)] data-[state=active]:border-[var(--accent)] data-[state=active]:text-accent"
           >
             {label}
-          </button>
+          </Tabs.Trigger>
         ))}
-      </div>
+      </Tabs.List>
       <div className="p-4">
-        {activeTab === 'progress' && <ProgressTab entryId={entryId} status={status} initialProgress={initialProgress} />}
-        {activeTab === 'sessions' && <SessionsTab entryId={entryId} status={status} />}
-        {activeTab === 'journal' && <JournalTab entryId={entryId} />}
+        <Tabs.Content value="progress" className="focus-visible:outline-none">
+          <ProgressTab entryId={entryId} status={status} initialProgress={initialProgress} />
+        </Tabs.Content>
+        <Tabs.Content value="sessions" className="focus-visible:outline-none">
+          <SessionsTab entryId={entryId} status={status} />
+        </Tabs.Content>
+        <Tabs.Content value="journal" className="focus-visible:outline-none">
+          <JournalTab entryId={entryId} />
+        </Tabs.Content>
       </div>
-    </div>
+    </Tabs.Root>
   );
 }
-
 // ── Progress tab ─────────────────────────────────────────────────────────────
 
 function ProgressTab({ entryId, status, initialProgress }) {
@@ -120,8 +124,15 @@ function SessionsTab({ entryId, status }) {
         <LogSessionForm entryId={entryId} onDone={() => { setShowForm(false); setRefreshKey((k) => k + 1); }} />
       )}
 
-      {ls === 'loading' && <div className="h-16 rounded-lg bg-[var(--surface-raised)] animate-pulse" />}
-      {ls === 'error' && <p className="text-sm text-[var(--danger)] cursor-pointer" onClick={logsRetry}>Failed to load — retry</p>}
+      {ls === 'loading' && <div role="status" aria-label="Loading sessions" className="h-16 rounded-lg bg-[var(--surface-raised)] motion-safe:animate-pulse" />}
+      {ls === 'error' && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
+          <span>Couldn’t load your sessions.</span>
+          <Button variant="secondary" onClick={logsRetry}>
+            Retry
+          </Button>
+        </div>
+      )}
       {ls === 'success' && (logsData?.items ?? []).length === 0 && (
         <p className="text-sm text-[var(--text-muted)]">No sessions logged yet.</p>
       )}
@@ -129,7 +140,7 @@ function SessionsTab({ entryId, status }) {
         <div key={log.id} className="flex items-start gap-3 text-sm border-t border-[var(--border)] pt-3">
           <Clock size={14} className="text-[var(--text-muted)] mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <p className="font-medium tabular-nums">{log.date} · <span className="text-[var(--accent)]">{log.minutes} min</span></p>
+            <p className="font-medium tabular-nums">{log.date} · <span className="text-accent">{log.minutes} min</span></p>
             {log.note && <p className="text-[var(--text-muted)] text-xs mt-0.5 italic">&ldquo;{log.note}&rdquo;</p>}
           </div>
           <button onClick={() => handleDelete(log.id)} className="text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors p-1" aria-label="Delete session">
@@ -211,8 +222,15 @@ function JournalTab({ entryId }) {
       {showForm && (
         <AddNoteForm entryId={entryId} onDone={() => { setShowForm(false); setRefreshKey((k) => k + 1); }} />
       )}
-      {status === 'loading' && <div className="h-16 rounded-lg bg-[var(--surface-raised)] animate-pulse" />}
-      {status === 'error' && <p className="text-sm text-[var(--danger)] cursor-pointer" onClick={retry}>Failed to load — retry</p>}
+      {status === 'loading' && <div role="status" aria-label="Loading notes" className="h-16 rounded-lg bg-[var(--surface-raised)] motion-safe:animate-pulse" />}
+      {status === 'error' && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
+          <span>Couldn’t load your notes.</span>
+          <Button variant="secondary" onClick={retry}>
+            Retry
+          </Button>
+        </div>
+      )}
       {status === 'success' && !(data?.items?.length) && (
         <p className="text-sm text-[var(--text-muted)]">No notes yet. Jot down where you left off.</p>
       )}

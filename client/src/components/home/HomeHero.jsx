@@ -73,7 +73,7 @@ function HeroBody({ dashboard, playNext }) {
   if (loading) {
     return (
       <div role="status" aria-label="Loading your game">
-        <Skeleton className="h-56 w-full rounded-card" />
+        <Skeleton className="h-72 w-full rounded-card" /> {/* the hero's own minimum height, so the page does not jump when it arrives */}
       </div>
     );
   }

@@ -75,7 +75,7 @@ export function HeroCarousel() {
             <p className="text-sm text-text-muted">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>
             {game.summary && <p className="line-clamp-2 text-sm text-text">{game.summary}</p>}
             <div>
-              <Link to={`/games/${game.slug}`} aria-label={`View ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
+              <Link to={`/games/${game.slug}`} aria-label={`View game: ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
                 View game
               </Link>
             </div>

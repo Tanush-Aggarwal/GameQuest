@@ -77,7 +77,7 @@ describe('TopBar', () => {
     expect(screen.getByRole('banner').firstElementChild.className).toMatch(/\bh-12\b/);
     expect(screen.getByRole('search')).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Search games' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Your profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('link', { name: /^Your profile/ })).toHaveAttribute('href', '/profile');
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument(); // navigation lives in the rail and the tab bar
   });
@@ -131,7 +131,7 @@ describe('TopBar details', () => {
         </MemoryRouter>
       </AuthContext.Provider>,
     );
-    expect(screen.queryByRole('link', { name: 'Your profile' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^Your profile/ })).not.toBeInTheDocument();
   });
 });
 describe('AppLayout', () => {

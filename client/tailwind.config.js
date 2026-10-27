@@ -18,6 +18,7 @@ const names = [
   'text-muted',
   'accent',
   'accent-fg',
+  'accent-text',
   'reward',
   'danger',
   'success',
@@ -37,6 +38,10 @@ export default {
   theme: {
     extend: {
       colors: Object.fromEntries(names.map((name) => [name, token(name)])),
+      // `text-accent` (and `decoration-accent`) is the accent in its readable-on-dark form; `bg-accent`, `border-accent` and
+      // `ring-accent` keep the brand colour itself. Text on an accent fill is `text-accent-fg`.
+      textColor: { accent: token('accent-text') },
+      textDecorationColor: { accent: token('accent-text') },
       borderRadius: { card: '12px', control: '8px' },
       // The sign-in collage: a column of covers, repeated twice, slides by exactly one copy and starts over unseen.
       keyframes: {

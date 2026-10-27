@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Command, Gamepad2, LogOut, Search } from 'lucide-react';
+import { Command, Gamepad2, LogOut, Search, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth.js';
 import { Button } from '@/components/ui/button.jsx';
@@ -54,23 +54,25 @@ export function TopBar({ onOpenPalette }) {
 
         <div className="ml-auto flex items-center gap-1">
           {onOpenPalette && (
-            <Button variant="ghost" onClick={onOpenPalette} aria-label="Quick search" aria-keyshortcuts="Control+K Meta+K" className="px-3">
+            <Button variant="ghost" onClick={onOpenPalette} aria-keyshortcuts="Control+K Meta+K" className="px-3">
+              {/* the name is the text, so what is seen (Ctrl K) is part of what is announced */}
               <Command className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">Quick search</span>
               <kbd className="hidden rounded-control border border-border px-1.5 text-xs lg:inline">Ctrl K</kbd>
             </Button>
           )}
           {user && (
             <Link
               to="/profile"
-              aria-label="Your profile"
               className="flex min-h-11 items-center gap-2 rounded-control px-2 text-sm text-text-muted hover:bg-surface-raised hover:text-text"
             >
               <span
                 aria-hidden="true"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/20 text-xs font-semibold uppercase text-text"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/20 text-text"
               >
-                {user.username.slice(0, 1)}
+                <User className="h-4 w-4" aria-hidden="true" />
               </span>
+              <span className="sr-only">Your profile:</span>
               <span className="hidden max-w-[10rem] truncate sm:inline">{user.username}</span>
             </Link>
           )}

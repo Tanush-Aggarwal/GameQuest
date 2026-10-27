@@ -1,0 +1,725 @@
+{
+  "axe": [
+    {
+      "name": "login",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "register",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "login",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "register",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "home",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "library",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "explore",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "collections",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "friends",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "profile",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "public-profile",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "sessions",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "session-new",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "library-entry",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "game",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "collection",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "session",
+      "width": 375,
+      "violations": []
+    },
+    {
+      "name": "home",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "library",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "explore",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "collections",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "friends",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "profile",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "public-profile",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "sessions",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "session-new",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "library-entry",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "game",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "collection",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "name": "session",
+      "width": 1440,
+      "violations": []
+    }
+  ],
+  "keyboard": [
+    {
+      "page": "home",
+      "stops": [
+        {
+          "tag": "A",
+          "name": "Skip to content",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "GameQuest home",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Home",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Library",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Collections",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Explore",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Sessions",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Friends",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Profile",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "INPUT",
+          "name": "Search games",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Quick searchCtrl K",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Your profile:demo",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Log out",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Continue Elden Ring",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Discover new games",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "View all",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Scroll suggestions left",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Scroll suggestions right",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "BacklogBuckshot Roulette",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "BacklogPico Park",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "BacklogA Short Hike",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "BacklogMetroid Dread",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "BacklogUndertale",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "PlayingElden Ring, 65% done",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "BacklogThe Quarry",
+          "visibleIndicator": true,
+          "onScreen": true
+        }
+      ],
+      "missingIndicator": []
+    },
+    {
+      "page": "library",
+      "stops": [
+        {
+          "tag": "A",
+          "name": "Skip to content",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "GameQuest home",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Home",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Library",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Collections",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Explore",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Sessions",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Friends",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Profile",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "INPUT",
+          "name": "Search games",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Quick searchCtrl K",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Your profile:demo",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Log out",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Sync now",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Collections",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "All 48",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Wishlist 10",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Backlog 28",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Playing 4",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Completed 5",
+          "visibleIndicator": true,
+          "onScreen": true
+        }
+      ],
+      "missingIndicator": []
+    },
+    {
+      "page": "explore",
+      "stops": [
+        {
+          "tag": "A",
+          "name": "Skip to content",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "GameQuest home",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Home",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Library",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Collections",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Explore",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Sessions",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Friends",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Profile",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Quick searchCtrl K",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Your profile:demo",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Log out",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "View game: Roblox",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Previous slide",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Show Roblox",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Show Cyberpunk 2077",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Show Grand Theft Auto V",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Show Counter-Strike 2",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Show Red Dead Redemption 2",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Next slide",
+          "visibleIndicator": true,
+          "onScreen": true
+        }
+      ],
+      "missingIndicator": []
+    },
+    {
+      "page": "game",
+      "stops": [
+        {
+          "tag": "SELECT",
+          "name": "Move Wuthering Waves to another status",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Open in library",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Recommend",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Schedule",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "About",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "DIV",
+          "name": "TrailerGameplay trailerReveal trailerRel",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Gameplay trailer",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Reveal trailer",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Release trailer",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Play trailer for Wuthering Waves",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Wrong trailer?",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 1 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 2 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 3 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 4 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 5 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 6 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 7 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "Open Wuthering Waves screenshot 8 of 20",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Cyberpunk 2077",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Red Dead Redemption 2",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Elden Ring",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Baldur's Gate 3",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "The Witcher 3: Wild Hunt",
+          "visibleIndicator": true,
+          "onScreen": true
+        },
+        {
+          "tag": "A",
+          "name": "Death Stranding",
+          "visibleIndicator": true,
+          "onScreen": true
+        }
+      ],
+      "missingIndicator": []
+    },
+    {
+      "page": "palette",
+      "focusedInInput": true,
+      "landedOn": "/games/hades-ii"
+    }
+  ]
+}

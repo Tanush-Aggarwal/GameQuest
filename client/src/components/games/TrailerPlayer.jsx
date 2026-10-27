@@ -118,7 +118,7 @@ export function TrailerPlayer({ slug, title }) {
   return (
     <section aria-label="Trailer" className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-text-muted">Trailer</h3>
+        <h2 className="font-heading text-sm font-semibold uppercase tracking-wide text-text-muted">Trailer</h2>
         {list.length > 1 && (
           <div role="group" aria-label="Choose a trailer" className="flex flex-wrap gap-1">
             {list.map((t, i) => (

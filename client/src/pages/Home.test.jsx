@@ -50,7 +50,7 @@ describe('Home', () => {
       items: [{ entryId: 'e1', gameId: 'g1', title: 'Hades', cover: null, backdrop: null, status: 'backlog', manualProgress: 0, timeToBeatMain: 22, reasons: ['Waiting 12 days'] }],
     });
     renderHome();
-    const link = await screen.findByRole('link', { name: 'Hades, Backlog' });
+    const link = await screen.findByRole('link', { name: 'Backlog Hades' });
     expect(link).toHaveAttribute('href', '/library/e1');
     expect(screen.getByText('Waiting 12 days')).toBeInTheDocument();
   });

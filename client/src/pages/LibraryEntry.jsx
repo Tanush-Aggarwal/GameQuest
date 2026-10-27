@@ -150,7 +150,7 @@ export default function LibraryEntry() {
               key={to}
               onClick={() => handleStatusChange(to)}
               disabled={busy}
-              className="min-h-11 rounded-full border border-[var(--border)] px-4 text-sm font-medium transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
+              className="min-h-11 rounded-full border border-[var(--border)] px-4 text-sm font-medium transition-colors hover:border-[var(--accent)] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
             >
               Move to {STATUS_LABELS[to]}
             </button>
@@ -256,7 +256,7 @@ function CollapsibleSummary({ text }) {
     <div>
       <p className="text-sm text-[var(--text-muted)] leading-relaxed">{shown}</p>
       {short && (
-        <button onClick={() => setExpanded((v) => !v)} className="mt-1 flex items-center gap-1 text-xs text-[var(--accent)] hover:underline">
+        <button onClick={() => setExpanded((v) => !v)} className="mt-1 flex items-center gap-1 text-xs text-accent hover:underline">
           {expanded ? 'Show less' : 'Show more'} <ChevronRight size={12} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
         </button>
       )}

@@ -92,7 +92,7 @@ describe('hovering or focusing a suggestion previews it in the hero (250 ms debo
   it('swaps after the delay on hover and back on leave', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderHero({ dashboard: ok({ resumeCard: resume }), playNext: ok({ items: [nextItem] }), extra: rail });
-    const card = screen.getByRole('link', { name: 'Celeste, Backlog' });
+    const card = screen.getByRole('link', { name: 'Backlog Celeste' });
 
     await user.hover(card);
     act(() => vi.advanceTimersByTime(PREVIEW_DELAY_MS - 50));
@@ -113,7 +113,7 @@ describe('hovering or focusing a suggestion previews it in the hero (250 ms debo
     await user.tab(); // hero Continue
     await user.tab(); // hero Discover
     await user.tab(); // the rail card
-    expect(screen.getByRole('link', { name: 'Celeste, Backlog' })).toHaveFocus();
+    expect(screen.getByRole('link', { name: 'Backlog Celeste' })).toHaveFocus();
     act(() => vi.advanceTimersByTime(PREVIEW_DELAY_MS + 10));
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Celeste');
     await user.tab();
@@ -134,9 +134,9 @@ describe('hovering or focusing a suggestion previews it in the hero (250 ms debo
         </ul>
       ),
     });
-    await user.hover(screen.getByRole('link', { name: 'Celeste, Backlog' }));
+    await user.hover(screen.getByRole('link', { name: 'Backlog Celeste' }));
     act(() => vi.advanceTimersByTime(100));
-    await user.hover(screen.getByRole('link', { name: 'Hollow Knight, Backlog' }));
+    await user.hover(screen.getByRole('link', { name: 'Backlog Hollow Knight' }));
     act(() => vi.advanceTimersByTime(PREVIEW_DELAY_MS + 10));
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Hollow Knight');
   });

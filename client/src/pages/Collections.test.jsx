@@ -291,8 +291,7 @@ describe('AddToCollection', () => {
     api.listCollections.mockResolvedValue({ items: [summary({ id: 'c1' }), summary({ id: 'c2', name: 'Cozy games' })], nextCursor: null });
     api.addCollectionItem.mockResolvedValue({});
     renderPicker();
-    await userEvent.selectOptions(await screen.findByLabelText('Collection'), 'c2');
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to Cozy games' }));
     expect(api.addCollectionItem).toHaveBeenCalledWith('c2', { entryId: 'e1' });
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Added to "Cozy games"'));
     expect(api.listCollections).toHaveBeenCalledWith({ type: 'manual', limit: 50 }, expect.anything());
@@ -302,8 +301,7 @@ describe('AddToCollection', () => {
     api.listCollections.mockResolvedValue({ items: [summary()], nextCursor: null });
     api.addCollectionItem.mockRejectedValue(Object.assign(new Error('x'), { response: { status: 409, data: { error: { code: 'CONFLICT', message: 'That game is already in this collection' } } } }));
     renderPicker();
-    await userEvent.selectOptions(await screen.findByLabelText('Collection'), 'c1');
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to Favourites' }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('That game is already in this collection'));
   });
 
@@ -317,6 +315,6 @@ describe('AddToCollection', () => {
     renderPicker();
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByLabelText('Collection')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Add to Favourites' })).toBeInTheDocument();
   });
 });

@@ -13,18 +13,16 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
-import { getBacklogHealth, getDashboard, getPlayNext } from '@/services/progressApi.js';
-import { listInbox } from '@/services/recommendationsApi.js';
+import { getBacklogHealth, getDashboard, getNextAdventure, getPlayNext } from '@/services/progressApi.js';
+import { getFeaturedGames, searchGames } from '@/services/gamesApi.js';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { SectionBoundary } from '@/components/ui/SectionBoundary.jsx';
 import { FriendFeed } from '@/components/feed/FriendFeed.jsx';
 import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
-import { RecommendationWidget } from '@/components/recommendations/RecommendationWidget.jsx';
 import { PlayNextSection } from '@/components/home/PlayNextRail.jsx';
 import { HomeHero } from '@/components/home/HomeHero.jsx';
-import { GameCardSkeleton, getGameArtwork } from '@/components/games/GameCard.jsx';
-import { getGame, searchGames } from '@/services/gamesApi.js';
+import { CoverImage, GameCardSkeleton } from '@/components/games/GameCard.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -34,19 +32,16 @@ export default function Home() {
   const loadBacklogHealth = useCallback((signal) => getBacklogHealth({ signal }), []);
   const loadTrending = useCallback(async (signal) => {
     try {
-      const featuredSlugs = ['hollow-knight-silksong', 'elden-ring', 'clair-obscur-expedition-33', 'hades-ii', 'zenless-zone-zero'];
-      const results = await Promise.allSettled(
-        featuredSlugs.map((slug) => getGame(slug, { signal }))
-      );
-      const featured = results
-        .filter((r) => r.status === 'fulfilled' && r.value)
-        .map((r) => r.value);
-      if (featured.length === 5) return featured;
+      const data = await getFeaturedGames({ limit: 5 }, { signal });
+      return data?.items ?? [];
     } catch {
-      // fallback to search
+      try {
+        const data = await searchGames({ limit: 5 }, { signal });
+        return data?.items ?? [];
+      } catch {
+        return [];
+      }
     }
-    const data = await searchGames({ limit: 5 }, { signal }).catch(() => null);
-    return data?.items ?? [];
   }, []);
 
   const dashboard = useAsync(loadDashboard);
@@ -87,7 +82,7 @@ export default function Home() {
 
         {/* Right: Recommendation + Community */}
         <div className="flex flex-col gap-4">
-          <AdventureCard dashboard={dashboard} />
+          <AdventureCard />
           <CommunityCard />
         </div>
       </div>
@@ -138,8 +133,8 @@ function StatTiles({ dashboard }) {
               <Icon className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-heading text-xl font-bold tabular-nums text-text">{value}</p>
-              <p className="text-xs text-text-muted">{label}</p>
+              <p className="text-xl font-bold font-heading tabular-nums text-text">{value}</p>
+              <p className="text-xs text-text-muted truncate">{label}</p>
             </div>
           </div>
         ))}
@@ -148,20 +143,31 @@ function StatTiles({ dashboard }) {
   );
 }
 
-// Trending row: 5 game cards in a horizontal row
+// ── Trending Games Row ───────────────────────────────────────────────────────
+
 function TrendingRow({ trending }) {
   if (trending.status === 'loading') {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" role="status" aria-label="Loading trending games">
-        {Array.from({ length: 5 }, (_, i) => <GameCardSkeleton key={i} />)}
+        {Array.from({ length: 5 }, (_, i) => (
+          <GameCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
+
   if (trending.status === 'error') {
     return <ErrorState message="Couldn't load trending games." onRetry={trending.retry} />;
   }
+
   const items = trending.data ?? [];
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <div className="rounded-[10px] border border-border/40 bg-surface/50 p-8 text-center text-xs text-text-muted">
+        No trending games available right now.
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -172,13 +178,11 @@ function TrendingRow({ trending }) {
   );
 }
 
-// Individual trending card matching reference: full bleed image with dark overlay, white text anchored at bottom-left, rating at bottom-right
 function TrendingCard({ game }) {
   const displayTitle = game.title;
-  const ratingValue = game.ratingAvg > 0
-    ? game.ratingAvg.toFixed(1)
-    : (game.totalRating ? (game.totalRating / 10).toFixed(1) : null);
-  const artwork = getGameArtwork(game) || game.cover;
+  const ratingValue = game.rating != null
+    ? (typeof game.rating === 'number' ? game.rating.toFixed(1) : game.rating)
+    : (game.ratingAvg > 0 ? game.ratingAvg.toFixed(1) : (game.totalRating ? (game.totalRating / 10).toFixed(1) : null));
 
   return (
     <Link
@@ -186,16 +190,12 @@ function TrendingCard({ game }) {
       className="gq-game-card group relative flex flex-col aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-[#161816] text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
     >
       <div className="relative h-full w-full overflow-hidden">
-        {artwork ? (
-          <img
-            src={artwork}
-            alt={displayTitle}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="h-full w-full bg-[#1a1c1a]" />
-        )}
+        <CoverImage
+          cover={game.cover}
+          title={displayTitle}
+          alt={displayTitle}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
 
         {/* Dark bottom gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 via-45% to-transparent pointer-events-none" />
@@ -223,81 +223,46 @@ function TrendingCard({ game }) {
   );
 }
 
-// "Your Next Adventure" recommendation card: dynamically selects an eligible game from the catalogue
-function AdventureCard({ dashboard }) {
-  const topGenre = dashboard?.data?.topGenres?.[0]?.name;
+// ── Right-Side Adventure & Community Panels ──────────────────────────────────
 
-  const loadRec = useCallback(async (signal) => {
-    // 1. Check if user has a pending friend recommendation
-    try {
-      const inbox = await listInbox({ status: 'pending', limit: 1 }, { signal });
-      if (inbox?.items?.[0]?.game) {
-        return inbox.items[0].game;
-      }
-    } catch {
-      // Proceed to catalogue recommendation
-    }
-
-    // 2. Discover an eligible catalogue game matching user's top genre or top rated
-    try {
-      const res = await searchGames(
-        topGenre ? { genre: topGenre, limit: 10 } : { sort: 'rating', limit: 10 },
-        { signal },
-      );
-      const candidates = (res?.items ?? []).filter((g) => g && g.slug);
-      if (candidates.length) {
-        return candidates[0];
-      }
-    } catch {
-      // Proceed to fallback
-    }
-
-    // 3. Documented catalogue fallback
-    try {
-      const fallback = await searchGames({ limit: 5 }, { signal });
-      if (fallback?.items?.[0]) return fallback.items[0];
-    } catch {
-      // fallback
-    }
-
-    // 4. Default catalogue reference game (Genshin Impact) if network unavailable
-    return {
-      title: 'Genshin Impact',
-      slug: 'genshin-impact',
-      genres: ['Role-playing (RPG)', 'Adventure'],
-      summary: 'Explore a vast world of wonders and uncover its hidden secrets across the realm of Teyvat.',
-      heroImage: 'https://images.igdb.com/igdb/image/upload/t_1080p/ar2ht4.jpg',
-      backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p/ar2ht4.jpg',
-      cover: 'https://images.igdb.com/igdb/image/upload/t_1080p/coa9dy.jpg',
-    };
-  }, [topGenre]);
-
-  const { status, data: game } = useAsync(loadRec);
+function AdventureCard() {
+  const loadAdventure = useCallback((signal) => getNextAdventure({ signal }), []);
+  const { status, data, error, retry } = useAsync(loadAdventure);
 
   if (status === 'loading') {
     return (
-      <div role="status" aria-label="Loading recommendation" className="aspect-[16/9] sm:min-h-[200px] w-full">
+      <div role="status" aria-label="Loading your next adventure" className="aspect-[16/9] sm:min-h-[200px] w-full">
         <Skeleton className="h-full w-full rounded-[10px] bg-white/5" />
       </div>
     );
   }
 
+  if (status === 'error') {
+    return <ErrorState message="Could not load your next adventure." onRetry={retry} />;
+  }
+
+  const pick = data?.pick;
+  const game = pick?.game;
   if (!game) return null;
 
   const title = game.title;
-  const genres = game.genres?.length ? game.genres.slice(0, 3) : ['RPG', 'Adventure'];
+  const badges = pick.reasons?.length
+    ? pick.reasons.slice(0, 3)
+    : (game.genres?.length ? game.genres.slice(0, 3) : ['RPG', 'Adventure']);
   const summary = game.summary || game.storyline || 'Explore a vast world of wonders and uncover its hidden secrets.';
-  const artwork = game.heroImage || game.backdrop || game.artworks?.[0] || game.cover;
-  const link = `/games/${game.slug}`;
+  const artwork = game.heroImage || game.backdrop || game.cover;
+  const isLibrary = pick.source === 'library';
+  const ctaLink = isLibrary && pick.entryId ? `/library/${pick.entryId}` : `/games/${game.slug}`;
+  const ctaText = isLibrary ? 'Continue in Library' : 'Add to Library';
 
   return (
-    <div className="relative flex flex-col justify-between overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[200px]">
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[200px] border border-white/10 shadow-xl">
       {/* Background artwork on the right */}
       <div className="absolute inset-0 -z-0">
         {artwork && (
           <img
             src={artwork}
-            alt={title}
+            alt=""
             className="absolute right-0 top-0 h-full w-[55%] object-cover object-right"
             loading="lazy"
           />
@@ -308,44 +273,49 @@ function AdventureCard({ dashboard }) {
       <div className="relative z-10 flex flex-col gap-2.5 max-w-[210px]">
         <div className="flex items-center gap-2">
           <Flame className="h-4 w-4 text-[var(--secondary-accent)] fill-[var(--secondary-accent)]" aria-hidden="true" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-white">Your Next Adventure</h3>
+          <span className="font-heading text-xs font-bold uppercase tracking-wider text-white">
+            Your Next Adventure
+          </span>
         </div>
 
-        <div>
-          <h4 className="text-base font-bold text-white leading-tight line-clamp-1">{title}</h4>
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {genres.map((g) => (
-              <span key={g} className="rounded-full border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-gray-300">
-                {g}
-              </span>
-            ))}
-          </div>
+        <h3 className="font-heading text-lg font-bold leading-tight text-white drop-shadow-sm">
+          {title}
+        </h3>
+
+        <div className="flex flex-wrap gap-1.5">
+          {badges.map((b) => (
+            <span
+              key={b}
+              className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-medium text-gray-300 backdrop-blur-xs"
+            >
+              {b}
+            </span>
+          ))}
         </div>
 
-        <p className="text-xs leading-relaxed text-gray-300 line-clamp-2">
+        <p className="line-clamp-2 text-xs leading-relaxed text-gray-300 drop-shadow-xs">
           {summary}
         </p>
       </div>
 
-      <div className="relative z-10 pt-3">
+      <div className="relative z-10 pt-4">
         <Link
-          to={link}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-bold text-[var(--accent-fg)] transition-transform hover:scale-[1.02]"
+          to={ctaLink}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-5 py-2 text-xs font-bold text-[var(--accent-fg)] transition-transform hover:scale-105 shadow-sm"
         >
-          Add to Library
-          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          {ctaText}
+          <span aria-hidden="true">&rarr;</span>
         </Link>
       </div>
     </div>
   );
 }
 
-// Community card
 function CommunityCard() {
   return (
     <Link
       to="/friends"
-      className="relative flex flex-col justify-end overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[110px] transition-transform hover:-translate-y-0.5 group"
+      className="relative flex flex-col justify-end overflow-hidden rounded-[10px] bg-[#161816] p-5 text-white min-h-[110px] border border-white/10 shadow-xl transition-transform hover:-translate-y-0.5 group"
     >
       <div className="absolute inset-0 -z-0">
         <img
@@ -364,72 +334,36 @@ function CommunityCard() {
   );
 }
 
-// Backlog health section
+// ── Backlog health chart ────────────────────────────────────────────────────
+
 function BacklogHealth({ dashboard, backlogHealth }) {
-  const d = dashboard.data;
-  const h = backlogHealth.data;
-
-  if (!d?.backlogHours && !d?.completedThisYear && !h?.data?.length) return null;
-
-  const chartData = (h?.data ?? []).map((item) => ({
-    ...item,
-    formattedMonth: new Date(`${item.month}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short' }),
-  }));
-
+  if (dashboard.status === 'loading') {
+    return (
+      <div role="status" aria-label="Loading your backlog trajectory">
+        <Skeleton className="h-[22rem] w-full rounded-card" />
+      </div>
+    );
+  }
+  if (dashboard.status === 'error') return <ErrorState message="Couldn't load your backlog health." onRetry={dashboard.retry} />;
+  const d = dashboard.data ?? {};
+  const backlogCount = d.statusCounts?.backlog ?? 0;
+  const isHealthy = d.velocity?.perMonth > 0;
   return (
-    <section aria-labelledby="backlog-health-title" className="gq-editorial-panel gq-backlog-panel flex flex-col gap-4 py-5 rounded-card border border-border bg-surface p-5">
-      <div className="sr-only" data-art="backlog" />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="backlog-health-title" className="font-semibold flex items-center gap-2 font-heading">
-          <Layers size={18} className="text-[var(--accent)]" aria-hidden="true" />
-          Backlog Health
-        </h2>
-      </div>
-
-      <div className="flex gap-6 flex-wrap text-sm border-b border-border pb-4">
-        {d?.completedThisYear > 0 && (
-          <div>
-            <p className="text-2xl font-bold tabular-nums font-heading text-[var(--status-completed)]">{d.completedThisYear}</p>
-            <p className="text-text-muted text-xs">completed this year</p>
-          </div>
-        )}
-        {d?.backlogHours > 0 && (
-          <div>
-            <p className="text-2xl font-bold tabular-nums font-heading text-[var(--warning)]">{Math.round(d.backlogHours)}h</p>
-            <p className="text-text-muted text-xs">in backlog</p>
-          </div>
-        )}
-        {h?.backlogCount > 0 && (
-          <div>
-            <p className="text-2xl font-bold tabular-nums font-heading text-text">{h.backlogCount}</p>
-            <p className="text-text-muted text-xs">backlog titles</p>
-          </div>
-        )}
-      </div>
-
-      {chartData.length >= 2 && (
-        <div className="flex flex-col gap-2 pt-2">
-          <div className="flex items-center justify-between text-xs text-text-muted">
-            <span>6-Month Trajectory: Added vs Completed</span>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-accent" /> Added
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[var(--status-completed)]" /> Completed
-              </span>
-            </div>
-          </div>
-
-          <div className="h-44 w-full">
-            <SectionBoundary message="Couldn't load the chart.">
-              <Suspense fallback={<div role="status" aria-label="Loading chart" className="h-full w-full" />}>
-                <VelocityChart chartData={chartData} />
-              </Suspense>
-            </SectionBoundary>
-          </div>
+    <section aria-label="Backlog health and completion trajectory" className="flex flex-col gap-4">
+      <SectionBoundary
+        title="Backlog Health"
+        subtitle={
+          isHealthy
+            ? `At your current velocity of ${d.velocity.perMonth} games/mo, your backlog of ${backlogCount} games will be cleared around ${d.projectedClearDate ?? 'soon'}.`
+            : `You have ${backlogCount} games in your backlog. Log completions to see your projected clear date.`
+        }
+      >
+        <div className="gq-chart-panel rounded-card border border-border bg-surface p-5">
+          <Suspense fallback={<Skeleton className="h-[18rem] w-full rounded-card" />}>
+            <VelocityChart history={backlogHealth.data?.history ?? []} />
+          </Suspense>
         </div>
-      )}
+      </SectionBoundary>
     </section>
   );
 }

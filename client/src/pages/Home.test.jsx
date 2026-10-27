@@ -2,7 +2,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
-vi.mock('@/services/progressApi.js', () => ({ getDashboard: vi.fn(), getPlayNext: vi.fn(), getBacklogHealth: vi.fn() }));
+vi.mock('@/services/progressApi.js', () => ({ getDashboard: vi.fn(), getPlayNext: vi.fn(), getBacklogHealth: vi.fn(), getNextAdventure: vi.fn() }));
+vi.mock('@/services/gamesApi.js', () => ({ getFeaturedGames: vi.fn().mockResolvedValue({ items: [] }), searchGames: vi.fn().mockResolvedValue({ items: [] }) }));
+vi.mock('@/services/publicApi.js', () => ({ getPublicStats: vi.fn().mockResolvedValue({ games: 10000, players: 25000, collections: 100 }) }));
 vi.mock('@/services/socialApi.js', () => ({ getFeed: vi.fn() }));
 vi.mock('@/services/sessionsApi.js', () => ({ listSessions: vi.fn() }));
 vi.mock('@/services/recommendationsApi.js', () => ({ listInbox: vi.fn() }));
@@ -13,6 +15,8 @@ const progress = await import('@/services/progressApi.js');
 const social = await import('@/services/socialApi.js');
 const sessions = await import('@/services/sessionsApi.js');
 const recommendations = await import('@/services/recommendationsApi.js');
+const publicApi = await import('@/services/publicApi.js');
+const gamesApi = await import('@/services/gamesApi.js');
 const { default: Home } = await import('./Home.jsx');
 
 const user = { id: '1', username: 'neo' };
@@ -32,6 +36,10 @@ beforeEach(() => {
   progress.getDashboard.mockResolvedValue({ statusCounts: { playing: 1, backlog: 4, completed: 2 }, totalHours: 30, resumeCard: null });
   progress.getPlayNext.mockResolvedValue({ items: [] });
   progress.getBacklogHealth.mockResolvedValue({ data: [] });
+  progress.getNextAdventure.mockResolvedValue({ pick: null });
+  publicApi.getPublicStats.mockResolvedValue({ games: 10000, players: 25000, collections: 100 });
+  gamesApi.getFeaturedGames.mockResolvedValue({ items: [] });
+  gamesApi.searchGames.mockResolvedValue({ items: [] });
   social.getFeed.mockResolvedValue({ items: [], nextCursor: null, friendCount: 0 });
   sessions.listSessions.mockResolvedValue({ items: [] });
   recommendations.listInbox.mockResolvedValue({ items: [] });

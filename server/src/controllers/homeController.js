@@ -1,4 +1,4 @@
-export function createHomeController({ homeService, requirementsService }) {
+export function createHomeController({ homeService, requirementsService, ratingsService }) {
   return {
     // Public and identical for everyone: a shared cache may keep it for ten minutes.
     async publicStats(req, res) {
@@ -12,6 +12,10 @@ export function createHomeController({ homeService, requirementsService }) {
 
     async nextAdventure(req, res) {
       res.json({ pick: await homeService.nextAdventure(req.auth.userId) });
+    },
+
+    async ratings(req, res) {
+      res.json(await ratingsService.forSlug(req.params.slug));
     },
 
     async requirements(req, res) {

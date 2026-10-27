@@ -28,7 +28,7 @@ export function TopBar({ onOpenPalette }) {
   const [notifications, setNotifications] = useState({ items: [], unread: 0 });
   const [openNotifications, setOpenNotifications] = useState(false);
   const notifRef = useRef(null);
-  const isGamePage = pathname.startsWith('/games/');
+  const isGamePage = false; // game pages use the same light top bar as the rest of the site
   const showSearch = pathname !== '/explore';
 
   useEffect(() => {

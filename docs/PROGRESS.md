@@ -14,12 +14,12 @@ Tier 4 — Social: collections, friends + activity feed, game sessions, and game
 
 ## Done
 - Game Detail Page Hub (`/games/:slug`) visual fidelity & theme fix:
-  1. Edge-to-Edge Dark Canvas: Entire page and canvas backdrop styled in `#0B0C0F` edge-to-edge, removing all cream panel borders and theme clashes. Dark variant top bar (`TopBar.jsx`) and bottom mobile tab bar (`BottomTabBar.jsx`) seamlessly integrated with `#0B0C0F`.
+  1. Light theme everywhere: the game page uses the same warm ivory canvas, light top bar and tokens (`bg-bg`, `bg-surface`, `text-text`, `text-text-muted`, `border-border`) as every other page. Only the hero banner is dark, because it sits on the game's art behind a scrim. There is no dark page variant.
   2. Compact Hero: Removed floating card border-radius; hero backdrop sits directly flush under TopBar, compact height (~560px max on desktop), removed stray "View screenshots" text link.
   3. Single Centered Container: Aligned all lower sections (tabs, About, facts, time-to-beat, More Like This) within a `max-w-[1280px]` container with 32px side padding (16px on mobile), matching hero text alignment.
-  4. High-Contrast Typography & Metas: Set fact labels (Developer, Publisher, Release date, Genre, Modes, Platforms), time-to-beat labels, and section descriptions to high-contrast `#9AA3B2` / `#D1D5DB` (WCAG AA ≥ 4.5:1), with white headings.
+  4. High-Contrast Typography & Metas: Set fact labels (Developer, Publisher, Release date, Genre, Modes, Platforms), time-to-beat labels, and section descriptions to `text-text-muted` labels and `text-text` values/headings (WCAG AA ≥ 4.5:1 on ivory).
   5. Grouped Platform Families: Clean grouped platforms (`PC, PlayStation, Xbox, Switch, Mac, Mobile`) displayed in Facts and Hero instead of raw platform strings.
-  6. Compact Overview Screenshots & More Like This: Single "Screenshots" heading with "View all ->", compact 16:9 carousel with cycle arrows; "More like this" rail with white headings, single-line truncated titles, and lime hover accents.
+  6. Compact Overview Screenshots & More Like This: Single "Screenshots" heading with "View all ->", compact 16:9 carousel with cycle arrows; "More like this" rail with `text-text` headings and single-line truncated titles. System requirements tab shows only when Steam has requirements for the game.
 - Profile & Settings Page Polish (`/profile`):
   1. Header Banner: Large 88px ringed avatar, username, Level N and thin lime XP progress bar (`xp` / `nextLevelXp`) from `GET /account/summary`, member-since, favourite game #1 backdrop with dark left scrim, and "View my public profile" link.
   2. Responsive Two-Column Layout: Desktop (≥1024px) two-column layout with Gamer Identity + Steam on left, and sticky Account Information, Privacy, Blocked Players, and Delete Account on right; full-width responsive stack on mobile.

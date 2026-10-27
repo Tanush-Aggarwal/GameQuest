@@ -17,7 +17,7 @@ import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { SteamDetails } from '@/components/steam/SteamBadge.jsx';
-import { otherPlatforms, steamOwnership } from '@/lib/steam.js';
+import { formatPlaytime, otherPlatforms, steamOwnership } from '@/lib/steam.js';
 
 const STATUS_LABELS = {
   wishlist: 'Wishlist',
@@ -137,7 +137,7 @@ export default function LibraryEntry() {
             </div>
 
             <div className="mt-1 flex flex-wrap gap-2">
-              {totalPlaytimeMin > 0 && <Stat icon={Clock} value={`${Math.round(totalPlaytimeMin / 60)}h`} label="played" />}
+              {totalPlaytimeMin > 0 && <Stat icon={Clock} value={formatPlaytime(totalPlaytimeMin)} label="played" />}
               {game.ratingAvg > 0 && <Stat icon={Star} value={game.ratingAvg.toFixed(1)} label="rating" />}
               {game.timeToBeat?.main > 0 && <Stat icon={Trophy} value={`~${game.timeToBeat.main}h`} label="to beat" />}
               <Stat icon={Gamepad2} value={`${progress}%`} label="progress" />

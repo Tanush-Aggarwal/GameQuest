@@ -82,7 +82,7 @@ export function createSessionService({ GameSession, Rsvp, Game, User, social, ev
       id: String(session._id),
       title: session.title || (game ? `Playing ${game.title}` : 'Play session'),
       customTitle: session.title ?? '',
-      game: game ? { id: String(game._id), slug: game.slug, title: game.title, cover: game.cover ?? null, backdrop: game.backdrop ?? null } : null,
+      game: game ? { id: String(game._id), slug: game.slug, title: game.title, cover: game.cover ?? null, backdrop: game.backdrop ?? game.screenshots?.[0] ?? game.artworks?.[0] ?? null } : null, // wide art for the session banner
       host: host ? { id: String(host._id), username: host.username } : null,
       startsAt: toIso(session.startsAt),
       endsAt: toIso(session.endsAt),

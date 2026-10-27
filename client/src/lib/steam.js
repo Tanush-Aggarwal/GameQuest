@@ -10,4 +10,6 @@ export function achievementPercent(achievements) {
   return Math.round((achievements.unlocked / achievements.total) * 100);
 }
 
-export const formatPlaytime = (minutes) => (minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`);
+// One decimal like Steam shows it (294.1h), whole hours past 1000.
+export const formatPlaytime = (minutes) =>
+  minutes >= 60 ? `${minutes >= 60000 ? Math.round(minutes / 60) : (Math.floor(minutes / 6) / 10).toFixed(1).replace(/\.0$/, "")}h` : `${minutes}m`;

@@ -283,3 +283,20 @@ describe('terms and privacy', () => {
     expect(typeof (await s.User.findOne({ usernameLower: 'dana' })).termsAcceptedAt?.getTime()).toBe('number');
   });
 });
+
+describe('ratings from external sources', () => {
+  it('combines IGDB, Steam user reviews (cached) and community ratings', async () => {
+    const { createRatingsService } = await import('../services/ratingsService.js');
+    const Game = createFakeCollection();
+    const MediaCache = createFakeCollection({ unique: [['gameId', 'source']] });
+    const steam = { getReviewSummary: jest.fn(async () => ({ label: 'Very Positive', percent: 92, total: 410000 })) };
+    const svc = createRatingsService({ Game, MediaCache, steam });
+    await Game.create({ slug: 'hades', totalRating: 93, totalRatingCount: 300, ratingAvg: 4.5, ratingCount: 2, externalIds: { steam: '1145360' } });
+    const r = await svc.forSlug('hades');
+    expect(r.igdb).toMatchObject({ score: 9.3, outOf: 10 });
+    expect(r.steam).toMatchObject({ label: 'Very Positive', percent: 92, total: 410000 });
+    expect(r.community).toMatchObject({ score: 4.5, outOf: 5, count: 2 });
+    await svc.forSlug('hades');
+    expect(steam.getReviewSummary).toHaveBeenCalledTimes(1);
+  });
+});

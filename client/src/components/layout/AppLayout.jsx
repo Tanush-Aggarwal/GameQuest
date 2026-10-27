@@ -51,15 +51,6 @@ export function AppLayout() {
   const isGamePage = pathname.startsWith('/games/');
 
   useEffect(() => {
-    if (isGamePage) {
-      document.body.style.backgroundColor = '#0B0C0F';
-      return () => {
-        document.body.style.backgroundColor = '';
-      };
-    }
-  }, [isGamePage]);
-
-  useEffect(() => {
     function onKeyDown(e) {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -74,7 +65,7 @@ export function AppLayout() {
     <ArtProvider>
       <AmbientProvider>
         <AmbientBackground />
-        <div className={`gq-app min-h-screen ${isGamePage ? 'bg-[#0B0C0F]' : ''}`}>
+        <div className={"gq-app min-h-screen"}>
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-3 focus:py-2 focus:text-accent-fg"
@@ -82,13 +73,13 @@ export function AppLayout() {
             Skip to content
           </a>
           <SideRail />
-          <div className={`md:pl-[160px] ${isGamePage ? 'bg-[#0B0C0F]' : ''}`}>
+          <div className="md:pl-[160px]">
             <TopBar onOpenPalette={() => openPalette(true)} />
             <main
               id="main"
               className={`gq-main mx-auto w-full pb-24 lg:pb-12 ${
                 isGamePage
-                  ? '!max-w-none !p-0 bg-[#0B0C0F]'
+                  ? '!max-w-none !p-0'
                   : 'px-4 py-6 sm:px-6 lg:px-8'
               }`}
             >

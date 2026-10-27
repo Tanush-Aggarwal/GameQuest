@@ -33,7 +33,7 @@ export function parseRequirementsHtml(html) {
 // Steam web API adapter. Only this module talks to Steam. The API key travels in the query string,
 // so errors are built from status codes and never from the request URL, and nothing here logs it.
 // `fetchImpl` is injectable so tests never touch the network.
-export function createSteamAdapter({ config, fetchImpl = fetch }) {
+export function createSteamAdapter({ config, fetchImpl = fetch, retryDelayMs = 700 }) {
   const key = config.steam?.apiKey ?? null;
   const isConfigured = () => Boolean(key);
 
@@ -69,14 +69,57 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
   const PRIVATE_MESSAGE =
     'Your Steam game details are private. In Steam, open Edit Profile > Privacy Settings and set "Game details" to Public, then sync again.';
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // Steam throttles bursts of per-game calls (429) and has short 5xx blips. For achievements, which
+  // are many small calls, wait and try again a couple of times before calling a game failed.
+  async function callWithRetry(path, params) {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return await call(path, params);
+      } catch (err) {
+        if (attempt >= 2) throw err;
+        await sleep(retryDelayMs * 2 ** attempt);
+      }
+    }
+  }
+
+  // Fallback when GetPlayerAchievements gives nothing usable: the game's schema says how many
+  // achievements exist, GetUserStatsForGame says which ones this player has. Returns null when the
+  // fallback itself cannot answer, so the caller can decide what that means.
+  async function achievementsFromStats(steamId, appid) {
+    try {
+      const schema = await call('ISteamUserStats/GetSchemaForGame/v2', { appid: String(appid), l: 'english' });
+      if (schema.status >= 400) return null;
+      const total = schema.body?.game?.availableGameStats?.achievements?.length ?? 0;
+      if (!total) return { unlocked: null, total: null }; // the game really has no achievements
+      const stats = await call('ISteamUserStats/GetUserStatsForGame/v0002', { steamid: steamId, appid: String(appid) });
+      if (stats.status === 401 || stats.status === 403) return null; // stats are private: not "0 unlocked"
+      if (stats.status >= 400) return { unlocked: 0, total }; // never played it: none unlocked yet
+      const unlocked = (stats.body?.playerstats?.achievements ?? []).filter((a) => a.achieved === 1).length;
+      return { unlocked, total };
+    } catch {
+      return null;
+    }
+  }
+
   async function getAchievements(steamId, appid) {
-    const { status, body } = await call('ISteamUserStats/GetPlayerAchievements/v0001', { steamid: steamId, appid: String(appid) });
-    // "Requested app has no stats" comes back as 400: the game simply has no achievements.
-    if (status === 400) return { unlocked: null, total: null };
-    if (status >= 400) throw new UpstreamError(`Steam would not return achievements (HTTP ${status}).`);
+    const { status, body } = await callWithRetry('ISteamUserStats/GetPlayerAchievements/v0001', {
+      steamid: steamId,
+      appid: String(appid),
+      l: 'english',
+    });
     const list = body?.playerstats?.achievements;
-    if (!Array.isArray(list) || !list.length) return { unlocked: null, total: null };
-    return { unlocked: list.filter((a) => a.achieved === 1).length, total: list.length };
+    if (status < 400 && Array.isArray(list) && list.length) {
+      return { unlocked: list.filter((a) => a.achieved === 1).length, total: list.length };
+    }
+    // 400 ("Requested app has no stats"), an empty list or a 403 can all hide real achievements
+    // (older games, other editions, privacy quirks), so double-check before saying "none".
+    const fallback = await achievementsFromStats(steamId, appid);
+    if (fallback) return fallback;
+    if (status <= 400) return { unlocked: null, total: null };
+    if (status === 403) throw new UpstreamError(PRIVATE_MESSAGE);
+    throw new UpstreamError(`Steam would not return achievements (HTTP ${status}).`);
   }
 
   return {
@@ -158,6 +201,23 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
       return { cover: cover ?? header, backdrop: backdrop ?? header };
     },
 
+    // Steam user review summary from the public store API (no key): { label, percent, total } or null.
+    async getReviewSummary(appid) {
+      let res;
+      try {
+        res = await fetchImpl(
+          `https://store.steampowered.com/appreviews/${encodeURIComponent(appid)}?${new URLSearchParams({ json: '1', language: 'all', purchase_type: 'all', num_per_page: '0' })}`,
+          { signal: AbortSignal.timeout(PROBE_TIMEOUT_MS * 2) },
+        );
+      } catch {
+        throw new UpstreamError('Could not reach the Steam store. Try again in a moment.');
+      }
+      if (!res.ok) throw new UpstreamError(`The Steam store is unavailable right now (HTTP ${res.status}).`);
+      const s = (await res.json().catch(() => null))?.query_summary;
+      if (!s || !(s.total_reviews > 0)) return null;
+      return { label: s.review_score_desc ?? null, percent: Math.round((s.total_positive / s.total_reviews) * 100), total: s.total_reviews };
+    },
+
     // PC system requirements from the public store API (no key). null when the app is unknown or has none.
     async getRequirements(appid) {
       let res;
@@ -183,7 +243,7 @@ export function createSteamAdapter({ config, fetchImpl = fetch }) {
 
     // Achievements for many games, `size` at a time. A game that fails is left out of `results`
     // (and counted in `failed`) so one bad response never fails the sync.
-    async getAchievementsBatch(steamId, appids, { size = 10, onProgress } = {}) {
+    async getAchievementsBatch(steamId, appids, { size = 5, onProgress } = {}) {
       const results = new Map();
       let failed = 0;
       for (let start = 0; start < appids.length; start += size) {

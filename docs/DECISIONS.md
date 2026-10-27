@@ -8,7 +8,7 @@ Format: date — decision — why.
 - 2026-10-26 — Background jobs with Agenda on MongoDB instead of BullMQ — no Redis to host or pay for.
 - 2026-10-26 — IGDB as main game data source (also unlocks Twitch clips with the same credentials); RAWG as fallback.
 - 2026-10-26 — Discord: OAuth `identify` + validated pasted invite first; bot-created invites/events second — linking an account cannot create server invites.
-- 2026-10-26 — Dark-first UI with Quest Violet accent and Loot Gold reserved for rewards.
+- 2026-10-26 — ~~Dark-first UI with Quest Violet accent~~ — superseded on 2026-10-27: the app is light-theme only (warm ivory + dark sidebar, lime accent). Do not reintroduce any dark page theme.
 - 2026-10-27 — Pixel-accurate visual fidelity recreation: warm ivory canvas (#F2EEE4), wide fantasy landscape hero backdrop with monolith and soft left-side ivory fade, 5 full-bleed trending game cards with dark bottom gradient and white title/rating overlay, Genshin Impact adventure card, character community banner, and removal of distracting ambient/panel background textures.
 - 2026-10-26 — 3D features (Blender/VRoid) deferred until the full website is built.
 
@@ -144,7 +144,7 @@ Format: date — decision — why.
 - `profileService.updateProfile` and `profileService.getProfile`: Injected `Game` model to populate `favouriteGames` with title, slug, cover, ratingAvg, and genres for public and friend profiles (respecting privacy and block boundaries).
 - User Profile (`/u/:username`): Added ambient gamer header with avatar (image with letter fallback), bio quote block, Letterboxd / Backloggd style "Favourite 4 Showcase" poster grid with ratings and direct links, and "Trophies & Milestones" shelf computed from user stats (Collector, Finisher, Veteran, Reviewer) styled with exact token colors (`#B9F2FF`, `#FFC14D`, `#C0C7D1`, `#CD7F32`).
 - Profile Management (`/profile`): Added interactive Gamer Identity editor allowing avatar URL input with instant gaming presets, bio with live char count, and interactive catalog game search to assign and manage the 4 showcase slots.
-- Backlog Health & Velocity (`Home.jsx`): Wired `getBacklogHealth` and rendered a responsive 6-month trajectory Recharts `AreaChart` with gradient violet (`#7C5CFF`) for added games and emerald green (`#34D399`) for completed games, dark-mode tooltip, and "Clear backlog in ~X months" velocity badge.
+- Backlog Health & Velocity (`Home.jsx`): Wired `getBacklogHealth` and rendered a responsive 6-month trajectory Recharts `AreaChart` with gradient violet (`#7C5CFF`) for added games and emerald green (`#34D399`) for completed games, light tooltip, and "Clear backlog in ~X months" velocity badge.
 - Desktop Navigation: Added direct top-level links for `Collections` and `Sessions` in `TopNav.jsx` on desktop (`DESKTOP_NAV_ITEMS`), while preserving the 5 core mobile bottom tabs (`MOBILE_NAV_ITEMS`) per AGENTS.md.
 - Demo Account Seeding: Enriched both `demo` and `alex` users in Atlas with avatars, bios, and 4 iconic favourite games each.
 
@@ -279,3 +279,8 @@ Format: date — decision — why.
 - **No linking by email:** if the verified Google email already belongs to a password account, sign-in is refused with a message to log in with the password. GameQuest does not verify emails, so linking could give an account to whoever registered the address first.
 - **Data model:** `User.googleId` (partial unique index, like `steam.steamId`); `passwordHash` is required only when there is no `googleId`. Google-only accounts cannot use password login. Terms: the button carries a "by continuing you agree" notice instead of a checkbox, so Google sign-ups do not set `termsAcceptedAt`.
 - **Setup is the owner's:** `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` go in `server/.env`; add `<origin>/api/v1/auth/google/callback` as an authorised redirect URI (docs/DEPLOY.md).
+
+## 2026-10-27 — Antigravity — Final Frontend Theme Lock: Permanent Warm Ivory Light Theme
+- **Decision:** The current frontend theme, visual appearance, and layout hierarchy are finalized and permanently locked in. GameQuest will not use a dark theme going forward.
+- **Theme Specification:** Standardized permanently on the Warm Ivory canvas (`--bg: #F2EEE4`), light surface cards (`--surface: #fbf8f1`, `--surface-raised: #e8dfcf`, `--border: #d3c8b7`), charcoal text (`--text: #151713`, `--text-muted: #625b4f`), near-black sidebar (`--sidebar-bg: #111311`), acid-lime accent (`--accent: #C9F36D`, `--accent-fg: #151713`), and burnt-orange secondary accent (`--secondary-accent: #B8420E`).
+- **Rule for all AI tools & future work:** Do not modify the frontend theme, design tokens, layout hierarchy, or component styling. No dark theme will be used or reintroduced. All future development must preserve the current visual design as final.

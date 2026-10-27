@@ -47,7 +47,8 @@ shared/
 - Status changes, progress updates and RSVPs are dedicated endpoints, not a generic PATCH.
 
 ## UI rules
-- Dark theme by default. Use only the design tokens in `client/src/styles/tokens.css` (`--bg`, `--surface`, `--surface-raised`, `--border`, `--text`, `--text-muted`, `--accent` #7C5CFF, `--reward` #FFC14D, status and trophy colours). Gold (`--reward`) is only for quests, trophies and XP.
+- Final Frontend Theme (locked): Warm Ivory (#F2EEE4) light theme canvas with dark sidebar (#111311). No dark theme will be used going forward. Use only the finalized design tokens in client/src/styles/tokens.css (--bg, --surface, --surface-raised, --border, --text, --text-muted, --accent #C9F36D, --secondary-accent #B8420E). Do not change the frontend styling or layout.
+- Light theme on every page, including the game detail page (`/games/:slug`). Never add page-level dark styling: no `#0B0C0F`, `#16181D`, `#9AA3B2`, `is-game-page`, `text-white` on page content, or dark variants in `Game.jsx`, `GameHero.jsx`, `AppLayout.jsx`, `TopBar.jsx`, `MoreLikeThis.jsx`, `ScreenshotGallery.jsx` or `visual-refresh.css`. Only art headers (`BackdropHero`) are dark, and `visual-refresh.css` keeps their text white. Do not revert these files with git.
 - Fonts: Space Grotesk (headings), Inter (UI), tabular numerals for stats.
 - Spacing on an 8-point grid; radius 12 px cards, 8 px controls.
 - Every data view implements loading (skeleton), empty (reason + one action), error (message + Retry, scoped to its section) and success states.

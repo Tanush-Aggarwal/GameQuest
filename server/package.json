@@ -16,7 +16,8 @@
     "catalog:steam-art": "node --env-file-if-exists=.env scripts/steam-art.js",
     "db:indexes": "node --env-file-if-exists=.env scripts/sync-indexes.js",
     "catalog:ttb": "node --env-file-if-exists=.env scripts/fix-time-to-beat.js",
-    "catalog:art": "node --env-file-if-exists=.env scripts/fix-art.js"
+    "catalog:art": "node --env-file-if-exists=.env scripts/fix-art.js",
+    "steam:debug": "node --env-file-if-exists=.env scripts/debug-steam.js"
   },
   "jest": {
     "testEnvironment": "node",

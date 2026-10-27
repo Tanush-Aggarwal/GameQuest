@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Clock, Gamepad2, Layers, RefreshCw, Star } from 'lucide-react';
+import { CalendarDays, Clock, Gamepad2, Layers, Play, Plus, RefreshCw, Star, Trophy, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
@@ -12,6 +12,17 @@ import { timeAgo } from '@/lib/time.js';
 
 const PAGE_SIZE = 15;
 
+// Each kind of activity gets its own icon and colour, tinted chip behind it, so the feed scans at a glance.
+const TONE = {
+  added: 'bg-[color-mix(in_srgb,var(--status-backlog)_14%,transparent)] text-[var(--status-backlog)]',
+  playing: 'bg-[color-mix(in_srgb,var(--status-playing)_14%,transparent)] text-[var(--status-playing)]',
+  completed: 'bg-[color-mix(in_srgb,var(--status-completed)_14%,transparent)] text-[var(--status-completed)]',
+  dropped: 'bg-[color-mix(in_srgb,var(--status-dropped)_12%,transparent)] text-[var(--status-dropped)]',
+  review: 'bg-[color-mix(in_srgb,var(--reward)_14%,transparent)] text-[var(--reward)]',
+  collection: 'bg-[color-mix(in_srgb,var(--secondary-accent)_12%,transparent)] text-[var(--secondary-accent)]',
+  session: 'bg-[var(--accent)] text-[var(--accent-fg)]',
+};
+
 // One sentence per activity type; the game and collection names are links.
 export function describe(item) {
   const game = item.game ? (
@@ -22,15 +33,16 @@ export function describe(item) {
   switch (item.type) {
     case 'library.statusChanged': {
       const { from, to } = item.data;
-      if (!from) return { icon: Gamepad2, body: <>added {game} to their {to}</> };
-      if (to === 'playing') return { icon: Gamepad2, body: <>started playing {game}</> };
-      if (to === 'completed') return { icon: Gamepad2, body: <>completed {game}</> };
-      if (to === 'dropped') return { icon: Gamepad2, body: <>dropped {game}</> };
-      return { icon: Gamepad2, body: <>moved {game} to {to}</> };
+      if (to === 'completed') return { icon: Trophy, tone: TONE.completed, body: <>completed {game}</> };
+      if (to === 'dropped') return { icon: XCircle, tone: TONE.dropped, body: <>dropped {game}</> };
+      if (!from) return { icon: Plus, tone: TONE.added, body: <>added {game} to their {to}</> };
+      if (to === 'playing') return { icon: Play, tone: TONE.playing, body: <>started playing {game}</> };
+      return { icon: Gamepad2, tone: TONE.added, body: <>moved {game} to {to}</> };
     }
     case 'review.created':
       return {
         icon: Star,
+        tone: TONE.review,
         body: (
           <>
             reviewed {game} <span className="tabular-nums">{'★'.repeat(item.data.rating)}<span className="sr-only"> {item.data.rating} out of 5</span></span>
@@ -38,10 +50,11 @@ export function describe(item) {
         ),
       };
     case 'library.sessionLogged':
-      return { icon: Clock, body: <>played {game} for <span className="tabular-nums">{item.data.minutes}</span> min</> };
+      return { icon: Clock, tone: TONE.playing, body: <>played {game} for <span className="tabular-nums">{item.data.minutes}</span> min</> };
     case 'collection.created':
       return {
         icon: Layers,
+        tone: TONE.collection,
         body: (
           <>
             created the collection{' '}
@@ -52,6 +65,7 @@ export function describe(item) {
     case 'session.created':
       return {
         icon: CalendarDays,
+        tone: TONE.session,
         body: (
           <>
             scheduled{' '}
@@ -63,27 +77,30 @@ export function describe(item) {
     case 'sync.completed':
       return {
         icon: RefreshCw,
+        tone: TONE.added,
         body: <>synced <span className="tabular-nums">{item.data.count}</span> {item.data.count === 1 ? 'game' : 'games'} from {item.data.platform}</>,
       };
     default:
-      return { icon: Gamepad2, body: <>did something</> };
+      return { icon: Gamepad2, tone: TONE.added, body: <>did something</> };
   }
 }
 
 function ActivityRow({ item, showActor }) {
-  const { icon: Icon, body } = describe(item);
+  const { icon: Icon, tone, body } = describe(item);
   return (
-    <li className="flex items-start gap-3 rounded-card border border-border/70 bg-bg/70 p-3">
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-      <div className="min-w-0 flex-1 text-sm text-text-muted">
+    <li className="flex items-start gap-3 rounded-control px-2 py-3 transition-colors hover:bg-bg">
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone}`}>
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1 text-sm leading-6 text-text-muted">
         {showActor && (
           <Link to={`/u/${item.actor.username}`} className="font-semibold text-text hover:underline">{item.actor.username}</Link>
         )}{' '}
         {body}
-        <p className="mt-0.5 text-xs">
-          <time dateTime={new Date(item.createdAt).toISOString()}>{timeAgo(item.createdAt)}</time>
-        </p>
       </div>
+      <time dateTime={new Date(item.createdAt).toISOString()} className="shrink-0 pt-0.5 text-xs tabular-nums text-text-muted">
+        {timeAgo(item.createdAt)}
+      </time>
     </li>
   );
 }
@@ -122,7 +139,7 @@ export function ActivityList({ loadPage, renderEmpty, showActor = true }) {
 
   return (
     <>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col divide-y divide-border/60">
         {view.items.map((item) => (
           <ActivityRow key={item.id} item={item} showActor={showActor} />
         ))}

@@ -158,24 +158,26 @@ GameQuest borrows the best-known pattern from each product its users already liv
 
 ## Design system
 
-GameQuest looks like a calm, dark "quest log": game art carries the colour, the interface stays quiet, and gold is reserved for rewards. Dark is the default theme; light is a toggle.
+GameQuest uses one theme only: a warm ivory light theme with a dark sidebar. Game art carries the colour, the interface stays quiet. Art headers (game, library entry, collection, profile, session) are dark because they sit on game art behind a scrim; text on them is white. There is no dark theme and no theme toggle.
 
 ### Colour tokens
 
-Define every colour as a CSS variable and map it into Tailwind, so the light theme is a second set of values, not a second stylesheet.
+Every colour is a CSS variable in `client/src/styles/tokens.css`, mapped into Tailwind. Do not hard-code page colours.
 
-| Token | Dark value | Used for |
+| Token | Value | Used for |
 | --- | --- | --- |
-| `--bg` | #0B0E14 | Page background |
-| `--surface` | #131824 | Cards, panels |
-| `--surface-raised` | #1B2232 | Hover, menus, modals |
-| `--border` | #2A3346 | Dividers, card outlines |
-| `--text` / `--text-muted` | #E8ECF4 / #9AA4B8 | Body text / secondary text |
-| `--accent` (Quest Violet) | #7C5CFF | Primary buttons, links, focus ring |
-| `--reward` (Loot Gold) | #FFC14D | Quests, trophies, XP — nothing else |
-| Status: Playing / Completed / Backlog / Wishlist / Dropped | #22D3EE / #34D399 / #94A3B8 / #F472B6 / #F87171 | Status ring, chips, filters |
-| Trophy tiers: Bronze / Silver / Gold / Platinum | #CD7F32 / #C0C7D1 / #FFC14D / #B9F2FF | Trophy badges |
-| Feedback: success / warning / error | #34D399 / #FBBF24 / #F87171 | Toasts, inline errors |
+| `--bg` | #F2EEE4 | Page background |
+| `--surface` | #FBF8F1 | Cards, panels |
+| `--surface-raised` | #E8DFCF | Hover, menus, chips |
+| `--border` | #D3C8B7 | Dividers, card outlines |
+| `--text` / `--text-muted` | #151713 / #625B4F | Body text / secondary text |
+| `--accent` / `--accent-fg` | #C9F36D / #151713 | Primary buttons, active states |
+| `--accent-text` | #9B3510 | Accent-coloured text on ivory |
+| `--secondary-accent` | #B8420E | Highlights, icons |
+| `--reward` | #8B5A14 | Trophies, XP, ratings |
+| Status: Playing / Completed / Backlog / Wishlist / Dropped | #155F77 / #17633B / #625B4F / #9B3510 / #A32828 | Status chips, icons |
+| Trophy tiers: Bronze / Silver / Gold / Platinum | #8B4A1B / #62686C / #8B5A14 / #155F77 | Trophy badges |
+| Sidebar | #111311 bg, #8E928B text | Left navigation rail |
 
 Never rely on colour alone: every status also has an icon and a label.
 

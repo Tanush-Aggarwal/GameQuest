@@ -21,7 +21,7 @@ function GameSkeleton() {
   return <div role="status" aria-label="Loading game" className="flex flex-col gap-5"><Skeleton className="h-[560px] w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-72 w-full" /></div>;
 }
 
-const TAB = 'min-h-12 shrink-0 border-b-2 border-transparent px-3 text-sm font-semibold text-[#9AA3B2] transition-colors hover:text-white data-[state=active]:border-[#C8F135] data-[state=active]:text-white sm:px-5';
+const TAB = 'min-h-12 shrink-0 border-b-2 border-transparent px-3 text-sm font-semibold text-text-muted transition-colors hover:text-text data-[state=active]:border-text data-[state=active]:text-text sm:px-5';
 
 function formatDate(value) {
   if (!value) return null;
@@ -43,8 +43,8 @@ function Facts({ game }) {
     <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
       {facts.map(([label, value]) => (
         <div key={label}>
-          <dt className="text-xs font-medium text-[#9AA3B2]">{label}</dt>
-          <dd className="mt-1 text-sm font-semibold text-white">{value}</dd>
+          <dt className="text-xs font-medium text-text-muted">{label}</dt>
+          <dd className="mt-1 text-sm font-semibold text-text">{value}</dd>
         </div>
       ))}
     </dl>
@@ -73,19 +73,19 @@ function TimeToBeat({ timeToBeat }) {
   const lastPct = lastItem ? lastItem.pct : 0;
 
   return (
-    <section className="mt-8 border-t border-white/10 pt-6" aria-labelledby="time-to-beat">
+    <section className="mt-8 border-t border-border pt-6" aria-labelledby="time-to-beat">
       <div className="mb-6 flex items-center gap-2">
-        <Clock3 className="h-4 w-4 text-[#9AA3B2]" aria-hidden="true" />
-        <h3 id="time-to-beat" className="text-sm font-semibold text-white">Time to beat</h3>
+        <Clock3 className="h-4 w-4 text-text-muted" aria-hidden="true" />
+        <h3 id="time-to-beat" className="text-sm font-semibold text-text">Time to beat</h3>
       </div>
       {timeToBeat?.endless && (
-        <p className="mb-4 text-sm text-[#9AA3B2]">Endless: multiplayer / live service</p>
+        <p className="mb-4 text-sm text-text-muted">Endless: multiplayer / live service</p>
       )}
 
       {items.length > 0 && (
         <div className="relative pt-2 pb-14">
           {/* Base track */}
-          <div className="absolute left-0 right-0 top-3.5 h-1.5 rounded-full bg-white/10" />
+          <div className="absolute left-0 right-0 top-3.5 h-1.5 rounded-full bg-surface-raised" />
 
           {/* Lighter lime tint up to last marker */}
           {lastPct > 0 && (
@@ -114,19 +114,19 @@ function TimeToBeat({ timeToBeat }) {
                 className="absolute top-2"
                 style={{ left: `${item.pct}%` }}
               >
-                <span className="block h-4 w-4 -translate-x-1/2 rounded-full border-2 border-white bg-[#0B0C0F] shadow-sm" />
+                <span className="block h-4 w-4 -translate-x-1/2 rounded-full border-2 border-text bg-bg shadow-sm" />
                 <div
                   className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center ${
                     isCrowded ? 'top-6 pt-3' : 'top-6'
                   }`}
                 >
-                  <span className="whitespace-nowrap text-xs font-medium text-[#9AA3B2]">
+                  <span className="whitespace-nowrap text-xs font-medium text-text-muted">
                     {item.label}
                   </span>
-                  <span className="whitespace-nowrap text-sm font-bold text-white">
+                  <span className="whitespace-nowrap text-sm font-bold text-text">
                     {timeToBeat.lowConfidence ? '~' : ''}{item.value}h
                     {timeToBeat.lowConfidence && (
-                      <span className="ml-1 text-[10px] font-normal text-[#9AA3B2]">few reports</span>
+                      <span className="ml-1 text-[10px] font-normal text-text-muted">few reports</span>
                     )}
                   </span>
                 </div>
@@ -144,11 +144,11 @@ function Overview({ game, onScreenshots }) {
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.8fr)]">
       <section aria-labelledby="about-title">
-        <h2 id="about-title" className="font-heading text-2xl font-bold text-white">About</h2>
-        <p className="mt-4 max-w-[70ch] whitespace-pre-line text-sm leading-7 text-[#D1D5DB]">
+        <h2 id="about-title" className="font-heading text-2xl font-bold text-text">About</h2>
+        <p className="mt-4 max-w-[70ch] whitespace-pre-line text-sm leading-7 text-text-muted">
           {game.summary || 'No description available yet.'}
         </p>
-        <div className="mt-8 border-t border-white/10 pt-6">
+        <div className="mt-8 border-t border-border pt-6">
           <Facts game={game} />
         </div>
         <TimeToBeat timeToBeat={game.timeToBeat} />
@@ -156,14 +156,14 @@ function Overview({ game, onScreenshots }) {
 
       <section aria-labelledby="screenshots-title">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="screenshots-title" className="font-heading text-2xl font-bold text-white">
+          <h2 id="screenshots-title" className="font-heading text-2xl font-bold text-text">
             Screenshots
           </h2>
           {shots.length > 0 && (
             <button
               type="button"
               onClick={onScreenshots}
-              className="text-sm font-medium text-[#9AA3B2] transition hover:text-white"
+              className="text-sm font-medium text-text-muted transition hover:text-text"
             >
               View all &rarr;
             </button>
@@ -172,7 +172,7 @@ function Overview({ game, onScreenshots }) {
         {shots.length > 0 ? (
           <ScreenshotGallery title={game.title} screenshots={shots} compact />
         ) : (
-          <p className="mt-5 text-sm text-[#9AA3B2]">No screenshots available yet.</p>
+          <p className="mt-5 text-sm text-text-muted">No screenshots available yet.</p>
         )}
       </section>
     </div>
@@ -187,20 +187,19 @@ function TrailerTiles({ slug, onPlay }) {
   return <>{(data ?? []).map((trailer) => <button key={trailer.videoId} type="button" onClick={onPlay} className="group relative aspect-video overflow-hidden rounded-control border border-border bg-surface-raised text-left"><img src={`https://i.ytimg.com/vi/${trailer.videoId}/hqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#C8F135] text-black"><Play className="h-5 w-5 fill-current" aria-hidden="true" /></span></span><span className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 text-xs font-medium text-white">{trailer.label}</span></button>)}</>;
 }
 
-function Requirements({ slug }) {
-  const load = useCallback((signal) => getGameRequirements(slug, { signal }), [slug]);
-  const { status, data, error, retry } = useAsync(load);
-  if (status === 'loading') return <div className="grid gap-4 sm:grid-cols-2"><Skeleton className="h-64" /><Skeleton className="h-64" /></div>;
-  if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
-  if (!data?.available) return <div className="rounded-control border border-dashed border-border p-8 text-sm text-[#9AA3B2]">{data?.reason || 'System requirements are not available for this game.'}</div>;
-  const list = (items) => <dl className="space-y-3">{(items ?? []).map((item) => <div key={`${item.label}-${item.value}`}><dt className="text-xs text-[#9AA3B2]">{item.label}</dt><dd className="mt-1 text-sm text-white">{item.value || '—'}</dd></div>)}</dl>;
-  return <div className="grid gap-6 sm:grid-cols-2"><section className="rounded-control border border-border bg-[#16181D] p-5"><h2 className="mb-5 text-lg font-semibold text-white">Minimum</h2>{list(data.minimum)}</section><section className="rounded-control border border-border bg-[#16181D] p-5"><h2 className="mb-5 text-lg font-semibold text-white">Recommended</h2>{list(data.recommended)}</section></div>;
+function Requirements({ data }) {
+  const list = (items) => <dl className="space-y-3">{(items ?? []).map((item) => <div key={`${item.label}-${item.value}`}><dt className="text-xs text-text-muted">{item.label}</dt><dd className="mt-1 text-sm text-text">{item.value || '—'}</dd></div>)}</dl>;
+  return <div className="grid gap-6 sm:grid-cols-2"><section className="rounded-control border border-border bg-surface p-5"><h2 className="mb-5 text-lg font-semibold text-text">Minimum</h2>{list(data.minimum)}</section><section className="rounded-control border border-border bg-surface p-5"><h2 className="mb-5 text-lg font-semibold text-text">Recommended</h2>{list(data.recommended)}</section></div>;
 }
 
 function GameDetails({ game }) {
   const [recommendOpen, setRecommendOpen] = useState(false);
   const [tab, setTab] = useState('overview');
   const [trailerOpen, setTrailerOpen] = useState(false);
+  // Only show the System requirements tab when the store actually has them for this game.
+  const loadReqs = useCallback((signal) => getGameRequirements(game.slug, { signal }), [game.slug]);
+  const { data: reqs } = useAsync(loadReqs);
+  const hasReqs = Boolean(reqs?.available);
   const entryState = useLibraryEntry(game.id);
   const { entry } = entryState;
   const { setBase, clearBase } = useAmbient();
@@ -224,12 +223,12 @@ function GameDetails({ game }) {
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-8 px-4 pt-6 sm:px-8">
         <Tabs.Root value={tab} onValueChange={setTab} className="flex flex-col gap-8">
-          <Tabs.List aria-label="Game details" className="flex overflow-x-auto border-b border-white/10">
+          <Tabs.List aria-label="Game details" className="flex overflow-x-auto border-b border-border">
             <Tabs.Trigger value="overview" className={TAB}>Overview</Tabs.Trigger>
             <Tabs.Trigger value="screenshots" className={TAB}>Screenshots</Tabs.Trigger>
             <Tabs.Trigger value="community" className={TAB}>Community</Tabs.Trigger>
             {entry && <Tabs.Trigger value="progress" className={TAB}>Your progress</Tabs.Trigger>}
-            <Tabs.Trigger value="requirements" className={TAB}>System requirements</Tabs.Trigger>
+            {hasReqs && <Tabs.Trigger value="requirements" className={TAB}>System requirements</Tabs.Trigger>}
           </Tabs.List>
           <Tabs.Content value="overview" className="focus-visible:outline-none">
             <Overview game={game} onScreenshots={() => setTab('screenshots')} />
@@ -248,11 +247,11 @@ function GameDetails({ game }) {
           </Tabs.Content>
           <Tabs.Content value="community" className="grid gap-8 focus-visible:outline-none lg:grid-cols-2">
             <section>
-              <h2 className="mb-4 font-heading text-2xl font-bold text-white">Community reviews</h2>
+              <h2 className="mb-4 font-heading text-2xl font-bold text-text">Community reviews</h2>
               {entry ? <ReviewPanel gameId={game.id} status={entry.status} /> : <ReviewsSection gameId={game.id} />}
             </section>
             <section>
-              <h2 className="mb-4 font-heading text-2xl font-bold text-white">Friends who have the game</h2>
+              <h2 className="mb-4 font-heading text-2xl font-bold text-text">Friends who have the game</h2>
               <FriendsSection slug={game.slug} />
             </section>
           </Tabs.Content>
@@ -261,9 +260,11 @@ function GameDetails({ game }) {
               <ProgressPanel key={entry.id} entryId={entry.id} status={entry.status} initialProgress={entry.manualProgress ?? 0} />
             </Tabs.Content>
           )}
-          <Tabs.Content value="requirements" className="focus-visible:outline-none">
-            <Requirements slug={game.slug} />
-          </Tabs.Content>
+          {hasReqs && (
+            <Tabs.Content value="requirements" className="focus-visible:outline-none">
+              <Requirements data={reqs} />
+            </Tabs.Content>
+          )}
         </Tabs.Root>
         <MoreLikeThis game={game} />
       </div>
@@ -275,7 +276,7 @@ export default function Game() {
   const { slug } = useParams();
   const load = useCallback((signal) => getGame(slug, { signal }), [slug]);
   const { status, data: game, error, retry } = useAsync(load);
-  return <section className="flex flex-col gap-6 bg-[#0B0C0F] pb-12 text-white">
+  return <section className="flex flex-col gap-6 bg-bg pb-12 text-text">
     {status === 'loading' && <GameSkeleton />}
     {status === 'error' && (error.status === 404 || error.response?.status === 404 ? <EmptyState headingLevel="h1" title="Game not found" description="This game isn't in the catalog yet. Try searching for it." actionLabel="Search games" actionTo="/explore" /> : <ErrorState message={error.message} onRetry={retry} />)}
     {status === 'success' && game && <GameDetails key={game.id} game={game} />}

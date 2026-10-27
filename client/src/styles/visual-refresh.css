@@ -195,3 +195,25 @@
     max-width: 100%;
   }
 }
+
+/*
+ * Art headers (collection, public profile, library entry...): every BackdropHero sits on a dark scrim,
+ * but pages pass light-theme text classes into it, which made titles and bios dark-on-dark.
+ * Inside a hero, text is white; buttons and light chips keep their own colours.
+ */
+[data-hero] :is(h1, h2, h3):not(button *) {
+  color: #ffffff !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+[data-hero] :is(.text-text, [class*='text-[var(--text)]']):not(button, button *, .bg-surface *, .bg-bg *) {
+  color: #ffffff !important;
+}
+[data-hero] :is(.text-text-muted, [class*='text-[var(--text-muted)]']):not(button, button *, .bg-surface *, .bg-bg *) {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+[data-hero] p:not(button p, .bg-surface p, .bg-bg p) {
+  color: rgba(255, 255, 255, 0.85);
+}
+[data-hero] svg:not(button svg, .bg-surface svg, .bg-bg svg, [class*='text-[#'] ) {
+  color: inherit;
+}

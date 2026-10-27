@@ -30,11 +30,11 @@ import { getErrorInfo } from '@/services/api.js';
 import { blockUser, getProfile, getProfileActivity, getProfileCollections, sendFriendRequest, unfriend } from '@/services/socialApi.js';
 
 const STAT_LABELS = [
-  ['games', 'Games in Library', Gamepad2],
-  ['playing', 'Currently Playing', Clock],
-  ['completed', 'Completed', Trophy],
-  ['hours', 'Hours Logged', Clock],
-  ['reviews', 'Reviews Written', Star],
+  ['games', 'Games in library', Gamepad2, 'var(--status-backlog)'],
+  ['playing', 'Playing now', Gamepad2, 'var(--status-playing)'],
+  ['completed', 'Completed', Trophy, 'var(--status-completed)'],
+  ['hours', 'Hours logged', Clock, 'var(--secondary-accent)'],
+  ['reviews', 'Reviews', Star, 'var(--reward)'],
 ];
 
 function ProfileSkeleton() {
@@ -53,7 +53,7 @@ function ProfileSkeleton() {
 
 function UserAvatar({ user, size = 'lg' }) {
   const [failed, setFailed] = useState(false);
-  const sizeClasses = size === 'lg' ? 'h-20 w-20 text-2xl' : 'h-12 w-12 text-base';
+  const sizeClasses = size === 'lg' ? 'h-24 w-24 text-3xl sm:h-28 sm:w-28' : 'h-12 w-12 text-base';
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : '?';
 
   if (user?.avatar && !failed) {
@@ -170,11 +170,11 @@ function FavouriteShowcase({ games = [], isSelf }) {
     <ArtPanel aria-labelledby="favourites-title" art={games[0]} seed="profile-favourites" className="flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <h2 id="favourites-title" className="text-lg font-semibold font-heading flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
+          <Sparkles className="h-4 w-4 text-[var(--secondary-accent)]" aria-hidden="true" />
           Favourite 4 Showcase
         </h2>
         {isSelf && (
-          <Link to="/profile" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline">
+          <Link to="/profile" className="inline-flex min-h-11 items-center text-xs font-semibold text-[var(--accent-text)] hover:underline">
             Manage favourites
           </Link>
         )}
@@ -188,7 +188,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
           </Link>
         </div>
       ) : (
-        <ul className="flex flex-wrap gap-3">
+        <ul className="flex flex-wrap gap-4">
           {games.map((game) => (
             <li key={game.id} className={LARGE_TILE}>
               <Link to={`/games/${game.slug}`} className="group flex flex-col gap-1.5">
@@ -202,7 +202,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
                   />
                   {game.ratingAvg > 0 && (
                     <span className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full bg-bg px-2 py-0.5 text-xs font-semibold text-text">
-                      <span aria-hidden="true" className="text-accent">★</span>
+                      <span aria-hidden="true" className="text-[var(--reward)]">★</span>
                       <span>
                         {game.ratingAvg.toFixed(1)}
                         <span className="sr-only"> out of 5</span>
@@ -210,7 +210,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
                     </span>
                   )}
                 </span>
-                <span className="line-clamp-2 text-xs font-medium leading-snug group-hover:text-accent" title={game.title}>
+                <span className="line-clamp-2 text-sm font-semibold leading-snug text-text group-hover:text-[var(--accent-text)]" title={game.title}>
                   {game.title}
                 </span>
               </Link>
@@ -227,27 +227,27 @@ function TrophyShelf({ stats }) {
   const trophies = [];
 
   // Collector
-  if (stats.games >= 25) trophies.push({ title: 'Master Collector', tier: 'Platinum', color: '#B9F2FF', desc: '25+ games owned' });
-  else if (stats.games >= 10) trophies.push({ title: 'Veteran Collector', tier: 'Gold', color: '#FFC14D', desc: '10+ games owned' });
-  else if (stats.games >= 5) trophies.push({ title: 'Avid Collector', tier: 'Silver', color: '#C0C7D1', desc: '5+ games owned' });
-  else if (stats.games >= 1) trophies.push({ title: 'Apprentice', tier: 'Bronze', color: '#CD7F32', desc: 'First game added' });
+  if (stats.games >= 25) trophies.push({ title: 'Master Collector', tier: 'Platinum', color: 'var(--trophy-platinum)', desc: '25+ games owned' });
+  else if (stats.games >= 10) trophies.push({ title: 'Veteran Collector', tier: 'Gold', color: 'var(--trophy-gold)', desc: '10+ games owned' });
+  else if (stats.games >= 5) trophies.push({ title: 'Avid Collector', tier: 'Silver', color: 'var(--trophy-silver)', desc: '5+ games owned' });
+  else if (stats.games >= 1) trophies.push({ title: 'Apprentice', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: 'First game added' });
 
   // Finisher
-  if (stats.completed >= 10) trophies.push({ title: 'Legendary Finisher', tier: 'Platinum', color: '#B9F2FF', desc: '10+ games completed' });
-  else if (stats.completed >= 5) trophies.push({ title: 'Master Finisher', tier: 'Gold', color: '#FFC14D', desc: '5+ games completed' });
-  else if (stats.completed >= 2) trophies.push({ title: 'Dedicated Finisher', tier: 'Silver', color: '#C0C7D1', desc: '2+ games completed' });
-  else if (stats.completed >= 1) trophies.push({ title: 'First Quest Cleared', tier: 'Bronze', color: '#CD7F32', desc: '1st game finished' });
+  if (stats.completed >= 10) trophies.push({ title: 'Legendary Finisher', tier: 'Platinum', color: 'var(--trophy-platinum)', desc: '10+ games completed' });
+  else if (stats.completed >= 5) trophies.push({ title: 'Master Finisher', tier: 'Gold', color: 'var(--trophy-gold)', desc: '5+ games completed' });
+  else if (stats.completed >= 2) trophies.push({ title: 'Dedicated Finisher', tier: 'Silver', color: 'var(--trophy-silver)', desc: '2+ games completed' });
+  else if (stats.completed >= 1) trophies.push({ title: 'First Quest Cleared', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: '1st game finished' });
 
   // Hours
-  if (stats.hours >= 100) trophies.push({ title: 'Century Master', tier: 'Platinum', color: '#B9F2FF', desc: '100+ hours logged' });
-  else if (stats.hours >= 50) trophies.push({ title: 'Dedicated Gamer', tier: 'Gold', color: '#FFC14D', desc: '50+ hours logged' });
-  else if (stats.hours >= 20) trophies.push({ title: 'Explorer', tier: 'Silver', color: '#C0C7D1', desc: '20+ hours logged' });
-  else if (stats.hours >= 5) trophies.push({ title: 'Initiate', tier: 'Bronze', color: '#CD7F32', desc: '5+ hours logged' });
+  if (stats.hours >= 100) trophies.push({ title: 'Century Master', tier: 'Platinum', color: 'var(--trophy-platinum)', desc: '100+ hours logged' });
+  else if (stats.hours >= 50) trophies.push({ title: 'Dedicated Gamer', tier: 'Gold', color: 'var(--trophy-gold)', desc: '50+ hours logged' });
+  else if (stats.hours >= 20) trophies.push({ title: 'Explorer', tier: 'Silver', color: 'var(--trophy-silver)', desc: '20+ hours logged' });
+  else if (stats.hours >= 5) trophies.push({ title: 'Initiate', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: '5+ hours logged' });
 
   // Reviews
-  if (stats.reviews >= 5) trophies.push({ title: 'Master Critic', tier: 'Gold', color: '#FFC14D', desc: '5+ reviews written' });
-  else if (stats.reviews >= 2) trophies.push({ title: 'Columnist', tier: 'Silver', color: '#C0C7D1', desc: '2+ reviews written' });
-  else if (stats.reviews >= 1) trophies.push({ title: 'Voice of the Player', tier: 'Bronze', color: '#CD7F32', desc: '1st review posted' });
+  if (stats.reviews >= 5) trophies.push({ title: 'Master Critic', tier: 'Gold', color: 'var(--trophy-gold)', desc: '5+ reviews written' });
+  else if (stats.reviews >= 2) trophies.push({ title: 'Columnist', tier: 'Silver', color: 'var(--trophy-silver)', desc: '2+ reviews written' });
+  else if (stats.reviews >= 1) trophies.push({ title: 'Voice of the Player', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: '1st review posted' });
 
   if (!trophies.length) return null;
 
@@ -257,7 +257,7 @@ function TrophyShelf({ stats }) {
         <Trophy className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
         Trophies & Milestones
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
         {trophies.map((t) => (
           <div
             key={t.title}
@@ -265,13 +265,13 @@ function TrophyShelf({ stats }) {
           >
             <div
               className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border"
-              style={{ borderColor: t.color, backgroundColor: `${t.color}15` }}
+              style={{ borderColor: t.color, backgroundColor: `color-mix(in srgb, ${t.color} 12%, transparent)` }}
             >
               <Trophy className="h-5 w-5" style={{ color: t.color }} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold truncate" style={{ color: t.color }}>{t.title}</p>
-              <p className="text-[11px] text-text-muted truncate">{t.desc}</p>
+              <p className="truncate text-sm font-bold" style={{ color: t.color }}>{t.title}</p>
+              <p className="truncate text-xs text-text-muted">{t.tier} · {t.desc}</p>
             </div>
           </div>
         ))}
@@ -287,7 +287,7 @@ function PublicCollections({ username }) {
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
   if (data.length === 0) return <EmptyState headingLevel="h3" icon={Layers} title="No collections to show" description={`${username} hasn’t shared any collections with you.`} />;
   return (
-    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-4">
       {data.map((c) => (
         <CollectionCard key={c.id} collection={c} />
       ))}
@@ -321,13 +321,13 @@ export default function UserProfile() {
         <>
           {/* User Hero Banner */}
           {/* Banner: the art of their first favourite game (a gradient when they have none, or the profile is private) */}
-          <BackdropHero as="header" art={profile.restricted ? null : profile.user.favouriteGames?.[0]} seed={profile.user.username} className="px-5 py-8 sm:px-8 sm:py-10">
+          <BackdropHero as="header" art={profile.restricted ? null : profile.user.favouriteGames?.[0]} seed={profile.user.username} className="min-h-[220px] px-5 py-8 sm:px-10 sm:py-12">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-5 sm:gap-6">
                 <UserAvatar user={profile.user} size="lg" />
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold font-heading">{profile.user.username}</h1>
-                  <p className="text-xs text-text-muted mt-0.5">
+                  <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-5xl">{profile.user.username}</h1>
+                  <p className="mt-1 text-sm text-text-muted">
                     Member since {new Date(profile.user.memberSince).toLocaleDateString(undefined, { dateStyle: 'long' })}
                   </p>
                   {profile.user.bio && (
@@ -350,39 +350,48 @@ export default function UserProfile() {
             <>
               {/* Stat Tiles */}
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                {STAT_LABELS.map(([key, label, Icon]) => (
-                  <div key={key} className="flex flex-col justify-between rounded-card border border-border bg-surface p-3.5">
+                {STAT_LABELS.map(([key, label, Icon, color]) => (
+                  <div key={key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-sm">
                     {/* dt and dd are direct children of the div that groups them, as a description list requires */}
-                    <dt className="mb-2 flex items-center justify-between text-xs text-text-muted">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-text-muted">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
+                        <Icon className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+                      </span>
                       {label}
-                      <Icon className="h-4 w-4" aria-hidden="true" />
                     </dt>
-                    <dd className="font-heading text-2xl font-bold tabular-nums text-text">{profile.stats[key]}</dd>
+                    <dd className="font-heading text-3xl font-bold tabular-nums text-text">{profile.stats[key]}</dd>
                   </div>
                 ))}
               </dl>
 
-              {/* Favourite 4 Showcase */}
-              <FavouriteShowcase games={profile.user.favouriteGames} isSelf={profile.relation === 'self'} />
+              <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+                {/* Main column: what they love and what they've been doing */}
+                <div className="flex min-w-0 flex-col gap-6">
+                  <FavouriteShowcase games={profile.user.favouriteGames} isSelf={profile.relation === 'self'} />
 
-              {/* Trophy Shelf */}
-              <TrophyShelf stats={profile.stats} />
+                  <section aria-labelledby="recent-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
+                    <h2 id="recent-title" className="text-lg font-semibold font-heading">Recent activity</h2>
+                    <div className="-mx-2 flex max-h-[520px] flex-col overflow-y-auto px-2">
+                      <ActivityList
+                        loadPage={loadActivity}
+                        showActor={false}
+                        renderEmpty={() => <EmptyState headingLevel="h3" title="No activity to show" description={`When ${profile.user.username} plays, finishes or reviews a game, it appears here.`} />}
+                      />
+                    </div>
+                  </section>
+                </div>
 
-              {/* Recent Activity */}
-              <section aria-labelledby="recent-title" className="flex flex-col gap-3">
-                <h2 id="recent-title" className="text-lg font-semibold font-heading">Recent activity</h2>
-                <ActivityList
-                  loadPage={loadActivity}
-                  showActor={false}
-                  renderEmpty={() => <EmptyState headingLevel="h3" title="No activity to show" description={`When ${profile.user.username} plays, finishes or reviews a game, it appears here.`} />}
-                />
-              </section>
-
-              {/* Collections */}
-              <section aria-labelledby="collections-title" className="flex flex-col gap-3">
-                <h2 id="collections-title" className="text-lg font-semibold font-heading">Collections</h2>
-                <PublicCollections username={profile.user.username} />
-              </section>
+                {/* Side column: achievements and shared collections */}
+                <aside className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
+                  <TrophyShelf stats={profile.stats} />
+                  <section aria-labelledby="collections-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
+                    <h2 id="collections-title" className="flex items-center gap-2 text-lg font-semibold font-heading">
+                      <Layers className="h-4 w-4 text-[var(--secondary-accent)]" aria-hidden="true" /> Collections
+                    </h2>
+                    <PublicCollections username={profile.user.username} />
+                  </section>
+                </aside>
+              </div>
             </>
           )}
         </>

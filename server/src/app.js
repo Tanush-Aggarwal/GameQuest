@@ -48,6 +48,7 @@ import { createHomeService } from './services/homeService.js';
 import { createNotificationService } from './services/notificationService.js';
 import { createAccountService } from './services/accountService.js';
 import { createRequirementsService } from './services/requirementsService.js';
+import { createRatingsService } from './services/ratingsService.js';
 import { createGoogleAdapter } from './adapters/auth/google.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
@@ -76,6 +77,7 @@ export function createApp({
   notificationService: _notifSvc,
   accountService: _accountSvc,
   requirementsService: _reqSvc,
+  ratingsService: _ratingsSvc,
   googleAdapter = createGoogleAdapter({ config }),
   eventBus = createEventBus({ logger }),
 }) {
@@ -153,6 +155,7 @@ export function createApp({
       logger,
     });
   const requirementsService = _reqSvc ?? createRequirementsService({ Game, MediaCache, steam: steamAdapter, logger });
+  const ratingsService = _ratingsSvc ?? createRatingsService({ Game, MediaCache, steam: steamAdapter, logger });
   registerSubscribers({ eventBus, collectionService, activityService, recommendationService });
 
   const app = express();
@@ -184,6 +187,7 @@ export function createApp({
       trailerService,
       homeService,
       requirementsService,
+      ratingsService,
       accountService,
       notificationService,
       googleAdapter,

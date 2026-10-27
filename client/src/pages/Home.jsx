@@ -9,7 +9,6 @@ import {
   Clock,
   ChevronRight,
   Star,
-  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -94,7 +93,7 @@ export default function Home() {
       <PlayNextSection playNext={playNext} />
 
       {/* Sessions and friend activity */}
-      <div className="gq-social-grid">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <UpcomingSessions />
         <FriendFeed />
       </div>
@@ -121,16 +120,19 @@ function StatTiles({ dashboard }) {
     { icon: Gamepad2, label: 'Playing', value: d.statusCounts?.playing ?? 0, color: 'var(--status-playing)' },
     { icon: Layers, label: 'Backlog', value: d.statusCounts?.backlog ?? 0, color: 'var(--status-backlog)' },
     { icon: Trophy, label: 'Completed', value: d.statusCounts?.completed ?? 0, color: 'var(--status-completed)' },
-    { icon: Clock, label: 'Hours logged', value: d.totalHours ?? 0, color: 'var(--accent)' },
+    { icon: Clock, label: 'Hours logged', value: d.totalHours ?? 0, color: 'var(--secondary-accent)' },
   ];
   return (
     <section aria-label="Your library at a glance" className="gq-stat-strip p-4 rounded-card border border-border bg-surface">
       <div className="sr-only" data-art="stats" />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-        {tiles.map(({ icon: Icon, label, value }) => (
+        {tiles.map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-raised)]">
-              <Icon className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
+            >
+              <Icon className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
             </div>
             <div className="min-w-0">
               <p className="text-xl font-bold font-heading tabular-nums text-text">{value}</p>
@@ -206,13 +208,12 @@ function TrendingCard({ game }) {
             {displayTitle}
           </h3>
           <div className="flex items-center justify-between text-xs pt-0.5">
-            <div className="flex items-center gap-1.5 text-gray-400">
-              <ShoppingBag className="h-3 w-3" aria-hidden="true" />
-              <Gamepad2 className="h-3 w-3" aria-hidden="true" />
-            </div>
+            <span className="truncate rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">
+              {game.genres?.[0] ?? 'Game'}
+            </span>
             {ratingValue && (
-              <span className="flex items-center gap-1 font-bold text-[#E58A2B]">
-                <Star className="h-3 w-3 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />
+              <span className="flex items-center gap-1 font-bold text-[#F5A04A]">
+                <Star className="h-3.5 w-3.5 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />
                 {ratingValue}
               </span>
             )}
@@ -281,7 +282,7 @@ function AdventureCard() {
       {/* Horizontal art across the whole card: first screenshot, then backdrop/artworks; skips any that fail */}
       <WideArt sources={[game.screenshots?.[0], game.backdrop, ...(game.artworks ?? []), ...(game.screenshots ?? []).slice(1)]} />
 
-      <div className="relative z-10 flex flex-col gap-2.5 max-w-[210px]">
+      <div className="relative z-10 flex flex-col gap-2.5 max-w-[240px]">
         <div className="flex items-center gap-2">
           <Flame className="h-4 w-4 text-[var(--secondary-accent)] fill-[var(--secondary-accent)]" aria-hidden="true" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider text-white">
@@ -297,14 +298,14 @@ function AdventureCard() {
           {badges.map((b) => (
             <span
               key={b}
-              className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-medium text-gray-300 backdrop-blur-xs"
+              className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm"
             >
               {b}
             </span>
           ))}
         </div>
 
-        <p className="line-clamp-2 text-xs leading-relaxed text-gray-300 drop-shadow-xs">
+        <p className="line-clamp-2 text-xs leading-relaxed text-white/85 drop-shadow-xs">
           {summary}
         </p>
       </div>

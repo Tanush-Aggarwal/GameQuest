@@ -282,7 +282,7 @@ describe('Library cards and quick menu', () => {
     const card = (await screen.findByRole('heading', { name: 'Hades' })).closest('li');
     expect(within(card).getByText('Playing')).toBeInTheDocument();
     expect(within(card).getByText('Steam')).toBeInTheDocument();
-    expect(within(card).getByText('13h')).toBeInTheDocument();
+    expect(within(card).getByText('12.5h')).toBeInTheDocument();
     expect(within(card).getByText(/25%/)).toBeInTheDocument();
     expect(card.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   });

@@ -85,11 +85,16 @@ describe('Game page redesign', () => {
   });
 
   it('has the required tabs and conditionally renders progress', async () => {
+    games.getGameRequirements.mockResolvedValue({
+      available: true,
+      minimum: [{ label: 'OS', value: 'Windows 10' }],
+      recommended: [],
+    });
     renderGame();
     const list = await screen.findByRole('tablist', { name: 'Game details' });
     expect(within(list).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Overview', 'Screenshots', 'Community', 'System requirements']);
     await userEvent.click(screen.getByRole('tab', { name: 'System requirements' }));
-    expect(await screen.findByText('Not available for this game.')).toBeInTheDocument();
+    expect(await screen.findByText('Windows 10')).toBeInTheDocument();
   });
 
   it('shows progress only for a library game and loads community content', async () => {

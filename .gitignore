@@ -23,3 +23,20 @@ Thumbs.db
 
 # update bundles from the cloud session
 *.bundle
+
+# AI assistant notes, prompts and working files: kept on this machine, not part of the submitted project
+AGENTS.md
+CLAUDE.md
+SETUP.md
+opencode.json
+.claude/
+scratch/
+docs/BLUEPRINT.md
+docs/DECISIONS.md
+docs/PROGRESS.md
+docs/BACKEND-API.md
+scripts/capture-redesign.mjs
+scripts/extract-reference-assets.mjs
+scripts/ingest-genshin.mjs
+scripts/test-modal-interaction.mjs
+scripts/ui-audit/

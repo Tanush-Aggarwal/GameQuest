@@ -22,7 +22,7 @@ describe('steam helpers', () => {
 
   it('formats playtime and lists the non-Steam platforms', () => {
     expect(formatPlaytime(45)).toBe('45m');
-    expect(formatPlaytime(150)).toBe('3h');
+    expect(formatPlaytime(150)).toBe('2.5h');
     expect(otherPlatforms(entry()).map((o) => o.platform)).toEqual(['Switch']);
   });
 });
@@ -31,7 +31,7 @@ describe('SteamBadge', () => {
   it('shows the Steam label, playtime and achievement percent with a screen-reader description', () => {
     render(<SteamBadge entry={entry()} />);
     expect(screen.getByText('Steam')).toBeInTheDocument();
-    expect(screen.getByText('3h')).toBeInTheDocument();
+    expect(screen.getByText('2.5h')).toBeInTheDocument();
     expect(screen.getByText('70%')).toBeInTheDocument();
     expect(screen.getByText(/achievements unlocked \(7 of 10\)/)).toBeInTheDocument();
   });
@@ -49,7 +49,7 @@ describe('SteamDetails', () => {
     render(<SteamDetails entry={entry()} />);
     expect(screen.getByRole('progressbar', { name: /achievements unlocked/i })).toHaveAttribute('aria-valuenow', '70');
     expect(screen.getByText('7 / 10 (70%)')).toBeInTheDocument();
-    expect(screen.getByText('3h played')).toBeInTheDocument();
+    expect(screen.getByText('2.5h played')).toBeInTheDocument();
     expect(screen.getByText(/^Synced/)).toBeInTheDocument();
   });
 

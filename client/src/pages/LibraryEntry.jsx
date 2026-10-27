@@ -205,7 +205,7 @@ export default function LibraryEntry() {
             </Card>
           )}
 
-          <Card title="Share & organise">
+          <Card title="Organise &amp; share">
             <div className="flex flex-col gap-3">
               <AddToCollection entryId={id} />
               <Button variant="secondary" onClick={() => setRecommendOpen(true)} className="w-full">

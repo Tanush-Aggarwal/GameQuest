@@ -7,8 +7,9 @@ import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
 import { getTrailers, reportTrailer } from '@/services/gamesApi.js';
+import { isPlayableTrailer, isSteamTrailer, trailerThumb } from '@/lib/trailers.js';
+import { SteamVideo } from './SteamVideo.jsx';
 
-const VIDEO_ID = /^[\w-]{11}$/;
 
 // English interface and captions off by default; autoplay because the viewer just clicked play.
 const embedUrl = (videoId) =>
@@ -67,6 +68,24 @@ function Player({ videoId, title }) {
   );
 }
 
+// Steam trailer: the poster with a play button until clicked, then the video itself.
+function SteamPoster({ trailer, title }) {
+  const [playing, setPlaying] = useState(false);
+  if (playing) return <SteamVideo trailer={trailer} title={title} />;
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-[12px] bg-black shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
+      <button type="button" onClick={() => setPlaying(true)} aria-label={`Play trailer for ${title}`} className="group absolute inset-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text">
+        {trailer.poster && <img src={trailer.poster} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />}
+        <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" aria-hidden="true" />
+        <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white text-[#111311] shadow-[0_0_0_10px_rgba(255,255,255,0.15)] motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-110">
+          <Play className="h-8 w-8 translate-x-0.5" fill="currentColor" aria-hidden="true" />
+        </span>
+        <span className="absolute bottom-4 left-5 text-sm font-semibold text-white/90" aria-hidden="true">Click to play</span>
+      </button>
+    </div>
+  );
+}
+
 // Trailer section of the game page: the best trailer, small tabs for the others, and "Wrong trailer?".
 // Renders nothing when the game has no (more) trailers.
 export function TrailerPlayer({ slug, title }) {
@@ -112,7 +131,7 @@ export function TrailerPlayer({ slug, title }) {
       </div>
     );
   }
-  const list = (trailers ?? []).filter((t) => VIDEO_ID.test(t.videoId));
+  const list = (trailers ?? []).filter(isPlayableTrailer);
   if (!list.length) return null;
 
   const current = list.find((t) => t.videoId === selected) ?? list[0];
@@ -121,13 +140,18 @@ export function TrailerPlayer({ slug, title }) {
   return (
     <section aria-label="Trailer" className={`grid gap-5 ${list.length > 1 ? 'lg:grid-cols-[minmax(0,1fr)_260px]' : ''}`}>
       <div className="flex min-w-0 flex-col gap-3">
-        <Player key={current.videoId} videoId={current.videoId} title={title} />
+        {isSteamTrailer(current) ? (
+          // Steam trailers start only when picked (autoplay), so the first card stays a thumbnail until clicked
+          <SteamPoster key={current.videoId} trailer={current} title={title} />
+        ) : (
+          <Player key={current.videoId} videoId={current.videoId} title={title} />
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold" style={{ color: '#fff' }}>
             {labels[list.indexOf(current)]}
-            <span className="ml-2 font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>· YouTube</span>
+            <span className="ml-2 font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>· {isSteamTrailer(current) ? 'Steam' : 'YouTube'}</span>
           </p>
-          {confirming ? (
+          {isSteamTrailer(current) ? null : confirming ? (
             <div role="group" aria-label="Confirm wrong trailer" className="flex flex-wrap items-center gap-2">
               <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>Hide this video?</span>
               <Button variant="secondary" onClick={() => wrongTrailer(current.videoId)} disabled={reporting}>
@@ -172,7 +196,7 @@ export function TrailerPlayer({ slug, title }) {
                   }`}
                 >
                   <span className="relative block aspect-video w-full shrink-0 overflow-hidden rounded-[7px] bg-black lg:w-28">
-                    <img src={`https://i.ytimg.com/vi/${t.videoId}/mqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    {trailerThumb(t, 'mq') && <img src={trailerThumb(t, 'mq')} alt="" loading="lazy" className="h-full w-full object-cover" />}
                     {active && (
                       <span className="absolute inset-0 flex items-center justify-center bg-black/45" aria-hidden="true">
                         <Play className="h-5 w-5 text-white" fill="currentColor" />

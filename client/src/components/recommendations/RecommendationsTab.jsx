@@ -51,7 +51,10 @@ export function RecommendationsTab() {
       inboxAsync.retry();
       scoreAsync.retry();
     } catch (err) {
-      toast.error(getErrorInfo(err).message);
+      // An answer that already landed (e.g. a double click) is not a failure: show the saved state.
+      if (getErrorInfo(err).code === 'CONFLICT') toast.message('Already answered');
+      else toast.error(getErrorInfo(err).message);
+      inboxAsync.retry();
     }
   }
 

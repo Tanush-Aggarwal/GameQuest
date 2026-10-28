@@ -6,9 +6,9 @@ import { createRequireAuth } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
 import { createGameController } from '../controllers/gameController.js';
 
-export function createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService }) {
+export function createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService, steamMediaService, Game }) {
   const router = Router();
-  const controller = createGameController({ gameService, trailerService });
+  const controller = createGameController({ gameService, trailerService, steamMediaService, Game });
   const home = createHomeController({ homeService, requirementsService, ratingsService });
 
   // Search and stale-game refreshes can fan out to IGDB, so they share their own bucket (client debounces typing).

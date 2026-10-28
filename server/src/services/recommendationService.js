@@ -151,7 +151,8 @@ export function createRecommendationService({
     },
 
     async respond(recipientId, id, { status, libraryStatus = 'backlog' }) {
-      let rec = await Recommendation.findOne({ _id: id });
+      // A plain object: spreading a Mongoose document later would lose its fields and break the reply.
+      let rec = await Recommendation.findOne({ _id: id }).lean();
       if (!rec) throw new NotFoundError('Recommendation not found');
 
       if (String(rec.toId) !== String(recipientId)) {
@@ -161,8 +162,6 @@ export function createRecommendationService({
       if (rec.status !== 'pending') {
         throw new ConflictError('This recommendation has already been answered');
       }
-
-      rec.status = status;
 
       if (status === 'accepted' && libraryService) {
         try {
@@ -192,7 +191,7 @@ export function createRecommendationService({
         status,
       });
 
-      const [enriched] = await enrichRecommendations([rec.toObject ? rec.toObject() : rec], recipientId);
+      const [enriched] = await enrichRecommendations([rec], recipientId);
       return enriched;
     },
 

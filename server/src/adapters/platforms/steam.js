@@ -241,6 +241,45 @@ export function createSteamAdapter({ config, fetchImpl = fetch, retryDelayMs = 7
       return { minimum, recommended };
     },
 
+    // Store media from the public store API (no key): trailers, full-size screenshots and wide art.
+    // null when the app is unknown. Movies carry whichever formats Steam sends (older apps: mp4/webm,
+    // newer ones: HLS/DASH manifests).
+    async getStoreMedia(appid) {
+      let res;
+      try {
+        res = await fetchImpl(`${STORE}?${new URLSearchParams({ appids: String(appid), l: 'english', cc: 'us' })}`, {
+          signal: AbortSignal.timeout(PROBE_TIMEOUT_MS * 2),
+        });
+      } catch {
+        throw new UpstreamError('Could not reach the Steam store. Try again in a moment.');
+      }
+      if (res.status === 429) throw new UpstreamError('The Steam store is rate limiting requests. Try again later.');
+      if (!res.ok) throw new UpstreamError(`The Steam store is unavailable right now (HTTP ${res.status}).`);
+      const entry = (await res.json().catch(() => null))?.[String(appid)];
+      if (!entry?.success || !entry.data) return null;
+      const d = entry.data;
+      const https = (u) => (typeof u === 'string' && u ? u.replace(/^http:/, 'https:') : null);
+      const movies = (d.movies ?? [])
+        .map((m) => ({
+          id: String(m.id),
+          name: m.name ?? 'Trailer',
+          poster: https(m.thumbnail),
+          mp4: https(m.mp4?.max ?? m.mp4?.['480']),
+          webm: https(m.webm?.max ?? m.webm?.['480']),
+          hls: https(m.hls_h264),
+          highlight: Boolean(m.highlight),
+        }))
+        .filter((m) => m.mp4 || m.webm || m.hls)
+        .sort((a, b) => Number(b.highlight) - Number(a.highlight))
+        .slice(0, 6);
+      return {
+        header: https(d.header_image),
+        background: https(d.background_raw ?? d.background),
+        screenshots: (d.screenshots ?? []).map((sc) => https(sc.path_full)).filter(Boolean).slice(0, 20),
+        movies,
+      };
+    },
+
     // Achievements for many games, `size` at a time. A game that fails is left out of `results`
     // (and counted in `failed`) so one bad response never fails the sync.
     async getAchievementsBatch(steamId, appids, { size = 5, onProgress } = {}) {

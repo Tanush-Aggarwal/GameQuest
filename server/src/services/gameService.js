@@ -98,6 +98,7 @@ export function createGameService({
   LibraryEntry,
   User,
   artService,
+  steamMediaService,
   now =() => new Date(),
   ttlMs = 30 * DAY_MS, // blueprint: IGDB metadata TTL is 30 days
   searchCooldownMs = 10 * 60 * 1000,
@@ -258,7 +259,8 @@ export function createGameService({
       }
       if (artService) game = await artService.fillSteamArt(game); // never throws; a missing cover/backdrop gets Steam art
       const [display] = await withParentArt(Game, [game]);
-      return toGameDto(display);
+      const dto = toGameDto(display);
+      return steamMediaService ? steamMediaService.enrich(dto, display) : dto;
     },
     async getFriendsPlaying(userId, slug) {
       const game = await Game.findOne({ slug }).lean();

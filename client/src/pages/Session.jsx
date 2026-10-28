@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { CoverImage } from '@/components/games/GameCard.jsx';
 import { ResponseBadge } from '@/components/sessions/responses.jsx';
 import { SessionForm } from '@/components/sessions/SessionForm.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -162,6 +163,12 @@ export default function Session() {
 
           <BackdropHero as="header" art={session.game} seed={session.id} className="px-5 py-8 sm:px-10 sm:py-10">
             <div className="flex min-h-[220px] flex-col justify-between gap-6 md:flex-row md:items-end">
+              <div className="flex min-w-0 items-end gap-5">
+                {session.game?.cover && (
+                  <Link to={`/games/${session.game.slug}`} className="hidden w-28 shrink-0 overflow-hidden rounded-[12px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:block lg:w-32" aria-hidden="true" tabIndex={-1}>
+                    <CoverImage cover={session.game.cover} title={session.game.title} className="aspect-[3/4] h-full w-full object-cover" />
+                  </Link>
+                )}
               <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ring-1 ring-white/20 backdrop-blur-sm">
@@ -190,18 +197,10 @@ export default function Session() {
                   </li>
                 </ul>
               </div>
-
-              {/* Date tile: the day at a glance, with the exact time range under it */}
-              <div className="flex shrink-0 items-stretch overflow-hidden rounded-[14px] bg-[#fbf8f1] text-[#151713] shadow-2xl">
-                <div className="flex w-20 flex-col items-center justify-center bg-[#151713] px-3 py-3 text-white">
-                  <span className="text-xs font-bold uppercase tracking-widest">{new Date(session.startsAt).toLocaleDateString(undefined, { month: 'short' })}</span>
-                  <span className="font-heading text-4xl font-bold leading-none">{new Date(session.startsAt).getDate()}</span>
-                </div>
-                <div className="flex flex-col justify-center gap-0.5 px-4 py-3">
-                  <span className="text-sm font-bold">{new Date(session.startsAt).toLocaleDateString(undefined, { weekday: 'long' })}</span>
-                  <time dateTime={session.startsAt} className="max-w-[16rem] text-xs leading-5 text-[#625b4f]">{fullWhen(session)}</time>
-                </div>
               </div>
+
+              {/* Date tile: the day at a glance, the time range under it (fixed colours, so page styles can't hide them) */}
+              <DateTile session={session} />
             </div>
           </BackdropHero>
 
@@ -304,5 +303,31 @@ export default function Session() {
         </>
       )}
     </section>
+  );
+}
+
+function DateTile({ session }) {
+  const start = new Date(session.startsAt);
+  const end = new Date(start.getTime() + (session.durationMin ?? 0) * 60000);
+  const time = (d) => d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const zone = start.toLocaleTimeString(undefined, { timeZoneName: 'short' }).split(' ').pop();
+  return (
+    <div className="flex shrink-0 items-stretch self-start overflow-hidden rounded-[16px] shadow-2xl ring-1 ring-white/15 md:self-end" style={{ background: '#fbf8f1', color: '#151713' }}>
+      <div className="flex w-[84px] flex-col items-center justify-center gap-1 px-3 py-3" style={{ background: '#151713', color: '#ffffff' }}>
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          {start.toLocaleDateString(undefined, { month: 'short' })}
+        </span>
+        <span className="font-heading text-[40px] font-bold leading-none tabular-nums" style={{ color: '#ffffff' }}>{start.getDate()}</span>
+      </div>
+      <div className="flex min-w-[11rem] flex-col justify-center gap-1 px-5 py-3">
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#625b4f' }}>
+          {start.toLocaleDateString(undefined, { weekday: 'long' })}
+        </span>
+        <time dateTime={session.startsAt} className="font-heading text-lg font-bold leading-tight tabular-nums">
+          {session.durationMin ? `${time(start)} – ${time(end)}` : time(start)}
+        </time>
+        <span className="text-[11px]" style={{ color: '#7a7264' }}>{zone}</span>
+      </div>
+    </div>
   );
 }

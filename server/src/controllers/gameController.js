@@ -1,4 +1,4 @@
-export function createGameController({ gameService, trailerService }) {
+export function createGameController({ gameService, trailerService, steamMediaService, Game }) {
   return {
     async search(req, res) {
       res.json(await gameService.search(req.query));
@@ -19,7 +19,14 @@ export function createGameController({ gameService, trailerService }) {
     // The list depends on who asks (a reporter's hidden videos), so no shared cache may keep it.
     async getTrailers(req, res) {
       res.set('Cache-Control', 'private, no-store');
-      res.json({ trailers: await trailerService.getTrailers(req.params.slug, req.auth.userId) });
+      const trailers = await trailerService.getTrailers(req.params.slug, req.auth.userId);
+      // Official Steam trailers come after the validated IGDB/YouTube picks (or alone when there are none).
+      let steam = [];
+      if (steamMediaService && Game) {
+        const game = await Game.findOne({ slug: req.params.slug }).select('_id externalIds').lean();
+        if (game) steam = await steamMediaService.trailers(game);
+      }
+      res.json({ trailers: [...trailers, ...steam].slice(0, 6) });
     },
 
     async reportTrailer(req, res) {

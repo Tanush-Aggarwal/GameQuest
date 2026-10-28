@@ -228,7 +228,7 @@ export default function LibraryEntry() {
               </button>
             </div>
           </Card>
-          {game && <RecommendationModal game={{ id: entry.gameId, title: game.title }} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />}
+          {game && <RecommendationModal game={{ id: entry.gameId, title: game.title, cover: game.cover }} isOpen={recommendOpen} onClose={() => setRecommendOpen(false)} />}
 
           <Card title="Danger zone">
             {confirmingRemove ? (

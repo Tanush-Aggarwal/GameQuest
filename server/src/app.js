@@ -49,6 +49,7 @@ import { createNotificationService } from './services/notificationService.js';
 import { createAccountService } from './services/accountService.js';
 import { createRequirementsService } from './services/requirementsService.js';
 import { createRatingsService } from './services/ratingsService.js';
+import { createSteamMediaService } from './services/steamMediaService.js';
 import { createGoogleAdapter } from './adapters/auth/google.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
@@ -78,6 +79,7 @@ export function createApp({
   accountService: _accountSvc,
   requirementsService: _reqSvc,
   ratingsService: _ratingsSvc,
+  steamMediaService: _steamMediaSvc,
   googleAdapter = createGoogleAdapter({ config }),
   eventBus = createEventBus({ logger }),
 }) {
@@ -86,10 +88,13 @@ export function createApp({
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
   const reviewService = _reviewSvc ?? createReviewService({ Review, Game, User, eventBus });
   const friendService = _friendSvc ?? createFriendService({ Friendship, Block, User, LibraryEntry, Game, eventBus });
+  // Steam store media (trailers, screenshots, key art). Off under Jest so tests never reach the network.
+  const steamMediaService =
+    _steamMediaSvc !== undefined ? _steamMediaSvc : process.env.NODE_ENV === 'test' ? null : createSteamMediaService({ MediaCache, steam: steamAdapter, logger });
   const artService = createArtService({ Game, MediaCache, steam: steamAdapter, logger });
   const gameService =
     _gameSvc ??
-    createGameService({ Game, igdb: igdbAdapter, logger, friendService, LibraryEntry, User, artService });
+    createGameService({ Game, igdb: igdbAdapter, logger, friendService, LibraryEntry, User, artService, steamMediaService });
   const collectionService =
     _collectionSvc ??
     createCollectionService({ Collection, CollectionItem, LibraryEntry, Game, User, eventBus, logger, social: friendService });
@@ -187,6 +192,8 @@ export function createApp({
       trailerService,
       homeService,
       requirementsService,
+      steamMediaService,
+      Game,
       ratingsService,
       accountService,
       notificationService,

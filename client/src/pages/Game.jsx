@@ -16,6 +16,7 @@ import { RecommendationModal } from '@/components/recommendations/Recommendation
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLibraryEntry } from '@/hooks/useLibraryEntry.js';
 import { getGame, getGameRequirements, getTrailers } from '@/services/gamesApi.js';
+import { isPlayableTrailer, trailerThumb } from '@/lib/trailers.js';
 
 function GameSkeleton() {
   return <div role="status" aria-label="Loading game" className="flex flex-col gap-5"><Skeleton className="h-[560px] w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-72 w-full" /></div>;
@@ -144,7 +145,7 @@ function TrailerTiles({ slug, onPlay }) {
   const { status, data, error, retry } = useAsync(load);
   if (status === 'loading') return <Skeleton className="aspect-video w-full" role="status" aria-label="Loading trailers" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
-  return <>{(data ?? []).map((trailer) => <button key={trailer.videoId} type="button" onClick={onPlay} className="group relative aspect-video overflow-hidden rounded-control border border-border bg-surface-raised text-left"><img src={`https://i.ytimg.com/vi/${trailer.videoId}/hqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111311] shadow-lg"><Play className="h-5 w-5 fill-current" aria-hidden="true" /></span></span><span className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 text-xs font-medium text-white">{trailer.label}</span></button>)}</>;
+  return <>{(data ?? []).filter(isPlayableTrailer).map((trailer) => <button key={trailer.videoId} type="button" onClick={onPlay} className="group relative aspect-video overflow-hidden rounded-control border border-border bg-surface-raised text-left"><img src={trailerThumb(trailer)} alt="" loading="lazy" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111311] shadow-lg"><Play className="h-5 w-5 fill-current" aria-hidden="true" /></span></span><span className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 text-xs font-medium text-white">{trailer.label}</span></button>)}</>;
 }
 
 function Requirements({ data }) {

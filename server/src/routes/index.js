@@ -34,10 +34,11 @@ export function createRoutes({
   trailerService,
   homeService,
   requirementsService,
+  steamMediaService,
+  Game,
   ratingsService,
   accountService,
   notificationService,
-  googleAdapter,
   LibraryEntry,
   config,
 }) {
@@ -46,9 +47,9 @@ export function createRoutes({
   const social = createSocialRouters({ authService, friendService, profileService, activityService });
 
   router.get('/health', health);
-  router.use('/auth', createAuthRouter({ authService, googleAdapter, config }));
+  router.use('/auth', createAuthRouter({ authService, config }));
   router.use('/public', createPublicRouter({ gameService, homeService }));
-  router.use('/games', createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService }));
+  router.use('/games', createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService, steamMediaService, Game }));
   router.use('/library', createLibraryRouter({ authService, libraryService }));
   router.use('/library', createProgressRouter({ requireAuth, progressService }));
   router.use('/insights', createInsightsRouter({ requireAuth, insightsService, homeService }));

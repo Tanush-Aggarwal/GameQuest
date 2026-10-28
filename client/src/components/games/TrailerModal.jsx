@@ -5,8 +5,8 @@ import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getTrailers } from '@/services/gamesApi.js';
 import { TrailerPlayer } from './TrailerPlayer.jsx';
+import { isPlayableTrailer } from '@/lib/trailers.js';
 
-const VIDEO_ID = /^[\w-]{11}$/;
 
 function TrailerModalContent({ slug, title, onClose, triggerRef }) {
   const closeBtnRef = useRef(null);
@@ -43,7 +43,7 @@ function TrailerModalContent({ slug, title, onClose, triggerRef }) {
   const load = useCallback((signal) => (slug ? getTrailers(slug, { signal }) : Promise.resolve([])), [slug]);
   const { status, data, retry } = useAsync(load);
 
-  const validTrailers = (data ?? []).filter((t) => VIDEO_ID.test(t.videoId));
+  const validTrailers = (data ?? []).filter(isPlayableTrailer);
   const hasNoTrailers = (status === 'success' && validTrailers.length === 0) || status === 'error';
 
   return (

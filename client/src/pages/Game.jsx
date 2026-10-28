@@ -184,7 +184,7 @@ function GameDetails({ game }) {
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-8 px-4 pt-6 sm:px-8">
         <Tabs.Root value={tab} onValueChange={setTab} className="flex flex-col gap-8">
-          <Tabs.List aria-label="Game details" className="flex overflow-x-auto border-b border-border">
+          <Tabs.List aria-label="Game details" className="flex overflow-x-auto border-b border-border scrollbar-none">
             <Tabs.Trigger value="overview" className={TAB}>Overview</Tabs.Trigger>
             <Tabs.Trigger value="screenshots" className={TAB}>Screenshots</Tabs.Trigger>
             <Tabs.Trigger value="community" className={TAB}>Community</Tabs.Trigger>

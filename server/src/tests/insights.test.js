@@ -113,3 +113,21 @@ describe('GET /api/v1/insights/play-next', () => {
     }
   });
 });
+
+describe('insights: backlog health', () => {
+  it('counts added and completed games per month from the library, with empty months included', async () => {
+    const s = setupInsights();
+    const now = new Date('2026-10-20T00:00:00Z');
+    const [a, b, c] = [await s.mkGame('A'), await s.mkGame('B'), await s.mkGame('C')];
+    await s.LibraryEntry.create({ userId: 'u1', gameId: a._id, status: 'completed', createdAt: new Date('2026-09-05'), completedAt: new Date('2026-10-02') });
+    await s.LibraryEntry.create({ userId: 'u1', gameId: b._id, status: 'backlog', createdAt: new Date('2026-10-03') });
+    await s.LibraryEntry.create({ userId: 'u1', gameId: c._id, status: 'wishlist', createdAt: new Date('2026-10-04') });
+
+    const health = await s.service.getBacklogHealth('u1', now);
+
+    expect(health.data.map((d) => d.month)).toEqual(['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10']);
+    expect(health.data.at(-2)).toEqual({ month: '2026-09', added: 1, completed: 0 });
+    expect(health.data.at(-1)).toEqual({ month: '2026-10', added: 1, completed: 1 }); // the wishlist game is not "added"
+    expect(health).toMatchObject({ backlogCount: 1, totalAdded: 2, totalCompleted: 1, completedPerMonth: 0.2, projectedClearMonths: 5 });
+  });
+});

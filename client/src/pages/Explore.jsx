@@ -176,6 +176,8 @@ export default function Explore() {
         <div className="relative min-w-52 max-w-xl flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
           <Input
+            id="explore-search-input"
+            name="search"
             type="search"
             aria-label="Search games"
             placeholder="Search for a game"
@@ -184,7 +186,7 @@ export default function Explore() {
             onChange={(e) => setText(e.target.value)}
           />
         </div>
-        <FancySelect aria-label="Filter by platform" value={platform} onChange={(e) => setFilter('platform', e.target.value)} className={SELECT}>
+        <FancySelect id="explore-platform-filter" name="platform" aria-label="Filter by platform" value={platform} onChange={(e) => setFilter('platform', e.target.value)} className={SELECT}>
           <option value="">All platforms</option>
           {PLATFORMS.map((p) => (
             <option key={p} value={p}>
@@ -192,7 +194,7 @@ export default function Explore() {
             </option>
           ))}
         </FancySelect>
-        <FancySelect aria-label="Filter by length" value={length} onChange={(e) => setFilter('length', e.target.value)} className={SELECT}>
+        <FancySelect id="explore-length-filter" name="length" aria-label="Filter by length" value={length} onChange={(e) => setFilter('length', e.target.value)} className={SELECT}>
           <option value="">Any length</option>
           {Object.entries(LENGTHS).map(([id, l]) => (
             <option key={id} value={id}>
@@ -200,7 +202,7 @@ export default function Explore() {
             </option>
           ))}
         </FancySelect>
-        <FancySelect aria-label="Filter by rating" value={rating} onChange={(e) => setFilter('rating', e.target.value)} className={SELECT}>
+        <FancySelect id="explore-rating-filter" name="rating" aria-label="Filter by rating" value={rating} onChange={(e) => setFilter('rating', e.target.value)} className={SELECT}>
           <option value="">Any rating</option>
           {Object.entries(RATINGS).map(([id, label]) => (
             <option key={id} value={id}>

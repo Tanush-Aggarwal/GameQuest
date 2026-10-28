@@ -86,7 +86,7 @@ export function TopBar({ onOpenPalette }) {
         <Link
           to="/"
           aria-label="GameQuest home"
-          className="gq-mobile-brand flex min-h-11 min-w-11 items-center gap-2 font-heading font-bold md:hidden"
+          className="gq-mobile-brand flex min-h-11 shrink-0 items-center gap-1.5 font-heading font-bold md:hidden"
         >
           <span className={`text-sm font-bold tracking-tight ${isGamePage ? 'text-white' : 'text-text'}`}>
             Game<span className="text-[var(--accent)]">Quest</span>
@@ -97,13 +97,13 @@ export function TopBar({ onOpenPalette }) {
         {showSearch && <SearchBox />}
 
         {/* Right actions */}
-        <div className="gq-top-actions ml-auto flex items-center gap-1 sm:gap-1.5">
+        <div className="gq-top-actions ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
           {onOpenPalette && (
             <Button
               variant="ghost"
               onClick={onOpenPalette}
               aria-keyshortcuts="Control+K Meta+K"
-              className={`h-10 px-2 sm:px-2.5 transition-colors ${isGamePage ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
+              className={`hidden sm:inline-flex h-10 px-2 sm:px-2.5 transition-colors ${isGamePage ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
             >
               <Command className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only">Quick search</span>

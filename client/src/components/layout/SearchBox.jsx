@@ -116,6 +116,8 @@ export function SearchBox() {
       <form role="search" onSubmit={onSubmit}>
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
         <input
+          id="topbar-search-input"
+          name="search"
           ref={inputRef}
           type="search"
           aria-label="Search games"

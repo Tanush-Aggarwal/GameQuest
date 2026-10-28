@@ -39,8 +39,9 @@ export default function Sessions() {
         title="Sessions"
         subtitle={`Times shown in your timezone (${viewerTimeZone()}).`}
         seed="sessions"
+        // the empty state below has its own button, so the header one only shows once there is a list
         actions={
-          <Link to="/sessions/new" className={buttonVariants()}>
+          status === 'success' && view.items.length === 0 ? null : <Link to="/sessions/new" className={buttonVariants()}>
             <Plus className="h-4 w-4" aria-hidden="true" /> Schedule a session
           </Link>
         }

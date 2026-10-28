@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 function CustomTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
-    const formattedMonth = label ? new Date(`${label}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : label;
+    const formattedMonth = label
+      ? new Date(`${label}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+      : label;
     return (
       <div className="rounded-card border border-border bg-surface p-2.5 shadow-xl text-xs space-y-1">
         <p className="font-semibold text-text mb-1">{formattedMonth}</p>
@@ -19,40 +22,63 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 // The six-month added-vs-completed chart. Recharts is large, so this file is loaded only when a chart is drawn (Home loads it lazily).
-export default function VelocityChart({ chartData }) {
+export default function VelocityChart({ chartData, history }) {
+  const formattedData = useMemo(() => {
+    const rawData = chartData ?? history ?? [];
+    return rawData.map((item) => {
+      const monthStr = item.month || item.formattedMonth || '';
+      let formatted = item.formattedMonth;
+      if (!formatted && monthStr) {
+        try {
+          formatted = new Date(`${monthStr}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short' });
+        } catch {
+          formatted = monthStr;
+        }
+      }
+      return {
+        ...item,
+        formattedMonth: formatted || monthStr,
+        added: Number(item.added) || 0,
+        completed: Number(item.completed) || 0,
+      };
+    });
+  }, [chartData, history]);
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <defs>
-          <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.4} />
-            <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
-          </linearGradient>
-          <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--status-completed)" stopOpacity={0.4} />
-            <stop offset="95%" stopColor="var(--status-completed)" stopOpacity={0.0} />
-          </linearGradient>
-        </defs>
-        <XAxis dataKey="formattedMonth" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
-        <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} allowDecimals={false} />
-        <Tooltip content={<CustomTooltip />} />
-        <Area
-          type="monotone"
-          dataKey="added"
-          stroke="var(--accent)"
-          strokeWidth={2}
-          fillOpacity={1}
-          fill="url(#colorAdded)"
-        />
-        <Area
-          type="monotone"
-          dataKey="completed"
-          stroke="var(--status-completed)"
-          strokeWidth={2}
-          fillOpacity={1}
-          fill="url(#colorCompleted)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="h-full min-h-[200px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={formattedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
+            </linearGradient>
+            <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--status-completed)" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="var(--status-completed)" stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="formattedMonth" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
+          <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} allowDecimals={false} />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="added"
+            stroke="var(--accent)"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorAdded)"
+          />
+          <Area
+            type="monotone"
+            dataKey="completed"
+            stroke="var(--status-completed)"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorCompleted)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

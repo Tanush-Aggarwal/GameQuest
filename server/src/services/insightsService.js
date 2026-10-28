@@ -172,34 +172,39 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
 
   // ── backlog health ────────────────────────────────────────────────────────
 
-  async function getBacklogHealth(userId) {
-    const since = monthsAgo(6);
-    const history = await StatusHistory.find({ userId, createdAt: { $gte: since } }).lean();
+  // Last 6 months, one row per month (empty months included): games added to the library vs games finished.
+  // Read from the library itself (createdAt / completedAt), so Steam imports and hand-added games both count;
+  // status history fills in completions saved before completedAt existed.
+  async function getBacklogHealth(userId, now = new Date()) {
+    const keys = [];
+    for (let i = 5; i >= 0; i -= 1) keys.push(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1)).toISOString().slice(0, 7));
+    const since = new Date(`${keys[0]}-01T00:00:00Z`);
+    const months = Object.fromEntries(keys.map((k) => [k, { added: 0, completed: 0 }]));
+    const monthOf = (d) => (d ? new Date(d).toISOString().slice(0, 7) : null);
 
-    // Build per-month added (→ backlog) vs completed counts.
-    const months = {};
-    for (const h of history) {
-      const key = new Date(h.createdAt).toISOString().slice(0, 7); // YYYY-MM
-      months[key] ??= { added: 0, completed: 0 };
-      if (h.to === 'backlog') months[key].added += 1;
-      if (h.to === 'completed') months[key].completed += 1;
+    const [entries, history] = await Promise.all([
+      LibraryEntry.find({ userId }).select('_id status createdAt completedAt updatedAt').lean(),
+      StatusHistory.find({ userId, to: 'completed', at: { $gte: since } }).lean(),
+    ]);
+    const completedFromHistory = new Map(history.map((h) => [String(h.entryId), h.at]));
+    for (const e of entries) {
+      const added = monthOf(e.createdAt);
+      if (e.status !== 'wishlist' && months[added]) months[added].added += 1;
+      if (e.status === 'completed') {
+        const done = monthOf(e.completedAt ?? completedFromHistory.get(String(e._id)) ?? e.updatedAt);
+        if (months[done]) months[done].completed += 1;
+      }
     }
+    const data = keys.map((month) => ({ month, ...months[month] }));
 
-    const data = Object.entries(months)
-      .sort()
-      .map(([month, { added, completed }]) => ({ month, added, completed }));
+    const backlogCount = entries.filter((e) => e.status === 'backlog').length;
+    const totalAdded = data.reduce((sum, d) => sum + d.added, 0);
+    const totalCompleted = data.reduce((sum, d) => sum + d.completed, 0);
+    const completedPerMonth = Math.round((totalCompleted / data.length) * 10) / 10;
+    // Linear projection on finishing pace alone: how long the current backlog takes at the 6-month average.
+    const projectedClearMonths = completedPerMonth > 0 ? Math.ceil(backlogCount / completedPerMonth) : null;
 
-    // Projected clear date (linear): if net rate is negative, never clears.
-    const backlogCount = await LibraryEntry.countDocuments({ userId, status: 'backlog' });
-    let projectedClearMonths = null;
-    if (data.length >= 2) {
-      const totalAdded = data.reduce((s, d) => s + d.added, 0);
-      const totalCompleted = data.reduce((s, d) => s + d.completed, 0);
-      const netPerMonth = (totalCompleted - totalAdded) / data.length;
-      if (netPerMonth > 0) projectedClearMonths = Math.ceil(backlogCount / netPerMonth);
-    }
-
-    return { data, backlogCount, projectedClearMonths };
+    return { data, backlogCount, totalAdded, totalCompleted, completedPerMonth, projectedClearMonths };
   }
 
   return { getDashboard, getPlayNext, getBacklogHealth };

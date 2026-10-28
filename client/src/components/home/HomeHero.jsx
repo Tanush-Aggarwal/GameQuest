@@ -162,10 +162,12 @@ function HeroBody({ dashboard, playNext }) {
               <WideArt key={g.id} game={g} visible={i === slide} eager={i === 0} />
             ))
           : <img src={game?.backdrop || '/assets/hero-fantasy.jpg'} alt="" className="absolute inset-0 h-full w-full object-cover object-center" loading="eager" />}
-        {/* Dark left-side gradient scrim behind text */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 via-55% to-transparent" />
+        {/* On mobile: protective dark overlay for bright artwork; on desktop: transparent right-side */}
+        <div className="absolute inset-0 bg-black/60 sm:bg-transparent" />
+        {/* Dark scrim behind text: vertical depth on mobile, editorial left-to-right on desktop */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/50 to-black/90 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/70 sm:via-55% sm:to-transparent" />
         {/* Subtle dark fade at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
       </div>
 
       {/* Hero content on left */}

@@ -1,26 +1,21 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 /**
- * Creates the email delivery service.
- * Supports SMTP (Resend, SendGrid, Mailgun, AWS SES, Gmail, Mailtrap, etc.).
+ * Creates the email delivery service backed by Resend's HTTPS API.
+ * Avoids outbound SMTP port blocking (ports 25, 465, 587) on cloud platforms like Render Free.
  * When unconfigured in development/test, logs safely without leaking credentials.
  */
-export function createEmailService({ config, logger = console }) {
+export function createEmailService({ config, logger = console, resendClient = null }) {
   const { email, clientOrigin, env } = config;
-  const isConfigured = Boolean(email?.smtpHost && email?.smtpUser && email?.smtpPass);
+  const apiKey = email?.resendApiKey;
+  const isConfigured = Boolean(resendClient || apiKey);
 
-  let transporter = null;
-  if (isConfigured) {
-    transporter = nodemailer.createTransport({
-      host: email.smtpHost,
-      port: email.smtpPort ?? 587,
-      secure: Boolean(email.smtpSecure),
-      auth: {
-        user: email.smtpUser,
-        pass: email.smtpPass,
-      },
-    });
+  let resend = resendClient;
+  if (!resend && apiKey) {
+    resend = new Resend(apiKey);
   }
+
+  const defaultFrom = email?.from || 'GameQuest <onboarding@resend.dev>';
 
   // Helper to mask email for logging (e.g. j***n@example.com)
   function maskEmail(addr) {
@@ -37,9 +32,8 @@ export function createEmailService({ config, logger = console }) {
     },
 
     async sendPasswordResetEmail({ to, username, token }) {
-      // Build trusted reset URL from configured client origin
       const resetUrl = `${clientOrigin}/reset-password?token=${encodeURIComponent(token)}`;
-      const from = email?.from || 'GameQuest <noreply@gamequest.app>';
+      const from = defaultFrom;
       const subject = 'Reset your GameQuest password';
 
       const textBody = `Hi ${username || 'Player'},
@@ -86,19 +80,36 @@ If you didn't request a password reset, you can safely ignore this email — you
 </body>
 </html>`;
 
-      if (transporter) {
+      if (resend) {
         try {
-          await transporter.sendMail({
+          const { data, error } = await resend.emails.send({
             from,
             to,
             subject,
             text: textBody,
             html: htmlBody,
           });
-          logger.info?.({ recipient: maskEmail(to) }, 'Password reset email sent');
-          return { sent: true };
+
+          if (error) {
+            logger.error?.(
+              { err: { name: error.name, message: error.message }, recipient: maskEmail(to) },
+              'Failed to send password reset email via Resend',
+            );
+            const sendErr = new Error(error.message || 'Resend delivery rejected');
+            sendErr.name = error.name || 'ResendError';
+            sendErr.statusCode = error.statusCode;
+            throw sendErr;
+          }
+
+          logger.info?.({ id: data?.id, recipient: maskEmail(to) }, 'Password reset email sent');
+          return { sent: true, id: data?.id };
         } catch (err) {
-          logger.error?.({ err: { name: err.name, message: err.message }, recipient: maskEmail(to) }, 'Failed to send password reset email via SMTP');
+          if (!err.name || err.name !== 'ResendError') {
+            logger.error?.(
+              { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
+              'Failed to send password reset email via Resend',
+            );
+          }
           throw err;
         }
       }
@@ -107,15 +118,14 @@ If you didn't request a password reset, you can safely ignore this email — you
       if (env === 'development') {
         console.log('\n=============================================================');
         console.log('📧 [DEV EMAIL SIMULATION] Password reset dispatched!');
-        console.log(`   Recipient: ${to}`);
+        console.log(`   Recipient: ${maskEmail(to)}`);
         console.log(`   Reset Link: ${resetUrl}`);
-        console.log('   (To send real emails to your inbox, configure SMTP in server/.env)');
+        console.log('   (To send real emails to your inbox, configure RESEND_API_KEY in server/.env)');
         console.log('=============================================================\n');
         logger.info?.(
           { recipient: maskEmail(to), devResetUrl: resetUrl },
-          'Password reset requested (SMTP unconfigured; set SMTP_HOST in .env for real delivery)',
+          'Password reset requested (Resend unconfigured; set RESEND_API_KEY in .env for real delivery)',
         );
-        // Explicitly record for local developer testing in non-production
         return { sent: false, devResetUrl: resetUrl };
       }
 
@@ -124,12 +134,12 @@ If you didn't request a password reset, you can safely ignore this email — you
       }
 
       // Production without configured email provider
-      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password reset: SMTP provider is not configured in production');
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password reset: Resend provider is not configured in production');
       return { sent: false };
     },
 
     async sendVerificationEmail({ to, username, code }) {
-      const from = email?.from || 'GameQuest <noreply@gamequest.app>';
+      const from = defaultFrom;
       const subject = `Your GameQuest verification code is ${code}`;
 
       const textBody = `Hi ${username || 'Player'},
@@ -174,19 +184,36 @@ If you didn't create a GameQuest account, you can safely ignore this email.
 </body>
 </html>`;
 
-      if (transporter) {
+      if (resend) {
         try {
-          await transporter.sendMail({
+          const { data, error } = await resend.emails.send({
             from,
             to,
             subject,
             text: textBody,
             html: htmlBody,
           });
-          logger.info?.({ recipient: maskEmail(to) }, 'Verification email code sent');
-          return { sent: true };
+
+          if (error) {
+            logger.error?.(
+              { err: { name: error.name, message: error.message }, recipient: maskEmail(to) },
+              'Failed to send verification email via Resend',
+            );
+            const sendErr = new Error(error.message || 'Resend delivery rejected');
+            sendErr.name = error.name || 'ResendError';
+            sendErr.statusCode = error.statusCode;
+            throw sendErr;
+          }
+
+          logger.info?.({ id: data?.id, recipient: maskEmail(to) }, 'Verification email code sent');
+          return { sent: true, id: data?.id };
         } catch (err) {
-          logger.error?.({ err: { name: err.name, message: err.message }, recipient: maskEmail(to) }, 'Failed to send verification email via SMTP');
+          if (!err.name || err.name !== 'ResendError') {
+            logger.error?.(
+              { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
+              'Failed to send verification email via Resend',
+            );
+          }
           throw err;
         }
       }
@@ -196,11 +223,11 @@ If you didn't create a GameQuest account, you can safely ignore this email.
         console.log('📧 [DEV EMAIL SIMULATION] Email verification code dispatched!');
         console.log(`   Recipient: ${maskEmail(to)}`);
         console.log(`   Verification Code: ${code}`);
-        console.log('   (To send real emails to your inbox, configure SMTP in server/.env)');
+        console.log('   (To send real emails to your inbox, configure RESEND_API_KEY in server/.env)');
         console.log('=============================================================\n');
         logger.info?.(
           { recipient: maskEmail(to) },
-          'Email verification code requested (SMTP unconfigured; set SMTP_HOST in .env for real delivery)',
+          'Email verification code requested (Resend unconfigured; set RESEND_API_KEY in .env for real delivery)',
         );
         return { sent: false };
       }
@@ -209,12 +236,12 @@ If you didn't create a GameQuest account, you can safely ignore this email.
         return { sent: false, testCode: code };
       }
 
-      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send verification email: SMTP provider is not configured in production');
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send verification email: Resend provider is not configured in production');
       return { sent: false };
     },
 
     async sendPasswordChangedNotification({ to, username }) {
-      const from = email?.from || 'GameQuest <noreply@gamequest.app>';
+      const from = defaultFrom;
       const subject = 'Your GameQuest password was changed';
 
       const textBody = `Hi ${username || 'Player'},
@@ -253,19 +280,36 @@ If you did NOT change your password, please reset your password immediately or c
 </body>
 </html>`;
 
-      if (transporter) {
+      if (resend) {
         try {
-          await transporter.sendMail({
+          const { data, error } = await resend.emails.send({
             from,
             to,
             subject,
             text: textBody,
             html: htmlBody,
           });
-          logger.info?.({ recipient: maskEmail(to) }, 'Password changed notification sent');
-          return { sent: true };
+
+          if (error) {
+            logger.error?.(
+              { err: { name: error.name, message: error.message }, recipient: maskEmail(to) },
+              'Failed to send password changed notification via Resend',
+            );
+            const sendErr = new Error(error.message || 'Resend delivery rejected');
+            sendErr.name = error.name || 'ResendError';
+            sendErr.statusCode = error.statusCode;
+            throw sendErr;
+          }
+
+          logger.info?.({ id: data?.id, recipient: maskEmail(to) }, 'Password changed notification sent');
+          return { sent: true, id: data?.id };
         } catch (err) {
-          logger.error?.({ err: { name: err.name, message: err.message }, recipient: maskEmail(to) }, 'Failed to send password changed notification via SMTP');
+          if (!err.name || err.name !== 'ResendError') {
+            logger.error?.(
+              { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
+              'Failed to send password changed notification via Resend',
+            );
+          }
           throw err;
         }
       }
@@ -275,9 +319,8 @@ If you did NOT change your password, please reset your password immediately or c
         return { sent: false };
       }
 
-      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password change notification: SMTP unconfigured in production');
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password change notification: Resend unconfigured in production');
       return { sent: false };
     },
   };
 }
-

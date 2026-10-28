@@ -43,3 +43,7 @@ services:
         sync: false
       - key: DISCORD_CLIENT_SECRET
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

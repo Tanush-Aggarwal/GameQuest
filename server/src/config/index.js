@@ -24,13 +24,15 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   // Public URL of this API (used to build OAuth callback URLs). Defaults to localhost in development.
   PUBLIC_API_URL: z.string().url().optional(),
-  // Email / SMTP delivery (used for password reset).
+  // Email delivery via Resend HTTPS API (avoids Render Free outbound SMTP port blocking)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  // Legacy SMTP keys kept optional so existing environments don't fail schema validation
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_SECURE: z.enum(['true', 'false']).optional(),
-  EMAIL_FROM: z.string().optional(),
   REQUIRE_EMAIL_VERIFICATION: z.enum(['true', 'false']).optional(),
   // Cookies: the client proxies /api through its own domain in production, so Lax works and
   // survives browsers that block third-party cookies. Use "none" only for a direct cross-site setup.
@@ -78,12 +80,8 @@ export function loadConfig(env = process.env) {
       clientSecret: e.TWITCH_CLIENT_SECRET || null,
     },
     email: {
-      smtpHost: e.SMTP_HOST || null,
-      smtpPort: e.SMTP_PORT || 587,
-      smtpUser: e.SMTP_USER || null,
-      smtpPass: e.SMTP_PASS || null,
-      smtpSecure: e.SMTP_SECURE === 'true',
-      from: e.EMAIL_FROM || 'GameQuest <noreply@gamequest.app>',
+      resendApiKey: e.RESEND_API_KEY || null,
+      from: e.EMAIL_FROM || 'GameQuest <onboarding@resend.dev>',
     },
   };
 }

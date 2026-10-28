@@ -129,7 +129,9 @@ export default function VerifyEmail() {
       toast.success('A new 6-digit verification code has been sent to your email.');
     } catch (err) {
       const info = getErrorInfo(err);
-      toast.error(info.message || 'Unable to send verification code. Please try again.');
+      const msg = info.message || 'Unable to send verification code. Please try again.';
+      toast.error(msg);
+      setErrorMessage(msg);
     } finally {
       setResendPending(false);
     }

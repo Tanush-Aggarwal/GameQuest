@@ -342,11 +342,19 @@ async function seed() {
       username: DEMO_USERNAME, usernameLower: DEMO_USERNAME, email: DEMO_EMAIL,
       passwordHash: await bcrypt.hash(DEMO_PASSWORD, 12), role: 'user',
       bio: 'Lifelong gamer, completionist, and indie game lover.',
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
     });
     console.log(`Created demo user ${DEMO_EMAIL}`);
   } else {
     console.log(`Demo user already exists (${DEMO_EMAIL})`);
   }
+
+  // Ensure explicitly seeded demo fixtures (demo@gamequest.dev, alex@gamequest.dev) are verified in local/seed environment
+  await User.updateMany(
+    { emailVerified: { $in: [null, false] }, email: { $in: [DEMO_EMAIL, ALEX_EMAIL] } },
+    { $set: { emailVerified: true, emailVerifiedAt: new Date() } },
+  );
 
   const games = {};
   for (const g of GAMES) games[g.slug] = await ensureGame(g);
@@ -527,6 +535,8 @@ async function seed() {
       username: 'alex', usernameLower: 'alex', email: ALEX_EMAIL,
       passwordHash: await bcrypt.hash(DEMO_PASSWORD, 12), role: 'user',
       bio: 'Cozy game connoisseur and deckbuilding addict.',
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
     });
     console.log(`Created user ${ALEX_EMAIL}`);
   }

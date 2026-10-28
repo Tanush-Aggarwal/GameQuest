@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useState } from 'react';
 const VelocityChart = lazy(() => import('@/components/home/VelocityChart.jsx'));
 import { Link } from 'react-router-dom';
 import {
+  Flame,
   Gamepad2,
   Layers,
   Trophy,
@@ -58,6 +59,7 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-[var(--secondary-accent)] fill-[var(--secondary-accent)]" aria-hidden="true" />
               <div>
                 <h2 className="font-heading text-lg font-bold text-[var(--text)]">Trending Games</h2>
                 <p className="text-xs text-[var(--text-muted)] flex items-center gap-1">
@@ -97,7 +99,7 @@ export default function Home() {
       </div>
 
       {/* Backlog health */}
-      <BacklogHealth backlogHealth={backlogHealth} />
+      <BacklogHealth dashboard={dashboard} backlogHealth={backlogHealth} />
     </section>
   );
 }
@@ -284,6 +286,7 @@ function AdventureCard() {
 
       <div className="relative z-10 flex flex-col gap-2.5 max-w-[240px]">
         <div className="flex items-center gap-2">
+          <Flame className="h-4 w-4 text-[var(--secondary-accent)] fill-[var(--secondary-accent)]" aria-hidden="true" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider text-white">
             Your Next Adventure
           </span>
@@ -345,77 +348,53 @@ function CommunityCard() {
   );
 }
 
-// ── Your gaming pace: games added vs finished over 6 months ─────────────────
+// ── Backlog health chart ────────────────────────────────────────────────────
 
-function PaceStat({ label, value, hint }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-card border border-border bg-bg/60 px-4 py-3">
-      <span className="text-xs font-medium text-text-muted">{label}</span>
-      <span className="font-heading text-2xl font-bold tabular-nums text-text">{value}</span>
-      {hint && <span className="text-[11px] text-text-muted">{hint}</span>}
-    </div>
-  );
-}
-
-function clearHint(months) {
-  if (months == null) return 'Finish a game to see when your backlog clears';
-  if (months <= 1) return 'Clears in about a month at this pace';
-  if (months < 24) return `Clears in about ${months} months at this pace`;
-  return `About ${Math.round(months / 12)} years at this pace`;
-}
-
-function BacklogHealth({ backlogHealth }) {
-  if (backlogHealth.status === 'loading') {
+function BacklogHealth({ dashboard, backlogHealth }) {
+  if (dashboard.status === 'loading') {
     return (
-      <div role="status" aria-label="Loading your gaming pace">
+      <div role="status" aria-label="Loading your backlog trajectory">
         <Skeleton className="h-[22rem] w-full rounded-card" />
       </div>
     );
   }
-  if (backlogHealth.status === 'error') return <ErrorState message="Couldn't load your gaming pace." onRetry={backlogHealth.retry} />;
-  const h = backlogHealth.data ?? {};
-  const data = h.data ?? [];
-  const hasActivity = (h.totalAdded ?? 0) + (h.totalCompleted ?? 0) > 0;
+  if (dashboard.status === 'error') return <ErrorState message="Couldn't load your backlog health." onRetry={dashboard.retry} />;
+  const d = dashboard.data ?? {};
+  const backlogCount = d.statusCounts?.backlog ?? 0;
+  const isHealthy = d.velocity?.perMonth > 0;
+  const historyData = backlogHealth.data?.data ?? backlogHealth.data?.history ?? [];
+  const hasHistory = Array.isArray(historyData) && historyData.length > 0;
 
   return (
-    <section aria-labelledby="pace-title" className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="pace-title" className="font-heading text-lg font-bold text-text">Your gaming pace</h2>
-          <p className="text-xs text-text-muted">Games you added vs games you finished, last 6 months</p>
-        </div>
-        <Link to="/library?status=backlog" className="inline-flex items-center gap-1 text-sm font-medium text-text-muted hover:text-text">
-          Open backlog <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <PaceStat label="Added" value={h.totalAdded ?? 0} hint="last 6 months" />
-        <PaceStat label="Finished" value={h.totalCompleted ?? 0} hint="last 6 months" />
-        <PaceStat label="Finished per month" value={h.completedPerMonth ?? 0} hint="6-month average" />
-        <PaceStat label="In backlog" value={h.backlogCount ?? 0} hint={clearHint(h.projectedClearMonths)} />
-      </div>
-
-      {hasActivity ? (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-4 text-xs text-text-muted" aria-hidden="true">
-            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-[var(--accent)]" /> Added</span>
-            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-[var(--status-completed)]" /> Finished</span>
-          </div>
-          <div className="h-[16rem] w-full">
+    <section aria-label="Backlog health and completion trajectory" className="flex flex-col gap-4">
+      <SectionBoundary
+        title="Backlog Health"
+        subtitle={
+          isHealthy
+            ? `At your current velocity of ${d.velocity.perMonth} games/mo, your backlog of ${backlogCount} games will be cleared around ${d.projectedClearDate ?? 'soon'}.`
+            : `You have ${backlogCount} games in your backlog. Log completions to see your projected clear date.`
+        }
+      >
+        <div className="gq-chart-panel h-[18rem] min-h-[260px] w-full rounded-card border border-border bg-surface p-5">
+          {backlogHealth.status === 'loading' ? (
+            <Skeleton className="h-full w-full rounded-card" />
+          ) : backlogHealth.status === 'error' ? (
+            <ErrorState message="Couldn't load completion history." onRetry={backlogHealth.retry} />
+          ) : hasHistory ? (
             <Suspense fallback={<Skeleton className="h-full w-full rounded-card" />}>
-              <VelocityChart chartData={data} />
+              <VelocityChart chartData={historyData} history={historyData} />
             </Suspense>
-          </div>
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center text-text-muted">
+              <Layers className="h-8 w-8 opacity-40 text-text-muted" aria-hidden="true" />
+              <p className="text-sm font-medium text-text">No completion history recorded yet</p>
+              <p className="max-w-md text-xs leading-relaxed text-text-muted">
+                Move games to your Backlog or log completions to see your monthly velocity trajectory.
+              </p>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-card border border-dashed border-border px-4 py-10 text-center">
-          <Layers className="h-7 w-7 text-text-muted opacity-50" aria-hidden="true" />
-          <p className="text-sm font-medium text-text">Nothing added or finished in the last 6 months</p>
-          <p className="max-w-md text-xs text-text-muted">Add games to your library or mark one as completed, and your pace shows up here.</p>
-          <Link to="/explore" className="mt-1 text-sm font-semibold text-text underline-offset-4 hover:underline">Find a game</Link>
-        </div>
-      )}
+      </SectionBoundary>
     </section>
   );
 }

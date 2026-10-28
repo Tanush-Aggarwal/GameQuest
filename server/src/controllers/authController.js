@@ -79,9 +79,24 @@ export function createAuthController({ authService, googleAdapter, config }) {
     },
 
     async register(req, res) {
-      const { user, ...tokens } = await authService.register(req.body);
-      setSession(res, tokens);
-      res.status(201).json({ user });
+      const result = await authService.register(req.body);
+      if (result.accessToken && result.refreshToken) {
+        setSession(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
+      }
+      res.status(201).json({
+        user: result.user,
+        ...(result.emailVerificationPending ? { emailVerificationPending: true } : {}),
+      });
+    },
+
+    async verifyEmail(req, res) {
+      const result = await authService.verifyEmail(req.body);
+      res.json(result);
+    },
+
+    async resendVerification(req, res) {
+      const result = await authService.resendVerification(req.body);
+      res.json(result);
     },
 
     async login(req, res) {
@@ -109,6 +124,16 @@ export function createAuthController({ authService, googleAdapter, config }) {
 
     async me(req, res) {
       res.json({ user: await authService.getMe(req.auth.userId) });
+    },
+
+    async forgotPassword(req, res) {
+      const result = await authService.forgotPassword(req.body);
+      res.json(result);
+    },
+
+    async resetPassword(req, res) {
+      const result = await authService.resetPassword(req.body);
+      res.json(result);
     },
   };
 }

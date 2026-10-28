@@ -81,9 +81,14 @@ export function AuthProvider({ children }) {
         setStatus('authenticated');
       },
       async register(payload) {
-        const u = await authApi.register(payload);
+        const res = await authApi.register(payload);
+        if (res?.emailVerificationPending) {
+          return res;
+        }
+        const u = res?.user || res;
         setUser(u);
         setStatus('authenticated');
+        return res;
       },
       // Local changes to the signed-in user (a new avatar) show everywhere at once, without a reload.
       updateUser(patch) {

@@ -15,8 +15,8 @@ export class ValidationError extends AppError {
 }
 
 export class AuthError extends AppError {
-  constructor(message = 'Authentication required') {
-    super(401, 'AUTH_ERROR', message);
+  constructor(message = 'Authentication required', details, code = 'AUTH_ERROR') {
+    super(401, code, message, details);
   }
 }
 
@@ -39,8 +39,8 @@ export class ConflictError extends AppError {
 }
 
 export class RateLimitError extends AppError {
-  constructor(message = 'Too many requests, try again later') {
-    super(429, 'RATE_LIMITED', message);
+  constructor(message = 'Too many requests, try again later', details) {
+    super(429, 'RATE_LIMITED', message, details);
   }
 }
 

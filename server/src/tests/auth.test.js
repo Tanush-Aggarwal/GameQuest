@@ -122,7 +122,7 @@ describe('auth routes', () => {
   });
 
   it('uses Secure + SameSite=Lax cookies in production by default (API proxied through the client domain)', async () => {
-    const { app } = setup({ NODE_ENV: 'production', CLIENT_ORIGIN: 'https://app.example.com' });
+    const { app } = setup({ NODE_ENV: 'production', CLIENT_ORIGIN: 'https://app.example.com', REQUIRE_EMAIL_VERIFICATION: 'false' });
     const res = await request(app).post('/api/v1/auth/register').send(creds);
     res.headers['set-cookie'].forEach((c) => {
       expect(c).toMatch(/Secure/i);
@@ -131,7 +131,7 @@ describe('auth routes', () => {
   });
 
   it('supports SameSite=None (always Secure) for a direct cross-site deployment', async () => {
-    const { app } = setup({ NODE_ENV: 'production', CLIENT_ORIGIN: 'https://app.example.com', COOKIE_SAMESITE: 'none' });
+    const { app } = setup({ NODE_ENV: 'production', CLIENT_ORIGIN: 'https://app.example.com', COOKIE_SAMESITE: 'none', REQUIRE_EMAIL_VERIFICATION: 'false' });
     const res = await request(app).post('/api/v1/auth/register').send(creds);
     res.headers['set-cookie'].forEach((c) => {
       expect(c).toMatch(/Secure/i);

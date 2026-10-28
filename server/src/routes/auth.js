@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { loginSchema, registerSchema } from '@gamequest/shared';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resendVerificationSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+} from '@gamequest/shared';
 import { validate } from '../middleware/validate.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
 import { createRequireAuth } from '../middleware/auth.js';
@@ -16,12 +23,16 @@ export function createAuthRouter({ authService, googleAdapter, config }) {
 
   router.post('/register', credentialsLimiter, validate(registerSchema), controller.register);
   router.post('/login', credentialsLimiter, validate(loginSchema), controller.login);
+  router.post('/verify-email', credentialsLimiter, validate(verifyEmailSchema), controller.verifyEmail);
+  router.post('/resend-verification', credentialsLimiter, validate(resendVerificationSchema), controller.resendVerification);
   router.get('/providers', controller.providers);
   router.get('/google', credentialsLimiter, controller.googleStart);
   router.get('/google/callback', credentialsLimiter, controller.googleCallback);
   router.post('/refresh', refreshLimiter, controller.refresh);
   router.post('/logout', controller.logout);
   router.get('/me', requireAuth, controller.me);
+  router.post('/forgot-password', credentialsLimiter, validate(forgotPasswordSchema), controller.forgotPassword);
+  router.post('/reset-password', credentialsLimiter, validate(resetPasswordSchema), controller.resetPassword);
 
   return router;
 }

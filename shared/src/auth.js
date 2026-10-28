@@ -28,3 +28,21 @@ export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1).refine(within72Bytes, PASSWORD_TOO_LONG),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(1, 'Reset token is required'),
+  password: passwordSchema,
+});
+
+export const resendVerificationSchema = z.object({
+  email: emailSchema,
+});
+
+export const verifyEmailSchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().regex(/^\d{6}$/, 'Verification code must be exactly 6 digits'),
+});

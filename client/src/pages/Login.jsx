@@ -22,6 +22,7 @@ export default function Login() {
       fields={FIELDS}
       schema={loginSchema}
       onSubmit={login}
+      forgotPasswordHref="/forgot-password"
       footer={
         <>
           New here? <AuthLink to="/register">Create an account</AuthLink>

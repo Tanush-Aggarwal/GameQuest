@@ -181,7 +181,7 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       if (!doc) return null;
       applyUpdate(doc, update);
       doc.updatedAt = new Date();
-      return structuredClone(opts.returnDocument === 'after' ? doc : before);
+      return structuredClone((opts.returnDocument === 'after' || opts.new) ? doc : before);
     },
     async countDocuments(q = {}) {
       return docs.filter((d) => matchesQuery(d, q)).length;

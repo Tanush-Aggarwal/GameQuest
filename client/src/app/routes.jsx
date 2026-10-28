@@ -11,6 +11,9 @@ const Friends = lazy(() => import('@/pages/Friends.jsx'));
 const Profile = lazy(() => import('@/pages/Profile.jsx'));
 const Login = lazy(() => import('@/pages/Login.jsx'));
 const Register = lazy(() => import('@/pages/Register.jsx'));
+const VerifyEmail = lazy(() => import('@/pages/VerifyEmail.jsx'));
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword.jsx'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword.jsx'));
 const LibraryEntry = lazy(() => import('@/pages/LibraryEntry.jsx'));
 const Collections = lazy(() => import('@/pages/Collections.jsx'));
 const Collection = lazy(() => import('@/pages/Collection.jsx'));
@@ -24,11 +27,14 @@ const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 export const routes = [
   { path: '/terms', element: <Legal type="terms" /> },
   { path: '/privacy', element: <Legal type="privacy" /> },
+  { path: '/verify-email', element: <VerifyEmail /> },
   {
     element: <PublicOnlyRoute />,
     children: [
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
+      { path: '/forgot-password', element: <ForgotPassword /> },
+      { path: '/reset-password', element: <ResetPassword /> },
     ],
   },
   {

@@ -48,6 +48,18 @@ const userSchema = new mongoose.Schema(
         unmatchedCount: { type: Number, default: undefined },
       },
     },
+    // Email verification state and timestamp
+    emailVerified: { type: Boolean, default: false },
+    emailVerifiedAt: { type: Date, default: null },
+    // Six-digit verification code HMAC, expiration, failed-attempt tracking, and sent timestamp.
+    emailVerificationCodeHmac: { type: String, select: false, default: undefined },
+    emailVerificationExpiresAt: { type: Date, select: false, default: undefined },
+    emailVerificationAttempts: { type: Number, select: false, default: 0 },
+    emailVerificationSentAt: { type: Date, select: false, default: undefined },
+    // Single-use cryptographically random token hash, expiration and sent timestamp for password recovery.
+    resetPasswordTokenHash: { type: String, select: false, default: undefined },
+    resetPasswordExpiresAt: { type: Date, select: false, default: undefined },
+    resetPasswordSentAt: { type: Date, select: false, default: undefined },
   },
   { timestamps: true },
 );
@@ -56,5 +68,9 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ 'steam.steamId': 1 }, { unique: true, partialFilterExpression: { 'steam.steamId': { $type: 'string' } } });
 
 userSchema.index({ googleId: 1 }, { unique: true, partialFilterExpression: { googleId: { $type: 'string' } } });
+
+userSchema.index({ resetPasswordTokenHash: 1 }, { partialFilterExpression: { resetPasswordTokenHash: { $type: 'string' } } });
+
+userSchema.index({ emailVerificationCodeHmac: 1 }, { partialFilterExpression: { emailVerificationCodeHmac: { $type: 'string' } } });
 
 export const User = mongoose.models.User ?? mongoose.model('User', userSchema);

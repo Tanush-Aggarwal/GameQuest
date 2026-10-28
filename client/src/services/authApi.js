@@ -2,7 +2,7 @@ import { api } from './api.js';
 
 export async function register(payload) {
   const { data } = await api.post('/auth/register', payload);
-  return data.user;
+  return data;
 }
 
 export async function login(payload) {
@@ -12,6 +12,26 @@ export async function login(payload) {
 
 export async function logout() {
   await api.post('/auth/logout');
+}
+
+export async function forgotPassword(payload) {
+  const { data } = await api.post('/auth/forgot-password', payload);
+  return data;
+}
+
+export async function resetPassword(payload) {
+  const { data } = await api.post('/auth/reset-password', payload);
+  return data;
+}
+
+export async function verifyEmail(payload) {
+  const { data } = await api.post('/auth/verify-email', payload);
+  return data;
+}
+
+export async function resendVerification(payload) {
+  const { data } = await api.post('/auth/resend-verification', payload);
+  return data;
 }
 
 // Resolves to the signed-in user, or null when there is no valid session.

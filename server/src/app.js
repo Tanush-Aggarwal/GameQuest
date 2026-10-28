@@ -51,12 +51,14 @@ import { createRequirementsService } from './services/requirementsService.js';
 import { createRatingsService } from './services/ratingsService.js';
 import { createSteamMediaService } from './services/steamMediaService.js';
 import { createGoogleAdapter } from './adapters/auth/google.js';
+import { createEmailService } from './services/emailService.js';
 
 // Services can be injected (tests pass ones backed by in-memory models).
 export function createApp({
   config,
   logger,
-  authService = createAuthService({ User, RefreshToken, config }),
+  emailService: _emailSvc,
+  authService: _authSvc,
   gameService: _gameSvc,
   libraryService: _libSvc,
   progressService: _progressSvc,
@@ -83,6 +85,8 @@ export function createApp({
   googleAdapter = createGoogleAdapter({ config }),
   eventBus = createEventBus({ logger }),
 }) {
+  const emailService = _emailSvc ?? createEmailService({ config, logger });
+  const authService = _authSvc ?? createAuthService({ User, RefreshToken, config, emailService, logger });
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
   const progressService = _progressSvc ?? createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger });
   const insightsService = _insightsSvc ?? createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Game, logger });
@@ -170,7 +174,24 @@ export function createApp({
 
   app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/api/v1/health' } }));
   app.use(helmet());
-  app.use(cors({ origin: config.clientOrigin, credentials: true }));
+  const allowedOrigins = [config.clientOrigin];
+  if (!config.isProd) {
+    for (const devOrigin of ['http://localhost:5174', 'http://localhost:5173', 'http://127.0.0.1:5174', 'http://127.0.0.1:5173']) {
+      if (!allowedOrigins.includes(devOrigin)) allowedOrigins.push(devOrigin);
+    }
+  }
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        return callback(null, false);
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 

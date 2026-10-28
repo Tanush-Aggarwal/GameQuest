@@ -28,13 +28,6 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     return d;
   }
 
-  function monthsAgo(n) {
-    const d = new Date();
-    d.setUTCMonth(d.getUTCMonth() - n, 1);
-    d.setUTCHours(0, 0, 0, 0);
-    return d;
-  }
-
   // ── dashboard ─────────────────────────────────────────────────────────────
 
   async function getDashboard(userId) {

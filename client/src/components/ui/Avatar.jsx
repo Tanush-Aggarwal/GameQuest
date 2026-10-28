@@ -13,7 +13,9 @@ const tintFor = (name = '') => TINTS[[...name].reduce((sum, c) => sum + c.charCo
 
 // The player's chosen picture everywhere, with their initial on a soft tint as the fallback (no picture, or it failed).
 export function Avatar({ user, size = 40, className = '', ring = false }) {
-  const [failed, setFailed] = useState(false);
+  // remembers which URL failed, so a new picture is tried again instead of staying on the initial
+  const [failedSrc, setFailedSrc] = useState(null);
+  const failed = Boolean(user?.avatar) && failedSrc === user.avatar;
   const name = user?.username ?? '?';
   const style = { width: size, height: size, fontSize: Math.max(11, Math.round(size * 0.4)) };
   const ringClass = ring ? 'ring-2 ring-white/80 shadow-md' : '';
@@ -23,7 +25,9 @@ export function Avatar({ user, size = 40, className = '', ring = false }) {
         src={user.avatar}
         alt=""
         aria-hidden="true"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(user.avatar)}
+        referrerPolicy="no-referrer"
+        loading="lazy"
         className={`shrink-0 rounded-full object-cover ${ringClass} ${className}`}
         style={style}
       />

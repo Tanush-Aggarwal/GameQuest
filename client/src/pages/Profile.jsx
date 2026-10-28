@@ -513,7 +513,7 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
           {/* Avatar (large, 88px, ring) */}
           <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full bg-[#16181D] ring-2 ring-white/20 shadow-xl">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center font-heading text-3xl font-bold text-white bg-white/15">
                 {username?.charAt(0).toUpperCase() || 'U'}

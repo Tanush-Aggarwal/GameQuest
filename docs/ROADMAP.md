@@ -6,7 +6,6 @@ What to improve and add next, grouped by how much work each item is. Each item s
 
 | Idea | Why | Where |
 |---|---|---|
-| **Rotate the leaked API keys** (Steam, YouTube, Twitch, JWT secrets) | Keys were shared during development; new ones close that gap | Render env vars, `server/.env` |
 | **Trophy unlock toasts** | Celebrate the moment a tier is earned instead of the player finding it later | Compare old/new stats after a status change or review; `sonner` toast |
 | **Open Graph previews** for `/u/:username` and `/games/:slug` | Links shared on Discord or WhatsApp show the cover and title | Small server route that returns meta tags, or Vercel middleware |
 | **Empty-state illustrations** | First-time users see a friendlier library, friends and sessions page | `components/ui/states.jsx` |

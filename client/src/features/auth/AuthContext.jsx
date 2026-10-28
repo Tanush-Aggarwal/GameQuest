@@ -1,3 +1,4 @@
+import { getAccountSummary } from '@/services/accountApi.js';
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import * as authApi from '@/services/authApi.js';
@@ -19,6 +20,23 @@ export function AuthProvider({ children }) {
       setStatus('error');
     }
   }, []);
+
+  // The session payload can arrive without the picture (older API, or a login made before it was set).
+  // Fill it from the account summary so the top bar, sidebar and menus all show the same avatar.
+  const userId = user?.id;
+  const hasAvatar = Boolean(user?.avatar);
+  useEffect(() => {
+    if (!userId || hasAvatar) return undefined;
+    let cancelled = false;
+    getAccountSummary()
+      .then((s) => {
+        if (!cancelled && s?.avatar) setUser((u) => (u && u.id === userId && !u.avatar ? { ...u, avatar: s.avatar } : u));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, hasAvatar]);
 
   const retry = useCallback(() => {
     setStatus('loading');

@@ -5,8 +5,7 @@
 **One library for every game you own: track progress, decide what to play next, and play together with friends.**
 
 [![Live demo](https://img.shields.io/badge/Live%20demo-gamequest--five.vercel.app-111?style=for-the-badge&logo=vercel)](https://gamequest-five.vercel.app)
-[![Tutorial video](https://img.shields.io/badge/Tutorial-Watch%20on%20YouTube-red?style=for-the-badge&logo=youtube)](https://youtu.be/YOUR_VIDEO_ID)
-
+[![Tutorial video](https://img.shields.io/badge/Video-Click%20to%20Watch-blue?style=for-the-badge&logo=play)](https://youtu.be/YOUR_VIDEO_ID)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Node](https://img.shields.io/badge/Node-20+-339933?logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000?logo=express)

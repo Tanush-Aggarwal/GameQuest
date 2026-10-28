@@ -36,6 +36,12 @@ export const unblockUser = (userId) => api.delete(`/blocks/${userId}`);
 // ── users and profiles ───────────────────────────────────────────────────────
 
 // Resolves to [{ id, username, relation }].
+// Players with a public profile, for "Find people" before anything is typed.
+export async function discoverUsers({ signal } = {}) {
+  const { data } = await api.get('/users/discover', { signal });
+  return data.items;
+}
+
 export async function searchUsers(q, { signal } = {}) {
   const { data } = await api.get('/users/search', { params: { q }, signal });
   return data.items;

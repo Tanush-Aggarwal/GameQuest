@@ -33,8 +33,8 @@
     font-variant-numeric: tabular-nums;
   }
   ::selection {
-    color: var(--accent-fg);
-    background: var(--accent);
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -179,3 +179,104 @@ input::placeholder, textarea::placeholder {
   color: var(--text-muted);
 }
 
+
+/* Native dropdowns, styled once for the whole app: own chevron, comfortable padding, clear hover and focus.
+   The open option list is drawn by the OS; its colours are set here so it matches the theme. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23625b4f' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 16px;
+  padding-right: 2.5rem !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+select:hover {
+  border-color: color-mix(in srgb, var(--text) 35%, var(--border));
+  background-color: color-mix(in srgb, var(--surface) 70%, var(--surface-raised));
+}
+select:focus,
+select:focus-visible {
+  outline: none;
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 18%, transparent);
+}
+select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+select option {
+  background-color: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+}
+select option:checked {
+  background-color: var(--surface-raised);
+  color: var(--text);
+}
+
+/* Progress bars, one look everywhere: a soft inset track and a gradient fill whose colour follows the amount
+   (just started → orange, underway → blue, nearly or fully done → green). `--p` is the percentage. */
+.gq-progress {
+  position: relative;
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  box-shadow: inset 0 1px 2px rgba(21, 23, 19, 0.12);
+}
+.gq-progress--on-dark {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+.gq-progress__fill {
+  height: 100%;
+  width: var(--p, 0%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b8420e, #df7a3a);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gq-progress__fill[data-level='mid'] { background: linear-gradient(90deg, #155f77, #2c8fae); }
+.gq-progress__fill[data-level='high'] { background: linear-gradient(90deg, #17633b, #3c9d63); }
+.gq-progress__fill[data-level='reward'] { background: linear-gradient(90deg, #8b5a14, #d39a3a); }
+
+/* The progress slider: same track and fill, plus a white thumb with a soft ring. */
+.gq-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #155f77, #2c8fae) 0 / var(--p, 0%) 100% no-repeat,
+    color-mix(in srgb, var(--text) 9%, transparent);
+  cursor: pointer;
+}
+.gq-range[data-level='low'] { background: linear-gradient(90deg, #b8420e, #df7a3a) 0 / var(--p, 0%) 100% no-repeat, color-mix(in srgb, var(--text) 9%, transparent); }
+.gq-range[data-level='high'] { background: linear-gradient(90deg, #17633b, #3c9d63) 0 / var(--p, 0%) 100% no-repeat, color-mix(in srgb, var(--text) 9%, transparent); }
+.gq-range:disabled { opacity: 0.55; cursor: not-allowed; }
+.gq-range:focus-visible { outline: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--text) 12%, transparent); }
+.gq-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 1.35rem;
+  width: 1.35rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid var(--text);
+  box-shadow: 0 2px 6px rgba(21, 23, 19, 0.25);
+  transition: transform 0.15s ease;
+}
+.gq-range::-webkit-slider-thumb:hover { transform: scale(1.1); }
+.gq-range::-moz-range-thumb {
+  height: 1.2rem;
+  width: 1.2rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid var(--text);
+  box-shadow: 0 2px 6px rgba(21, 23, 19, 0.25);
+}

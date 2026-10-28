@@ -484,7 +484,7 @@ describe('sessions in the activity feed', () => {
     const s = await ctx.sessionService.create(ctx.alex.id, await ctx.input({ title: 'Co-op night' }));
     await ctx.tick();
     const feed = await ctx.activityService.feed(ctx.demo.id);
-    expect(feed.items).toEqual([expect.objectContaining({ type: 'session.created', actor: { id: ctx.alex.id, username: 'alex' }, data: expect.objectContaining({ sessionId: s.id, title: 'Co-op night' }) })]);
+    expect(feed.items).toEqual([expect.objectContaining({ type: 'session.created', actor: { id: ctx.alex.id, username: 'alex', avatar: null }, data: expect.objectContaining({ sessionId: s.id, title: 'Co-op night' }) })]);
     await ctx.sessionService.cancel(ctx.alex.id, s.id);
     expect((await ctx.activityService.feed(ctx.demo.id)).items).toEqual([]);
   });

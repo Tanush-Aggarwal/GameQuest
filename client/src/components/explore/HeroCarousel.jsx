@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Pause, Play, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { cn } from '@/lib/utils.js';
 import { buttonVariants } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
@@ -11,24 +12,36 @@ import { useMotionOk } from '@/lib/motion.js';
 import { searchGames } from '@/services/gamesApi.js';
 
 export const SLIDES = 5;
+
+function shuffle(list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 export const ADVANCE_MS = 7000;
 const ICON_BUTTON =
-  'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-bg/80 text-text hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+  'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-bg/80 text-text hover:border-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text';
 
 // Trending games (the most popular in the catalog) as a hero. It moves by itself every few seconds unless the viewer
-// prefers reduced motion; a Pause button is always there while it moves, and it also holds still while the pointer or
-// keyboard focus is on it. Dots, arrows and the slide's own link work without a pointer. Its own section: a failure
-// here shows an error with Retry and leaves the rest of the page alone.
+// prefers reduced motion; it also holds still while the pointer or keyboard focus is on it. Dots, arrows and the
+// slide's own link work without a pointer. Its own section: a failure here shows an error with Retry and leaves the
+// rest of the page alone.
 export function HeroCarousel() {
-  const load = useCallback(async (signal) => (await searchGames({ limit: SLIDES + 3 }, { signal })).items.filter((g) => g.backdrop || g.cover).slice(0, SLIDES), []);
+  // Popular games, shuffled so the header is a different game each visit; games with wide art are preferred.
+  const load = useCallback(async (signal) => {
+    const items = (await searchGames({ limit: SLIDES + 3 }, { signal })).items.filter((g) => g.backdrop || g.screenshots?.length || g.cover);
+    return shuffle(items).slice(0, SLIDES);
+  }, []);
   const { status, data: slides, retry } = useAsync(load);
   const motionOk = useMotionOk();
   const [index, setIndex] = useState(0);
-  const [userPaused, setUserPaused] = useState(false);
   const [held, setHeld] = useState(false); // pointer or focus is on the carousel
 
   const count = slides?.length ?? 0;
-  const auto = motionOk && !userPaused && !held && count > 1;
+  const auto = motionOk && !held && count > 1;
   const go = useCallback((to) => setIndex((i) => (count ? (((typeof to === 'function' ? to(i) : to) % count) + count) % count : 0)), [count]);
 
   useEffect(() => {
@@ -75,7 +88,7 @@ export function HeroCarousel() {
               <p className="text-sm font-medium text-gray-300">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>
               {game.summary && <p className="line-clamp-2 text-sm text-gray-200 leading-relaxed">{game.summary}</p>}
               <div className="pt-1">
-                <Link to={`/games/${game.slug}`} aria-label={`View game: ${game.title}`} className={buttonVariants({ variant: 'primary' })}>
+                <Link to={`/games/${game.slug}`} aria-label={`View game: ${game.title}`} className={cn(buttonVariants(), 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)] hover:brightness-105')}>
                   View game
                 </Link>
               </div>
@@ -97,21 +110,12 @@ export function HeroCarousel() {
                 aria-label={`Slide ${i + 1}: ${s.title}`}
                 aria-pressed={i === index}
                 onClick={() => go(i)}
-                className={`h-2.5 rounded-full transition-all ${i === index ? 'w-8 bg-[var(--accent)]' : 'w-2.5 bg-border hover:bg-text-muted'}`}
+                className={`h-2.5 rounded-full transition-all ${i === index ? 'w-8 bg-text' : 'w-2.5 bg-border hover:bg-text-muted'}`}
               />
             ))}
           </div>
           <button type="button" aria-label="Next slide" onClick={() => go((i) => i + 1)} className={ICON_BUTTON}>
             <ChevronRight className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label={userPaused ? 'Resume auto-advance' : 'Pause auto-advance'}
-            aria-pressed={userPaused}
-            onClick={() => setUserPaused((p) => !p)}
-            className={ICON_BUTTON}
-          >
-            {userPaused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
           </button>
         </div>
       )}

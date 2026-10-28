@@ -43,6 +43,10 @@ export function createSocialController({ friendService, profileService, activity
     },
 
     // users and profiles
+    async discoverUsers(req, res) {
+      res.json({ items: await friendService.discoverUsers(req.auth.userId) });
+    },
+
     async searchUsers(req, res) {
       res.json({ items: await friendService.searchUsers(req.auth.userId, req.query) });
     },

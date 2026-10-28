@@ -25,7 +25,7 @@ export function QuickStatusMenu({ entry, onMove, onRemove, disabled, triggerClas
           disabled={disabled}
           aria-label={`Change status of ${title}`}
           className={cn(
-            'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-bg text-text hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60',
+            'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-bg text-text hover:border-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text disabled:opacity-60',
             triggerClassName,
           )}
         >

@@ -28,7 +28,7 @@ export function CollectionCard({ collection, headingLevel: Heading = 'h3' }) {
     <li>
       <Link
         to={`/collections/${collection.id}`}
-        className="group relative block overflow-hidden rounded-card border border-border bg-surface shadow-lg transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="group relative block overflow-hidden rounded-card border border-border bg-surface shadow-lg transition-colors hover:border-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
       >
         <CoverMosaic covers={collection.covers} />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bg via-bg/90 to-transparent p-3 pt-12">

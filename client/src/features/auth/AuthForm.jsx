@@ -97,7 +97,7 @@ export function AuthForm({ title, submitLabel, fields, schema, onSubmit, footer,
                 name="acceptTerms"
                 checked={Boolean(values.acceptTerms)}
                 onChange={(e) => setValues((v) => ({ ...v, acceptTerms: e.target.checked ? true : undefined }))}
-                className="mt-0.5 h-4 w-4 rounded border-border bg-surface text-accent focus:ring-accent"
+                className="mt-0.5 h-4 w-4 rounded border-border bg-surface text-accent focus:ring-text"
               />
               <span>
                 I agree to the{' '}

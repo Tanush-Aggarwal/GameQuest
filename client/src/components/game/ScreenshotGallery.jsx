@@ -54,7 +54,7 @@ export function ScreenshotGallery({ title, screenshots = [], compact = false }) 
                       opener.current = e.currentTarget;
                       setIndex(globalIdx);
                     }}
-                    className="group relative block aspect-video w-full overflow-hidden rounded-[8px] border border-border bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8F135]"
+                    className="group relative block aspect-video w-full overflow-hidden rounded-[8px] border border-border bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
                   >
                     <img
                       src={screenshotThumb(url)}
@@ -75,7 +75,7 @@ export function ScreenshotGallery({ title, screenshots = [], compact = false }) 
                 type="button"
                 aria-label="Previous screenshot pair"
                 onClick={() => setPairOffset((p) => (p - 2 >= 0 ? p - 2 : Math.max(0, shots.length - 2)))}
-                className="absolute -left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface/90 text-text shadow-lg backdrop-blur-sm transition hover:border-text hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8F135]"
+                className="absolute -left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface/90 text-text shadow-lg backdrop-blur-sm transition hover:border-text hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -83,7 +83,7 @@ export function ScreenshotGallery({ title, screenshots = [], compact = false }) 
                 type="button"
                 aria-label="Next screenshot pair"
                 onClick={() => setPairOffset((p) => (p + 2 < shots.length ? p + 2 : 0))}
-                className="absolute -right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface/90 text-text shadow-lg backdrop-blur-sm transition hover:border-text hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8F135]"
+                className="absolute -right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface/90 text-text shadow-lg backdrop-blur-sm transition hover:border-text hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -101,7 +101,7 @@ export function ScreenshotGallery({ title, screenshots = [], compact = false }) 
                   opener.current = e.currentTarget;
                   setIndex(i);
                 }}
-                className="group relative block aspect-video w-full overflow-hidden rounded-[8px] border border-border bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8F135]"
+                className="group relative block aspect-video w-full overflow-hidden rounded-[8px] border border-border bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
               >
                 <img
                   src={screenshotThumb(url)}
@@ -162,4 +162,4 @@ export function ScreenshotGallery({ title, screenshots = [], compact = false }) 
 }
 
 const navButton =
-  'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text hover:border-text hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8F135]';
+  'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text hover:border-text hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text';

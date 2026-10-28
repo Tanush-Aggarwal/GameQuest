@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Check, Command, LogOut, Search, User } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Bell, Check, Command, LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { Avatar } from '@/components/ui/Avatar.jsx';
+import { SearchBox } from './SearchBox.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { Button } from '@/components/ui/button.jsx';
 import { getNotifications, markNotificationsRead } from '@/services/accountApi.js';
@@ -22,9 +24,7 @@ function formatRelativeTime(iso) {
 // Horizontal top bar: search, command-palette, notifications, profile, logout.
 export function TopBar({ onOpenPalette }) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [text, setText] = useState('');
   const [notifications, setNotifications] = useState({ items: [], unread: 0 });
   const [openNotifications, setOpenNotifications] = useState(false);
   const notifRef = useRef(null);
@@ -58,13 +58,6 @@ export function TopBar({ onOpenPalette }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openNotifications]);
-
-  function search(e) {
-    e.preventDefault();
-    const q = text.trim();
-    if (!q) return;
-    navigate(`/explore?q=${encodeURIComponent(q)}`);
-  }
 
   async function handleLogout() {
     try {
@@ -101,22 +94,7 @@ export function TopBar({ onOpenPalette }) {
         </Link>
 
         {/* Search bar */}
-        {showSearch && (
-          <form role="search" onSubmit={search} className="relative min-w-0 flex-1 md:max-w-md mx-auto">
-            <Search className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isGamePage ? 'text-[#9AA3B2]' : 'text-text-muted'}`} aria-hidden="true" />
-            <input
-              type="search"
-              aria-label="Search games"
-              placeholder="Search games, genres, players..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className={`gq-search h-11 w-full rounded-full border pl-9 pr-14 text-sm transition-colors focus:outline-none ${isGamePage ? '!border-white/15 !bg-[#16181D] !text-white placeholder:!text-[#9AA3B2] focus:!border-white/40' : 'border-border bg-surface text-text placeholder:text-text-muted focus:border-text'}`}
-            />
-            <kbd className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-block rounded border px-1.5 py-0.5 text-[10px] font-mono font-medium ${isGamePage ? '!border-white/15 !bg-white/10 !text-[#9AA3B2]' : 'border-border bg-surface-raised text-text-muted'}`}>
-              Ctrl K
-            </kbd>
-          </form>
-        )}
+        {showSearch && <SearchBox />}
 
         {/* Right actions */}
         <div className="gq-top-actions ml-auto flex items-center gap-1 sm:gap-1.5">
@@ -185,19 +163,13 @@ export function TopBar({ onOpenPalette }) {
                           item.unread ? 'bg-surface-raised font-medium' : 'hover:bg-surface-raised/50 text-text-muted'
                         }`}
                       >
-                        {item.actor?.avatar ? (
-                          <img src={item.actor.avatar} alt="" className="h-7 w-7 rounded-full object-cover shrink-0 mt-0.5" />
-                        ) : (
-                          <span className="flex h-7 w-7 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-bold items-center justify-center shrink-0 mt-0.5 text-[10px]">
-                            {item.actor?.username?.charAt(0).toUpperCase() || 'U'}
-                          </span>
-                        )}
+                        <Avatar user={item.actor ?? { username: 'U' }} size={28} className="mt-0.5" />
                         <div className="flex flex-col min-w-0 flex-1">
                           <span className="text-text leading-snug">{item.text}</span>
                           <span className="text-[10px] text-text-muted mt-0.5">{formatRelativeTime(item.createdAt)}</span>
                         </div>
                         {item.unread && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] shrink-0 mt-2" aria-hidden="true" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--secondary-accent)] shrink-0 mt-2" aria-hidden="true" />
                         )}
                       </Link>
                     ))
@@ -212,12 +184,7 @@ export function TopBar({ onOpenPalette }) {
               to="/profile"
               className={`flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-control px-1.5 sm:px-2 py-1 text-sm font-medium transition-colors ${isGamePage ? 'text-gray-200 hover:text-white hover:bg-white/10' : 'text-text-muted hover:text-text'}`}
             >
-              <span
-                aria-hidden="true"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-xs font-bold"
-              >
-                {user.username ? user.username.charAt(0).toUpperCase() : <User className="h-4 w-4" aria-hidden="true" />}
-              </span>
+              <Avatar user={user} size={32} />
               <span className="sr-only">Your profile:</span>
               <span className="hidden max-w-[10rem] truncate font-semibold sm:inline">{user.username}</span>
             </Link>

@@ -135,6 +135,17 @@ describe('gameService.search (cache-first)', () => {
     expect(ctx.igdb.search).not.toHaveBeenCalled();
   });
 
+  it('finds games from the start of any word of the title, best match first', async () => {
+    const ctx = setupCatalog({ seed: [stored('Mina the Hollower'), stored('Hollow Knight'), stored('Alcohol Tycoon'), stored('Hollow Knight Silksong')] });
+    await ctx.seed;
+    const titles = async (q) => (await ctx.gameService.search({ q, limit: 10 })).items.map((g) => g.title);
+    expect(await titles('hol')).toEqual(expect.arrayContaining(['Hollow Knight', 'Hollow Knight Silksong', 'Mina the Hollower']));
+    expect(await titles('hol')).not.toContain('Alcohol Tycoon'); // a word must start with the query
+    expect((await titles('hol'))[0]).toMatch(/^Hollow Knight/); // titles that start with it come first
+    expect(await titles('hol kni')).toEqual(expect.arrayContaining(['Hollow Knight', 'Hollow Knight Silksong']));
+    expect(await titles('(hol')).toEqual([]); // regex characters are literal
+  });
+
   it('fetches from IGDB on a cache miss, upserts, and returns the new games', async () => {
     const ctx = setupCatalog({ igdbGames: [rawGame(7, 'Hades')] });
     const res = await ctx.gameService.search({ q: 'hades', limit: 20 });

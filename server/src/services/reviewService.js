@@ -9,6 +9,7 @@ export const toReviewDto = (r, user) => ({
   rating: r.rating,
   body: r.body ?? null,
   username: user?.username ?? null,
+  avatar: user?.avatar ?? null,
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,
 });

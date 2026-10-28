@@ -139,10 +139,35 @@ export function createGameService({
     return { failed: null };
   }
 
+  function titlePattern(q) {
+    const words = q
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 6)
+      .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // a word starts at the beginning or after a space or punctuation (plain characters: works in MongoDB and in JS)
+    return words.map((w) => `(?=.*(?:^|[\\s:\\-_.,'"!?&/(]) ?${w})`).join('');
+  }
+
+  // Best matches first: the title itself starts with the query, then a word does; popularity breaks ties.
+  function rank(rows, q) {
+    const needle = q.trim().toLowerCase();
+    const score = (g) => {
+      const t = (g.title ?? '').toLowerCase();
+      if (t === needle) return 0;
+      if (t.startsWith(needle)) return 1;
+      return 2;
+    };
+    return rows.map((g, i) => [score(g), i, g]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map((x) => x[2]);
+  }
+
   function buildFilter({ q, genre, platform, maxHours, minHours, minRating, releasedAfter, releasedBefore, sort, cursor }) {
     // DLC, bundles and editions are hidden from every catalog read.
     const filter = { hidden: { $ne: true } };
-    if (q) filter.$text = { $search: q };
+    // Every word of the query must start a word of the title, case-insensitively: "hol" finds "Hollow Knight",
+    // "hol kni" too. (A $text search only matches whole words, so a partial name found nothing.)
+    if (q) filter.title = { $regex: titlePattern(q), $options: 'i' };
     if (genre) filter.genres = genre;
     if (platform) filter.platforms = platform;
     if (maxHours || minHours) {
@@ -166,7 +191,7 @@ export function createGameService({
       .sort(byRating ? { totalRating: -1, slug: 1 } : { popularity: -1, slug: 1 })
       .limit(params.limit + 1)
       .lean();
-    const page = rows.slice(0, params.limit);
+    const page = (params.q && !params.cursor ? rank(rows.slice(0, params.limit), params.q) : rows.slice(0, params.limit));
     // the rating order is for shelves: no cursor, so no paging (the schema refuses a cursor with it)
     return { items: page.map(toGameDto), nextCursor: !byRating && rows.length > params.limit ? encodeCursor(page[page.length - 1]) : null };
   }

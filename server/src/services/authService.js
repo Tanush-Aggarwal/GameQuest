@@ -11,6 +11,7 @@ export function toPublicUser(user) {
   return {
     id: String(user._id),
     username: user.username,
+    avatar: user.avatar ?? null,
     email: user.email,
     role: user.role,
     createdAt: user.createdAt,

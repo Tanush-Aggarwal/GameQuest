@@ -12,7 +12,8 @@ import { getErrorInfo } from '@/services/api.js';
 export function RecommendationModal({ game, isOpen, onClose }) {
   const loadFriends = useCallback((signal) => listFriends({ signal }), []);
   const { status, data } = useAsync(loadFriends);
-  const friends = data?.friends ?? [];
+  // listFriends resolves to the array of friends itself
+  const friends = Array.isArray(data) ? data : data?.friends ?? data?.items ?? [];
 
   const [selectedFriendId, setSelectedFriendId] = useState('');
   const [message, setMessage] = useState('');

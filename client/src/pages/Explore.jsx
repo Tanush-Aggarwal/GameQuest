@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Clock, Compass, Flame, Gamepad2, Monitor, Search, Sparkles, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
@@ -15,7 +16,7 @@ import { searchGames } from '@/services/gamesApi.js';
 const PAGE_SIZE = 24;
 const DEBOUNCE_MS = 300;
 const DAY_MS = 86_400_000;
-const SELECT = 'h-11 rounded-control border border-border bg-surface-raised px-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent';
+const SELECT = 'w-full sm:w-auto sm:min-w-[11rem]';
 
 const GENRES = [
   { id: 'all', label: 'All Games' },
@@ -38,7 +39,8 @@ const LENGTHS = {
   medium: { label: '10 to 20 hours', params: { minHours: 10, maxHours: 20 } },
   long: { label: '40+ hours', params: { minHours: 40 } },
 };
-const RATINGS = { 70: '70+', 80: '80+', 90: '90+' };
+// Ratings are shown out of 10 everywhere; the API filters on 0-100.
+const RATINGS = { 70: '7+', 80: '8+', 90: '9+' };
 
 const isoDaysAgo = (days, from = Date.now()) => new Date(from - days * DAY_MS).toISOString().slice(0, 10);
 
@@ -182,30 +184,30 @@ export default function Explore() {
             onChange={(e) => setText(e.target.value)}
           />
         </div>
-        <select aria-label="Filter by platform" value={platform} onChange={(e) => setFilter('platform', e.target.value)} className={SELECT}>
+        <FancySelect aria-label="Filter by platform" value={platform} onChange={(e) => setFilter('platform', e.target.value)} className={SELECT}>
           <option value="">All platforms</option>
           {PLATFORMS.map((p) => (
             <option key={p} value={p}>
               {platformLabel(p)}
             </option>
           ))}
-        </select>
-        <select aria-label="Filter by length" value={length} onChange={(e) => setFilter('length', e.target.value)} className={SELECT}>
+        </FancySelect>
+        <FancySelect aria-label="Filter by length" value={length} onChange={(e) => setFilter('length', e.target.value)} className={SELECT}>
           <option value="">Any length</option>
           {Object.entries(LENGTHS).map(([id, l]) => (
             <option key={id} value={id}>
               {l.label}
             </option>
           ))}
-        </select>
-        <select aria-label="Filter by rating" value={rating} onChange={(e) => setFilter('rating', e.target.value)} className={SELECT}>
+        </FancySelect>
+        <FancySelect aria-label="Filter by rating" value={rating} onChange={(e) => setFilter('rating', e.target.value)} className={SELECT}>
           <option value="">Any rating</option>
           {Object.entries(RATINGS).map(([id, label]) => (
             <option key={id} value={id}>
-              Rated {label}
+              ★ {label}
             </option>
           ))}
-        </select>
+        </FancySelect>
         {filtered && (
           <Button variant="ghost" onClick={() => setParams(q ? { q } : {})}>
             Clear filters

@@ -24,17 +24,22 @@
 
 .gq-game-hero {
   position: relative;
-  border-radius: 0 !important;
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  /* sits a little below the top bar as a rounded card: no hairline outline, no flush edge */
+  margin: 12px 12px 0;
+  width: auto !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.55);
   background-color: #0B0C0F !important;
   color: #ffffff !important;
 }
 
+@media (min-width: 640px) {
+  .gq-game-hero { margin: 16px 20px 0; border-radius: 24px !important; }
+}
+
 .gq-game-hero [data-art] > div {
-  background: linear-gradient(to right, #111311 0%, rgba(17, 19, 17, 0.88) 50%, rgba(17, 19, 17, 0.25) 100%) !important;
+  background: linear-gradient(to right, rgba(17, 19, 17, 0.92) 0%, rgba(17, 19, 17, 0.7) 38%, rgba(17, 19, 17, 0.15) 75%, transparent 100%) !important;
 }
 
 .gq-home-hero__copy {
@@ -112,8 +117,8 @@
 }
 
 .gq-app .gq-bottom-tabbar a[aria-current='page'] svg {
-  color: var(--accent-fg);
-  background: var(--accent);
+  color: var(--bg);
+  background: var(--text);
   border-radius: 4px;
   padding: 1px;
 }
@@ -144,9 +149,9 @@
 }
 
 .gq-app .gq-genre-tab.is-active {
-  color: var(--accent-fg);
-  background: var(--accent);
-  border-color: var(--accent);
+  color: var(--bg);
+  background: var(--text);
+  border-color: var(--text);
   font-weight: 700;
 }
 
@@ -178,7 +183,7 @@
   background: var(--surface);
 }
 .gq-stat-icon {
-  color: var(--accent);
+  color: var(--secondary-accent);
 }
 .gq-stat-value {
   font-size: 1.25rem;

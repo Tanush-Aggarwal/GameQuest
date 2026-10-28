@@ -10,7 +10,7 @@ const pairOf = (a, b) => {
 };
 const otherOf = (doc, me) => (String(doc.userA) === String(me) ? String(doc.userB) : String(doc.userA));
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const toUserDto = (u) => ({ id: String(u._id), username: u.username });
+const toUserDto = (u) => ({ id: String(u._id), username: u.username, avatar: u.avatar ?? null });
 
 // Friendships are mutual (request → accept) and blocks override everything: a blocked pair can't
 // request, search, see or be seen by each other. This service also answers `isFriend`/`isBlocked`
@@ -89,6 +89,18 @@ export function createFriendService({ Friendship, Block, User, LibraryEntry, Gam
     async relation(viewerId, otherId) {
       if (String(viewerId) === String(otherId)) return 'self';
       return relationOf(await loadRelations(viewerId), String(otherId));
+    },
+
+    // Everyone with a public profile, newest first, for "Find people" before anything is typed.
+    async discoverUsers(viewerId, { limit = 30 } = {}) {
+      const [rows, rel] = await Promise.all([
+        User.find({ privacy: 'public', _id: { $ne: viewerId } }).sort({ createdAt: -1 }).limit(limit + 20).lean(),
+        loadRelations(viewerId),
+      ]);
+      return rows
+        .filter((u) => !rel.blockedMe.has(String(u._id)) && !rel.blockedByMe.has(String(u._id)))
+        .slice(0, limit)
+        .map((u) => ({ ...toUserDto(u), bio: u.bio ?? '', relation: relationOf(rel, String(u._id)) }));
     },
 
     async searchUsers(viewerId, { q, limit = 10 }) {

@@ -83,7 +83,7 @@ export function createSessionService({ GameSession, Rsvp, Game, User, social, ev
       title: session.title || (game ? `Playing ${game.title}` : 'Play session'),
       customTitle: session.title ?? '',
       game: game ? { id: String(game._id), slug: game.slug, title: game.title, cover: game.cover ?? null, backdrop: game.backdrop ?? game.screenshots?.[0] ?? game.artworks?.[0] ?? null } : null, // wide art for the session banner
-      host: host ? { id: String(host._id), username: host.username } : null,
+      host: host ? { id: String(host._id), username: host.username, avatar: host.avatar ?? null } : null,
       startsAt: toIso(session.startsAt),
       endsAt: toIso(session.endsAt),
       durationMin: session.durationMin,
@@ -125,7 +125,7 @@ export function createSessionService({ GameSession, Rsvp, Game, User, social, ev
         .filter((u) => String(u._id) !== String(session.hostId))
         .filter((u) => dto.isHost || String(u._id) === String(viewerId) || inviteeIds.includes(String(u._id)) || knownToViewer.has(String(u._id)))
         .map((u) => ({
-          user: { id: String(u._id), username: u.username },
+          user: { id: String(u._id), username: u.username, avatar: u.avatar ?? null },
           response: rsvpByUser.get(String(u._id)) ?? 'invited',
           role: inviteeIds.includes(String(u._id)) ? 'invitee' : 'guest',
         })),

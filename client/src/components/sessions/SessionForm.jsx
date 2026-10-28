@@ -1,6 +1,9 @@
 import { useCallback, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Check, Clock, MonitorSmartphone, Pencil, Users } from 'lucide-react';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { SESSION_DURATIONS, createSessionSchema, updateSessionSchema } from '@gamequest/shared';
+import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -12,7 +15,7 @@ import { listFriends } from '@/services/socialApi.js';
 // The datetime input has minute precision, so compare to the minute.
 const sameMinute = (a, b) => Math.floor(new Date(a).getTime() / 60_000) === Math.floor(new Date(b).getTime() / 60_000);
 
-const selectClass = 'min-h-11 w-full rounded-control border border-border bg-surface px-2 text-sm text-text';
+const selectClass = 'w-full';
 const hourLabel = (min) => {
   const h = Math.floor(min / 60);
   const m = min % 60;
@@ -84,71 +87,115 @@ export function SessionForm({ gameId, initial, submitLabel, onSubmit, onCancel }
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4" aria-label={editing ? 'Edit session' : 'New session'}>
-      <Field id={`${id}-title`} label="Title" hint="Optional — defaults to “Playing <game>”." error={errors.title}>
-        <Input id={`${id}-title`} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} />
-      </Field>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field id={`${id}-start`} label="Starts" hint={`Your time (${viewerTimeZone()})`} error={errors.startsAt}>
-          <Input id={`${id}-start`} type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={Boolean(errors.startsAt)} />
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5" aria-label={editing ? 'Edit session' : 'New session'}>
+      <Section icon={Pencil} title="Details" subtitle="Give it a name your friends will recognise.">
+        <Field id={`${id}-title`} label="Title" hint="Optional — defaults to “Playing <game>”." error={errors.title}>
+          <Input id={`${id}-title`} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="Boss rush night" />
         </Field>
-        <Field id={`${id}-dur`} label="Length" error={errors.durationMin}>
-          <select id={`${id}-dur`} className={selectClass} value={durationMin} onChange={(e) => setDurationMin(e.target.value)}>
-            {SESSION_DURATIONS.map((m) => (
-              <option key={m} value={m}>{hourLabel(m)}</option>
-            ))}
-          </select>
-        </Field>
-        <Field id={`${id}-platform`} label="Platform" hint="Optional" error={errors.platform}>
-          <Input id={`${id}-platform`} value={platform} maxLength={50} onChange={(e) => setPlatform(e.target.value)} placeholder="PC, Switch, PS5…" />
-        </Field>
-        <Field id={`${id}-max`} label="Players (including you)" error={errors.maxPlayers}>
-          <Input id={`${id}-max`} type="number" min={2} max={32} value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} aria-invalid={Boolean(errors.maxPlayers)} />
-        </Field>
-      </div>
+      </Section>
 
-      <Field id={`${id}-vis`} label="Who can join" error={errors.visibility}>
-        <select id={`${id}-vis`} className={selectClass} value={visibility} onChange={(e) => setVisibility(e.target.value)}>
-          <option value="friends">All my friends</option>
-          <option value="invite">Only people I invite</option>
-        </select>
-      </Field>
+      <Section icon={Clock} title="When" subtitle={`Times are in your timezone (${viewerTimeZone()}).`}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id={`${id}-start`} label="Starts" error={errors.startsAt}>
+            <Input id={`${id}-start`} type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={Boolean(errors.startsAt)} />
+          </Field>
+          <Field id={`${id}-dur`} label="Length" error={errors.durationMin}>
+            <FancySelect id={`${id}-dur`} className={selectClass} value={durationMin} onChange={(e) => setDurationMin(e.target.value)}>
+              {SESSION_DURATIONS.map((m) => (
+                <option key={m} value={m}>{hourLabel(m)}</option>
+              ))}
+            </FancySelect>
+          </Field>
+        </div>
+      </Section>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium">Invite friends {visibility === 'invite' ? '' : <span className="text-text-muted">(optional)</span>}</legend>
-        {friends.status === 'loading' && <Skeleton className="h-16 w-full" role="status" aria-label="Loading friends" />}
-        {friends.status === 'error' && <ErrorState message={friends.error.message} onRetry={friends.retry} />}
-        {friends.status === 'success' && friends.data.length === 0 && (
-          <p className="text-sm text-text-muted">
-            You have no friends yet. <Link to="/friends?tab=find" className="text-accent underline">Find people</Link> to invite them.
-          </p>
-        )}
-        {friends.status === 'success' && friends.data.length > 0 && (
-          <ul className="grid gap-1 sm:grid-cols-2">
-            {friends.data.map((f) => (
-              <li key={f.id}>
-                <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-2 hover:bg-surface-raised">
-                  <input type="checkbox" checked={inviteeIds.includes(f.id)} onChange={() => toggleInvitee(f.id)} className="h-4 w-4 accent-[var(--accent)]" />
-                  <span className="text-sm">{f.username}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-        {errors.inviteeIds && <p className="text-sm text-danger">{errors.inviteeIds}</p>}
-      </fieldset>
+      <Section icon={Users} title="Who" subtitle="Choose who can join and invite friends directly.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id={`${id}-vis`} label="Who can join" error={errors.visibility}>
+            <FancySelect id={`${id}-vis`} className={selectClass} value={visibility} onChange={(e) => setVisibility(e.target.value)}>
+              <option value="friends">All my friends</option>
+              <option value="invite">Only people I invite</option>
+            </FancySelect>
+          </Field>
+          <Field id={`${id}-max`} label="Players (including you)" error={errors.maxPlayers}>
+            <Input id={`${id}-max`} type="number" min={2} max={32} value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} aria-invalid={Boolean(errors.maxPlayers)} />
+          </Field>
+        </div>
 
-      <Field id={`${id}-discord`} label="Discord invite" hint="Optional — a discord.gg/… or discord.com/invite/… link." error={errors.discordInviteUrl}>
-        <Input id={`${id}-discord`} value={discord} maxLength={100} onChange={(e) => setDiscord(e.target.value)} placeholder="https://discord.gg/your-code" aria-invalid={Boolean(errors.discordInviteUrl)} />
-      </Field>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-sm font-medium">
+            Invite friends {visibility === 'invite' ? '' : <span className="text-text-muted">(optional)</span>}
+            {inviteeIds.length > 0 && <span className="ml-2 rounded-full bg-surface-raised px-2 py-0.5 text-xs font-semibold text-text">{inviteeIds.length} invited</span>}
+          </legend>
+          {friends.status === 'loading' && <Skeleton className="h-16 w-full" role="status" aria-label="Loading friends" />}
+          {friends.status === 'error' && <ErrorState message={friends.error.message} onRetry={friends.retry} />}
+          {friends.status === 'success' && friends.data.length === 0 && (
+            <p className="text-sm text-text-muted">
+              You have no friends yet. <Link to="/friends?tab=find" className="text-accent underline">Find people</Link> to invite them.
+            </p>
+          )}
+          {friends.status === 'success' && friends.data.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {friends.data.map((f) => {
+                const on = inviteeIds.includes(f.id);
+                return (
+                  <li key={f.id}>
+                    <label
+                      className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-text ${
+                        on ? 'border-text bg-text text-bg' : 'border-border bg-bg text-text hover:border-text'
+                      }`}
+                    >
+                      <input type="checkbox" checked={on} onChange={() => toggleInvitee(f.id)} className="sr-only" />
+                      <Avatar user={f} size={32} />
+                      <span>{f.username}</span>
+                      {on && <Check className="h-4 w-4" aria-hidden="true" />}
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {errors.inviteeIds && <p className="text-sm text-danger">{errors.inviteeIds}</p>}
+        </fieldset>
+      </Section>
 
-      {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
+      <Section icon={MonitorSmartphone} title="Where" subtitle="Optional: the platform and a voice channel.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id={`${id}-platform`} label="Platform" hint="Optional" error={errors.platform}>
+            <Input id={`${id}-platform`} value={platform} maxLength={50} onChange={(e) => setPlatform(e.target.value)} placeholder="PC, Switch, PS5…" />
+          </Field>
+          <Field id={`${id}-discord`} label="Discord invite" hint="Optional — a discord.gg/… or discord.com/invite/… link." error={errors.discordInviteUrl}>
+            <Input id={`${id}-discord`} value={discord} maxLength={100} onChange={(e) => setDiscord(e.target.value)} placeholder="https://discord.gg/your-code" aria-invalid={Boolean(errors.discordInviteUrl)} />
+          </Field>
+        </div>
+      </Section>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : submitLabel}</Button>
-        {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
+      {formError && <p role="alert" className="rounded-card border border-[var(--danger)]/30 bg-[var(--danger)]/5 px-4 py-3 text-sm text-danger">{formError}</p>}
+
+      <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface/95 p-3 shadow-lg backdrop-blur">
+        <p className="px-1 text-xs text-text-muted">Friends you invite get a notification.</p>
+        <div className="flex gap-2">
+          {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
+          <Button type="submit" disabled={submitting} className="px-6">{submitting ? 'Saving…' : submitLabel}</Button>
+        </div>
       </div>
     </form>
+  );
+}
+
+function Section({ icon: Icon, title, subtitle, children }) {
+  return (
+    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
+      <header className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-raised text-text" aria-hidden="true">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div>
+          <h2 className="font-heading text-base font-bold text-text">{title}</h2>
+          {subtitle && <p className="text-xs text-text-muted">{subtitle}</p>}
+        </div>
+      </header>
+      {children}
+    </section>
   );
 }

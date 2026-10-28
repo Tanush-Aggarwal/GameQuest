@@ -43,6 +43,7 @@ export function createSocialRouters({ authService, friendService, profileService
 
   const users = Router();
   users.use(requireAuth);
+  users.get('/discover', searchLimiter, controller.discoverUsers);
   users.get('/search', searchLimiter, validate(userSearchQuerySchema, 'query'), controller.searchUsers);
   users.patch('/me', validate(updateProfileSchema), controller.updateProfile);
   users.patch('/me/privacy', validate(privacySchema), controller.setPrivacy);

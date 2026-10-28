@@ -144,7 +144,7 @@ export function createActivityService({ Activity, LibraryEntry, Game, User, Coll
         return {
           id: String(r._id),
           type: r.type,
-          actor: { id: String(r.actorId), username: userById.get(String(r.actorId)).username },
+          actor: { id: String(r.actorId), username: userById.get(String(r.actorId)).username, avatar: userById.get(String(r.actorId)).avatar ?? null },
           game: game ? { id: String(game._id), slug: game.slug, title: game.title, cover: game.cover ?? null } : null,
           data: r.data ?? {},
           createdAt: r.createdAt,

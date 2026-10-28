@@ -1,4 +1,6 @@
 import { ForbiddenError, NotFoundError } from '../utils/errors.js';
+import { effectiveMinutes } from './insightsService.js';
+import { XP, levelForXp, xpForLevel } from './accountService.js';
 
 // Public profile pages (/u/:username). Every read of another person's data goes through the
 // privacy check here: blocks hide the profile entirely, the owner's privacy setting decides the rest.
@@ -42,18 +44,43 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
     // Hidden games stay out of everyone else's numbers.
     const filter = { userId: user._id };
     if (!self) filter.hiddenFromFriends = { $ne: true };
-    const [entries, reviews] = await Promise.all([LibraryEntry.find(filter).limit(5000).lean(), Review.countDocuments({ userId: user._id })]);
+    const [entries, reviews, friends] = await Promise.all([
+      LibraryEntry.find(filter).limit(5000).lean(),
+      Review.countDocuments({ userId: user._id }),
+      friendService?.listFriends ? friendService.listFriends(user._id).then((f) => f.length).catch(() => 0) : 0,
+    ]);
     const owned = entries.filter((e) => e.status !== 'wishlist');
-    const minutes = owned.reduce(
-      (sum, e) => sum + Math.max(e.loggedMinutes ?? 0, (e.ownerships ?? []).reduce((s, o) => s + (o.playtimeMin ?? 0), 0)),
-      0,
-    );
+    const minutes = owned.reduce((sum, e) => sum + effectiveMinutes(e), 0);
+    const completed = entries.filter((e) => e.status === 'completed').length;
+
+    // Trophy inputs: every number below comes from the player's own library, reviews and friends.
+    const platforms = new Set(owned.flatMap((e) => (e.ownerships ?? []).map((o) => String(o.platform).toLowerCase())));
+    const achievements = owned.reduce((sum, e) => sum + (e.achievements?.unlocked ?? 0), 0);
+    let genres = 0;
+    if (Game && owned.length) {
+      const games = await Game.find({ _id: { $in: owned.map((e) => e.gameId) } }).select('genres').lean();
+      genres = new Set(games.flatMap((g) => g.genres ?? [])).size;
+    }
+
+    // Same formula as the account summary (see accountService), so the level matches the sidebar.
+    const levelHours = Math.floor(entries.reduce((sum, e) => sum + effectiveMinutes(e), 0) / 60);
+    const xp = levelHours * XP.perHour + completed * XP.perCompleted + reviews * XP.perReview;
+    const level = levelForXp(xp);
+
     return {
       games: owned.length,
       playing: entries.filter((e) => e.status === 'playing').length,
-      completed: entries.filter((e) => e.status === 'completed').length,
+      completed,
       hours: Math.round(minutes / 60),
       reviews,
+      friends,
+      platforms: platforms.size,
+      genres,
+      achievements,
+      level,
+      xp,
+      levelStartXp: xpForLevel(level),
+      nextLevelXp: xpForLevel(level + 1),
     };
   }
 

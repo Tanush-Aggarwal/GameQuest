@@ -89,8 +89,8 @@ export function AddToCollection({ entryId }) {
                   aria-pressed={done}
                   aria-label={done ? `Remove from ${c.name}` : `Add to ${c.name}`}
                   title={done ? 'Click to remove' : 'Click to add'}
-                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-[6px] px-3 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
-                    done ? 'bg-[var(--accent)] text-[var(--accent-fg)]' : 'text-text hover:bg-surface-raised'
+                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-[6px] px-3 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text ${
+                    done ? 'bg-text text-bg' : 'text-text hover:bg-surface-raised'
                   } disabled:opacity-60`}
                 >
                   <span className="truncate">{c.name}</span>

@@ -1,129 +1,172 @@
-# GameQuest 🎮
+<div align="center">
 
-A full-stack MERN web app: one unified game library across platforms, smart "what to play next" decisions, and social play with friends — collections, an activity feed, and scheduled play sessions.
+# 🎮 GameQuest
+
+**One library for every game you own: track progress, decide what to play next, and play together with friends.**
+
+[![Live demo](https://img.shields.io/badge/Live%20demo-gamequest--five.vercel.app-111?style=for-the-badge&logo=vercel)](https://gamequest-five.vercel.app)
+[![Tutorial video](https://img.shields.io/badge/Tutorial-Watch%20on%20YouTube-red?style=for-the-badge&logo=youtube)](https://youtu.be/YOUR_VIDEO_ID)
+
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![Node](https://img.shields.io/badge/Node-20+-339933?logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000?logo=express)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
+![Tests](https://img.shields.io/badge/server%20tests-588%20passing-2ea44f)
+
+</div>
 
 ---
 
-## Tech Stack
+## 📺 Tutorial video
+
+[![GameQuest walkthrough](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://youtu.be/YOUR_VIDEO_ID)
+
+A walkthrough of the app: signing up, linking Steam, the library, collections, friends and scheduling a session.
+<!-- To add your video: upload it to YouTube (Unlisted is fine), copy the id after "youtu.be/" or "v=",
+     and replace every YOUR_VIDEO_ID in this file (3 places). -->
+
+---
+
+## ✨ What it does
+
+| | |
+|---|---|
+| 📚 **Unified library** | One entry per game, whichever platforms you own it on. Status flow Wishlist → Backlog → Playing → Completed / Dropped, with history. |
+| 🔗 **Steam sync** | Link your Steam profile to import owned games, playtime and achievements. Your manual progress is never overwritten. |
+| 🎯 **What to play next** | Scores your backlog by recent play, progress, time to beat and the genres you enjoy, and says why each pick was chosen. |
+| 📈 **Progress** | Manual progress, logged play sessions, journal notes and achievement percentage, kept as separate tracks. |
+| 🔎 **Search** | Type part of any word ("hol" finds Hollow Knight), with live suggestions in the top bar (press `/` or `Ctrl K`). |
+| 🗂️ **Collections** | Hand-picked lists with drag-to-reorder, or smart collections built from rules (e.g. "backlog and under 15 h"). |
+| 👥 **Friends** | Requests, blocking, an activity feed, game recommendations and public profiles with privacy settings. |
+| 📅 **Sessions** | Schedule a game night, invite friends, RSVP with a player limit, add a Discord link and download a calendar file. |
+| 🏆 **Levels & trophies** | XP from real activity and trophy tracks with Bronze → Platinum tiers (explained below). |
+| 🎬 **Game pages** | Art header, validated trailers, screenshots, time to beat, system requirements and community reviews. |
+
+### How levels work
+
+XP comes only from things you actually do, and it never goes down:
+
+| Action | XP |
+|---|---|
+| Each hour played (Steam or logged by you, whichever is higher per game) | +10 |
+| Each game completed | +100 |
+| Each review written | +25 |
+
+Level *n* starts at **100 × (n − 1)² XP**: level 2 at 100, level 3 at 400, level 5 at 1,600, level 10 at 8,100. Each level takes a little longer than the last. Click **How levels work** on your profile to see your own numbers.
+
+### Trophies & milestones
+
+Eight tracks, each with Bronze, Silver, Gold and Platinum tiers, all worked out from your real stats. Your profile shows the next goal for each track.
+
+| Track | Counts | Bronze / Silver / Gold / Platinum |
+|---|---|---|
+| Collector | games in library | 1 / 10 / 25 / 50 |
+| Finisher | games completed | 1 / 5 / 15 / 30 |
+| Time played | hours played | 10 / 50 / 150 / 500 |
+| Achievement hunter | Steam achievements unlocked | 10 / 100 / 500 / 1,500 |
+| Critic | reviews written | 1 / 5 / 15 / 30 |
+| Genre explorer | different genres played | 3 / 6 / 10 / 15 |
+| Platform hopper | platforms linked | 1 / 2 / 3 / 4 |
+| Squad | friends | 1 / 3 / 10 / 25 |
+
+---
+
+## 🧱 Tech stack
 
 | Layer | Tools |
 |---|---|
-| **Client** | React 19, Vite, React Router 7, Tailwind CSS 3 (CSS-variable tokens), Recharts, Sonner toasts, Lucide icons, Axios |
-| **Server** | Node.js, Express 5, Mongoose 9, Zod (validation), Pino (logging), Helmet, bcrypt, JSON Web Tokens |
+| **Client** | React 19, Vite, React Router 7, Tailwind CSS (CSS-variable tokens), Radix UI, Framer Motion, Recharts, Sonner, Lucide, Axios |
+| **Server** | Node.js, Express 5, Mongoose, Zod, Pino, Helmet, express-rate-limit, bcrypt, JSON Web Tokens |
 | **Database** | MongoDB Atlas |
-| **Shared** | `@gamequest/shared` — Zod schemas re-used on both client and server |
-| **Testing** | Jest + Supertest (server, 541 tests), Vitest + Testing Library (client, 248 tests) |
+| **Shared** | `@gamequest/shared`: Zod schemas used by both client and server |
+| **External APIs** | IGDB (catalog), Steam Web API (library and achievements), YouTube Data API (trailers) |
+| **Testing** | Jest + Supertest (server, in-memory fakes, no database needed), Vitest + Testing Library (client) |
+| **Hosting** | Vercel (client), Render (API), MongoDB Atlas (database), UptimeRobot (keeps the API awake) |
 
----
+## 🏗️ Architecture
 
-## Features
+```
+Browser ──► Vercel (React SPA)
+              │  /api/* is rewritten to Render, so auth cookies stay first-party
+              ▼
+           Render (Express API)  ──►  IGDB · Steam · YouTube  (adapters, cached in MongoDB)
+              │
+              ▼
+           MongoDB Atlas
+```
 
-**Library and progress**
-- **Auth** — Register, login, JWT access token (15 min) + refresh rotation with reuse detection (7 days), HTTP-only cookies
-- **Game catalog** — Search via IGDB (Twitch-backed), cache-first in MongoDB, filters, cursor pagination; degrades to cached games if IGDB is unavailable
-- **Unified library** — One entry per game with multi-platform ownerships, status state machine (Wishlist → Backlog → Playing → Completed | Dropped), status history, "hide from friends" switch
-- **Progress tracking** — Manual progress, play-session logging, journal entries
-- **Dashboard** — Resume card, stat tiles, "What to play next" scoring, backlog snapshot
-- **Reviews** — 1–5 stars, community reviews, atomic average refresh on the game
+- **Layers:** routes → middleware → controllers → services → models / adapters. Controllers are thin; all rules live in services, which receive their models by injection so tests can use in-memory fakes.
+- **Identity only from the signed cookie.** Access token 15 min, refresh token 7 days with rotation and reuse detection.
+- **Privacy in the service layer:** profiles, collections, sessions and the feed all use one definition of "friend" and "blocked"; something you may not see answers 404.
+- **Events:** services emit domain events (`library.statusChanged`, `review.created`, `session.created`, …) and the activity feed subscribes. Activity is written nowhere else.
+- **External sources fail alone:** `Promise.allSettled`, so a failing IGDB call becomes a warning next to cached results.
+- **Times are UTC**, shown in the viewer's timezone.
 
-**Organise**
-- **Collections** — Manual collections with drag-to-reorder (keyboard up/down buttons too; fractional positions) and smart collections whose rules (a whitelist of fields and operators) are compiled on every read, with a live preview in the rule builder. Visibility: public / friends / private
-
-**Social**
-- **Friends** — Search by username, requests (send / accept / decline / cancel), unfriend, block. Friendships are mutual and stored as a sorted pair; blocks override everything
-- **Activity feed** — Friends' activity on Home (status changes, first reviews, session logs, new collections, new sessions), written only by event-bus subscribers and filtered at read time for `hiddenFromFriends` and current visibility
-- **Public profiles** — `/u/:username` with stats, recent activity and public collections; profile privacy (public / friends / private)
-- **Game sessions** — Schedule a play session (game, time, length, platform, player limit, optional Discord invite), invite friends or open it to all friends, RSVP going / maybe / can't make it with capacity enforcement, calendar file (`.ics`) download, upcoming list grouped by day in your own timezone
-
----
-
-## Project Structure
+## 📁 Project structure
 
 ```
 gamequest/
-├── client/          # React + Vite SPA
+├── client/                 React + Vite SPA
 │   └── src/
-│       ├── app/         # Router, route guards
-│       ├── components/  # UI primitives + feature components (library, collections, feed, sessions…)
-│       ├── features/    # Auth context
-│       ├── hooks/       # useAsync, useLayered, useAuth
-│       ├── lib/         # Status metadata, time helpers
-│       ├── pages/       # Route-level pages
-│       └── services/    # Axios API wrappers
-├── server/          # Express API
-│   ├── scripts/         # seed.js, import-catalog.js, fix-catalog.js, sync-indexes.js
-│   └── src/
-│       ├── adapters/    # IGDB content adapter
-│       ├── config/      # Env validation (Zod)
-│       ├── controllers/ # Thin HTTP handlers
-│       ├── events/      # Event bus + subscribers (activity feed, clean-up)
-│       ├── middleware/  # Auth, validate, rate limit, error handler
-│       ├── models/      # Mongoose models
-│       ├── routes/      # Express routers
-│       ├── services/    # Business rules (dependency injection)
-│       ├── tests/       # Jest tests with in-memory fakes
-│       └── utils/       # Errors, smart-rule compiler, .ics builder
-├── shared/          # @gamequest/shared — Zod schemas
-└── .env.example     # Copy → server/.env and fill in
+│       ├── app/            router, route guards, wake-up page
+│       ├── components/     ui primitives + feature components
+│       ├── features/       auth context
+│       ├── hooks/          useAsync, useLayered, …
+│       ├── lib/            levels, trophies, art helpers, status metadata
+│       ├── pages/          route-level pages
+│       └── services/       axios API wrappers
+├── server/                 Express API
+│   ├── scripts/            seed, catalog import, index sync
+│   └── src/                adapters · config · controllers · events · middleware
+│                           models · routes · services · tests · utils
+├── shared/                 Zod schemas
+├── docs/DEPLOY.md          deployment guide
+├── docs/ROADMAP.md         what to build next
+├── render.yaml             Render blueprint
+└── vercel.json             Vercel config + API rewrite
 ```
 
 ---
 
-## Setup
+## 🚀 Run it locally
 
-### Prerequisites
-
-- Node.js ≥ 20.19
-- A MongoDB Atlas cluster (free tier works; allow your IP under Network Access)
-- (Optional) Twitch Developer App for IGDB game search
-
-### 1. Clone and install
+**Needs:** Node.js 20.19 or newer, a MongoDB Atlas cluster (free tier works; allow your IP under Network Access). Optional: Twitch app (IGDB), Steam Web API key, YouTube Data API key.
 
 ```bash
-git clone <repo-url> gamequest
+git clone https://github.com/<your-username>/gamequest.git
 cd gamequest
-npm install          # installs all workspaces
+npm install                     # installs all workspaces
+cp .env.example server/.env     # then fill it in (below)
+npm run seed                    # optional demo data
+npm run dev                     # API on :4000, client on :5173
 ```
 
-### 2. Configure environment
+Open **http://localhost:5173** and log in with `demo@gamequest.dev` / `Demo1234!`, or register.
 
-```bash
-cp .env.example server/.env
-```
-
-Open `server/.env` and fill in:
+### Environment (`server/.env`)
 
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/gamequest
 JWT_ACCESS_SECRET=<random 32+ chars>
 JWT_REFRESH_SECRET=<different random 32+ chars>
 TOKEN_ENCRYPTION_KEY=<32 bytes, base64>
+CLIENT_ORIGIN=http://localhost:5173
 
-# Optional — needed for game search
-TWITCH_CLIENT_ID=<from dev.twitch.tv>
-TWITCH_CLIENT_SECRET=<from dev.twitch.tv>
+# Optional: each feature switches itself off without its key
+TWITCH_CLIENT_ID=           # game search (IGDB)
+TWITCH_CLIENT_SECRET=
+STEAM_API_KEY=              # Steam sync
+YOUTUBE_API_KEY=            # trailers
 ```
 
-**Generate secrets quickly:**
+Generate a secret: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+The seed creates **demo** and **alex** (`alex@gamequest.dev` / `Demo1234!`), who are friends, with libraries, reviews, collections and an upcoming session.
 
-### 3. Seed demo data (optional but recommended)
+<details>
+<summary><b>Catalog, Steam and trailer details</b></summary>
 
-```bash
-npm run seed
-```
-
-The seed is idempotent. It creates:
-- **demo** — `demo@gamequest.dev` / `Demo1234!`: 8 games across every status, play logs, reviews, a public manual collection ("All-time favourites") and a smart collection ("Short backlog": status = backlog and ≤ 15 h to beat)
-- **alex** — `alex@gamequest.dev` / `Demo1234!`, friends with demo, with a library, two reviews and a public collection, so demo's activity feed has content
-- An upcoming session hosted by alex ("Hades night") with demo invited
-
-Alex's activity is created through the real services and event bus, not inserted directly. The seed also runs `npm run db:indexes`.
-
-### 3b. Import the game catalog (needs `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET`)
+#### Import the game catalog (needs `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET`)
 
 ```bash
 npm run catalog:import     # ~3,000 games from IGDB; resumable, safe to re-run (add `-- --fresh` to start over)
@@ -136,7 +179,7 @@ npm run db:indexes         # build indexes (production runs with autoIndex off)
 
 Only main games, remakes, remasters, expanded games, ports and standalone expansions are catalog games, and they need a cover and no `version_parent`. DLC, bundles, mods, episodes, seasons, updates, packs and editions are never imported and never returned by live search. `catalog:fix` re-checks games already stored: DLC / bundles / editions become `hidden: true` with `parentGameId` set (library entries pointing at them keep working and show the parent game's art), missing art is filled, and seeded slugs are aligned with IGDB's.
 
-### 3c. Steam and trailers (needs `STEAM_API_KEY` / `YOUTUBE_API_KEY`; each feature switches itself off without its key)
+#### Steam and trailers (needs `STEAM_API_KEY` / `YOUTUBE_API_KEY`; each feature switches itself off without its key)
 
 - **Link Steam** on *Profile → Steam* with a SteamID64, a `steamcommunity.com/profiles/<id>` URL or a vanity name. Steam **Game details must be Public** (Steam → Edit Profile → Privacy Settings), otherwise the sync stops with a message that says so. One Steam account links to one GameQuest user. Unlinking keeps the games already in your library.
 - **Sync now** reads your owned games (free games included) and each game's achievements, matches them to the catalog by Steam app id, and imports unknown games from IGDB with the same catalog rule (tools, soundtracks and DLC are listed as "not matched", never added). It keeps one library entry per game, adds a `Steam` ownership with playtime and an achievement snapshot, and never overwrites your manual progress or the status of a game that is already in your library. New games start as *Playing* (played in the last 2 weeks), *Completed* (100% achievements) or *Backlog*. One sync per user every 5 minutes; failed attempts do not use that up.
@@ -146,20 +189,34 @@ Only main games, remakes, remasters, expanded games, ports and standalone expans
 - `npm run trailers:refresh -- --limit=300 [--budget=80]` pre-picks trailers for the most popular games (cheap `videos.list` checks on IGDB candidates first, at most `--budget` search calls) and prints how many came from IGDB or YouTube and the quota used.
 - After pulling these changes run `npm run db:indexes` (new unique index on a user's Steam id).
 
-### 4. Run in development
+</details>
+
+## 🧪 Tests and checks
 
 ```bash
-# From repo root — runs server (port 4000) and client (port 5173) together
-npm run dev
+npm test -w server      # Jest: 588 tests, no database needed
+npm test -w client      # Vitest + Testing Library
+npm run lint
+npm run build           # production build of the client
 ```
 
-Open **http://localhost:5173** — log in with the demo account or register a new one.
+## ☁️ Deployment
 
----
+| Part | Where | URL |
+|---|---|---|
+| Client | Vercel | https://gamequest-five.vercel.app |
+| API | Render (free plan) | https://gamequest-jou3.onrender.com |
+| Database | MongoDB Atlas | n/a |
+| Uptime | UptimeRobot pings `/api/v1/health` every 5 minutes | n/a |
 
-## API Endpoints
+Render's free plan sleeps after 15 minutes without traffic. The UptimeRobot monitor keeps it awake; if it does fall asleep, the app shows a wake-up page while it starts. The full Vercel + Render + Atlas walkthrough is in [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
-All routes are under `/api/v1` and (except `/health` and `/auth/*`) require the session cookie. Errors always look like `{ error: { code, message, details? } }`; lists use cursor pagination (`cursor`, `limit`).
+Key Render env vars: `NODE_ENV=production`, `CLIENT_ORIGIN=https://gamequest-five.vercel.app`, `COOKIE_SAMESITE=lax`, `TRUST_PROXY=2`.
+
+<details>
+<summary><b>API endpoints</b> (all under <code>/api/v1</code>)</summary>
+
+Every route except `/health` and `/auth/*` needs the session cookie. Errors look like `{ error: { code, message, details? } }`; lists use cursor pagination (`cursor`, `limit`).
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -208,53 +265,18 @@ All routes are under `/api/v1` and (except `/health` and `/auth/*`) require the 
 | PUT | `/sessions/:id/rsvp` | RSVP: `{ response: going \| maybe \| declined }` |
 | GET | `/sessions/:id/ics` | Calendar file (`text/calendar`, UTC) |
 
----
+</details>
 
-## Running Tests
+## 🗺️ Roadmap
 
-```bash
-npm test -w server    # Jest — 211 tests, no database needed (in-memory fakes)
-npm test -w client    # Vitest + Testing Library — 105 tests
-npm run build -w client
-npm run lint
-```
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for planned features.
 
----
+## 🏷️ Versions
 
-## Deployment
-
-| Service | URL |
-|---------|-----|
-| **Client** | [https://gamequest-tanush.vercel.app](https://gamequest-tanush.vercel.app) |
-| **API** | proxied through the client domain at `/api/v1` |
-
-See [`docs/DEPLOY.md`](docs/DEPLOY.md) for the full step-by-step Vercel + Render + Atlas setup.
-
-After deploying, verify with:
-
-```bash
-node scripts/verify-deploy.js https://gamequest-tanush.vercel.app
-```
-
-Key production env vars on Render:
-- `NODE_ENV=production`
-- `CLIENT_ORIGIN=https://gamequest-tanush.vercel.app` (your Vercel URL, no trailing slash)
-- `COOKIE_SAMESITE=lax`
-- `TRUST_PROXY=2`
+Stable versions are tagged in Git (`v1.0`, …). To look at or go back to one, see **Releases** on GitHub, or run `git checkout v1.0`.
 
 ---
 
-## Architecture Notes
-
-- **Layers** — routes → middleware → controllers → services → models/adapters. Controllers are thin; business rules live in services, which take their models by injection so tests swap in in-memory fakes.
-- **Identity comes only from the signed cookie** — never from the request body. Other people are addressed by URL.
-- **Privacy filter in the service layer** — profiles, collections, sessions and the feed all decide visibility from one definition of "friend" and "blocked"; a thing you may not see answers 404.
-- **Events** — services emit domain events (`library.statusChanged`, `review.created`, `library.sessionLogged`, `collection.created`, `session.created`, …); the activity feed and clean-up jobs subscribe in `events/subscribers.js`. Activity is written nowhere else.
-- **Status is a state machine** — invalid transitions return 409 with the allowed moves.
-- **Smart collections are safe by construction** — rules compile only from a whitelist of fields, operators and value types; nothing a user types becomes a Mongo key or operator.
-- **Times are UTC** — stored and sent as UTC, formatted in the viewer's timezone in the client.
-- **External sources fail alone** — `Promise.allSettled`; a failing IGDB lookup becomes a warning next to cached results.
-
-## UI audit
-
-Screenshots of every page at 375 / 768 / 1440 px are in `docs/screenshots/`. They, the axe-core accessibility scan, the keyboard walk and the Lighthouse runs come from repeatable scripts: see `scripts/ui-audit/README.md`.
+<div align="center">
+Built by <b>Tanush Aggarwal</b> as a MERN end-term project.
+</div>

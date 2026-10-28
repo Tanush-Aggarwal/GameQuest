@@ -110,7 +110,7 @@ export default function LibraryEntry() {
       <BackdropHero art={game} seed={game.title ?? 'entry'} className="min-h-[300px] px-5 py-7 text-white sm:px-10 sm:py-10">
         <div className="flex h-full flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
           {game.cover ? (
-            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-48 w-36 flex-shrink-0 rounded-[10px] border-2 border-[var(--accent)] shadow-2xl sm:h-60 sm:w-44" />
+            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-48 w-36 flex-shrink-0 rounded-[14px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:h-60 sm:w-44" />
           ) : (
             <div className="flex h-48 w-36 flex-shrink-0 items-center justify-center rounded-[10px] bg-white/10 sm:h-60 sm:w-44">
               <Gamepad2 size={32} className="text-white/60" aria-hidden="true" />
@@ -143,7 +143,7 @@ export default function LibraryEntry() {
               <Stat icon={Gamepad2} value={`${progress}%`} label="progress" />
             </div>
 
-            {nextStatuses.length > 0 && (
+            {(nextStatuses.length > 0 || game.slug) && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {nextStatuses.map((to, i) => (
                   <button
@@ -157,6 +157,14 @@ export default function LibraryEntry() {
                     Move to {STATUS_LABELS[to]}
                   </button>
                 ))}
+                {game.slug && (
+                  <Link
+                    to={`/games/${game.slug}`}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-white/85 underline-offset-4 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                  >
+                    Game details <ChevronRight size={16} aria-hidden="true" />
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -213,7 +221,7 @@ export default function LibraryEntry() {
               </Button>
               <button
                 onClick={handleToggleVisibility}
-                className="flex min-h-11 items-center gap-2 rounded-control px-1 text-sm text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex min-h-11 items-center gap-2 rounded-control px-1 text-sm text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
               >
                 {entry.hiddenFromFriends ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
                 {entry.hiddenFromFriends ? 'Hidden from friends' : 'Visible to friends'}
@@ -235,7 +243,7 @@ export default function LibraryEntry() {
             ) : (
               <button
                 onClick={() => setConfirmingRemove(true)}
-                className="flex min-h-11 items-center gap-2 rounded-control px-1 text-sm font-medium text-[var(--danger)] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex min-h-11 items-center gap-2 rounded-control px-1 text-sm font-medium text-[var(--danger)] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
               >
                 <Trash2 size={16} aria-hidden="true" /> Remove from library
               </button>

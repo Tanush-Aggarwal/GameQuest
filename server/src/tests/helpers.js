@@ -47,7 +47,13 @@ const sameValue = (a, b) => {
 
 function matchValue(actual, cond) {
   const isOps = cond && typeof cond === 'object' && !isDate(cond) && Object.keys(cond).every((k) => k.startsWith('$'));
-  if (isOps) return Object.entries(cond).every(([op, v]) => OPS[op](actual, v));
+  if (isOps) {
+    return Object.entries(cond).every(([op, v]) => {
+      if (op === '$options') return true; // read together with $regex
+      if (op === '$regex') return typeof actual === 'string' && (v instanceof RegExp && !cond.$options ? v : new RegExp(v, cond.$options ?? '')).test(actual);
+      return OPS[op](actual, v);
+    });
+  }
   return Array.isArray(actual) ? actual.some((x) => sameValue(x, cond)) : sameValue(actual, cond);
 }
 

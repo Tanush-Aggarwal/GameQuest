@@ -17,16 +17,26 @@ export const MAX_BACKDROP_RATIO = 2.8;
 // `seed`, never a flat box. The image is the likely largest paint of the page, so it loads eagerly with high priority.
 export function BackdropHero({ art, seed = '', as: Tag = 'section', className, children, ...rest }) {
   const own = typeof art === 'string' ? { backdrop: art } : art;
-  const backdropUrl = artImageUrl(own?.backdrop, 'hero');
+  // Wide art first (backdrop, then artworks, then screenshots), so a game without a stored backdrop still gets a
+  // sharp banner; the blurred cover is only the last resort.
+  const wideUrls = [own?.backdrop, ...(own?.artworks ?? []), ...(own?.screenshots ?? []).slice(0, 3)]
+    .map((a) => artImageUrl(a, 'hero'))
+    .filter(Boolean);
   const coverUrl = artImageUrl(own?.cover, 'cover');
   const [rejected, setRejected] = useState(() => new Set());
   const reject = (u) => setRejected((s) => (s.has(u) ? s : new Set(s).add(u)));
-  const url = [backdropUrl, coverUrl].find((u) => u && !rejected.has(u)) ?? null;
+  const url = [...wideUrls, coverUrl].find((u) => u && !rejected.has(u)) ?? null;
+  const isWide = Boolean(url) && url !== coverUrl;
+  const backdropUrl = isWide ? url : null;
   const usable = Boolean(url);
   const [loadedUrl, setLoadedUrl] = useState(null);
   // true when the picture can be shown; a too-wide backdrop is rejected instead
   const accept = (img) => {
-    if (url === backdropUrl && img.naturalHeight > 0 && img.naturalWidth / img.naturalHeight > MAX_BACKDROP_RATIO) {
+    const ratio = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 0;
+    // too wide (a logo strip), too square (a logo or key art that would be zoomed in) or too small to fill a banner
+    const misfit = ratio > MAX_BACKDROP_RATIO || (ratio > 0 && ratio < 1.3) || img.naturalWidth < 800;
+    const hasNextWide = wideUrls.some((u) => u !== url && !rejected.has(u));
+    if (url === backdropUrl && img.naturalHeight > 0 && (ratio > MAX_BACKDROP_RATIO || (misfit && hasNextWide))) {
       reject(url);
       return;
     }
@@ -61,7 +71,7 @@ export function BackdropHero({ art, seed = '', as: Tag = 'section', className, c
                 onLoad={(e) => accept(e.currentTarget)}
                 onError={() => reject(url)}
                 className={cn(
-                  'h-full w-full object-cover motion-safe:transition-opacity motion-safe:duration-500',
+                  'h-full w-full object-cover object-[center_30%] motion-safe:transition-opacity motion-safe:duration-500',
                   loadedUrl === url ? 'opacity-100' : 'opacity-0',
                   url === coverUrl && 'scale-125 blur-2xl',
                 )}

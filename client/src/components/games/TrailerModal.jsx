@@ -51,37 +51,42 @@ function TrailerModalContent({ slug, title, onClose, triggerRef }) {
       role="dialog"
       aria-modal="true"
       aria-label={`${title} Trailer`}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/85 p-4 backdrop-blur-md sm:p-8"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden rounded-[14px] border border-white/10 bg-[#161816] p-5 sm:p-6 text-white shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+        className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[18px] p-5 text-white shadow-2xl ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-200 sm:p-7" style={{ background: 'radial-gradient(120% 80% at 0% 0%, #1f2a14 0%, #111311 45%, #0b0c0b 100%)' }}
       >
-        <div className="flex items-center justify-between pb-4 border-b border-white/10">
-          <div className="flex items-center gap-2.5 min-w-0 pr-4">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden="true" />
-            <h3 className="font-heading text-base sm:text-lg font-bold text-white truncate">
-              {title} — Official Trailer
-            </h3>
+        <div className="flex items-center justify-between border-b border-white/10 pb-5">
+          <div className="flex min-w-0 items-center gap-3 pr-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15" aria-hidden="true">
+              <Film className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.55)' }}>Trailers</p>
+              <h3 className="truncate font-heading text-lg font-bold sm:text-2xl" style={{ color: '#fff' }}>
+                {title}
+              </h3>
+            </div>
           </div>
           <button
             ref={closeBtnRef}
             type="button"
             onClick={onClose}
             aria-label="Close trailer"
-            className="shrink-0 rounded-full bg-white/10 p-2 text-gray-300 hover:bg-white/20 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="shrink-0 rounded-full bg-white/10 p-2 text-gray-300 hover:bg-white/20 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="w-full flex-1 overflow-y-auto pt-4">
+        <div className="w-full flex-1 overflow-y-auto pt-5">
           {status === 'loading' && (
             <div role="status" aria-label="Loading trailer" className="flex flex-col gap-3">
-              <Skeleton className="aspect-video w-full rounded-[10px] bg-white/10" />
+              <Skeleton className="aspect-video w-full rounded-[12px] bg-white/10" />
             </div>
           )}
 

@@ -387,6 +387,13 @@ describe('profileService', () => {
     expect(asSelf).toMatchObject({ relation: 'self', stats: { games: 3, hours: 13 }, user: { privacy: 'public' } });
   });
 
+  it('adds level and trophy inputs that match the account summary formula', async () => {
+    const ctx = await world();
+    const { stats } = await ctx.profileService.getProfile(ctx.alex.id, 'alex');
+    // 13 hours x 10 + 1 completed x 100 = 230 XP, which is level 2 (100 XP) on the way to level 3 (400 XP)
+    expect(stats).toMatchObject({ xp: 230, level: 2, levelStartXp: 100, nextLevelXp: 400, friends: 1, achievements: 0 });
+  });
+
   it('reports the relation to the viewer', async () => {
     const ctx = await world();
     expect((await ctx.profileService.getProfile(ctx.demo.id, 'alex')).relation).toBe('friend');
@@ -526,7 +533,7 @@ describe('social routes', () => {
     const entry = await ctx.LibraryEntry.create({ userId: alex.id, gameId: game._id, status: 'backlog' });
 
     const found = await demo.agent.get('/api/v1/users/search?q=al');
-    expect(found.body.items).toEqual([{ id: alex.id, username: 'alex', relation: 'none' }]);
+    expect(found.body.items).toEqual([{ id: alex.id, username: 'alex', avatar: null, relation: 'none' }]);
 
     const sent = await demo.agent.post('/api/v1/friends/requests').send({ username: 'alex' });
     expect(sent.status).toBe(201);

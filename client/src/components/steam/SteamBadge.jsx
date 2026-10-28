@@ -1,4 +1,5 @@
 import { Clock, Gamepad2, Trophy } from 'lucide-react';
+import { ProgressBar } from '@/components/ui/ProgressBar.jsx';
 import { achievementPercent, formatPlaytime, steamOwnership } from '@/lib/steam.js';
 import { formatDateTime } from '@/lib/time.js';
 
@@ -56,16 +57,7 @@ export function SteamDetails({ entry }) {
               {achievements.unlocked} / {achievements.total} ({pct}%)
             </span>
           </div>
-          <div
-            role="progressbar"
-            aria-label="Achievements unlocked"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={pct}
-            className="h-2 overflow-hidden rounded-full border border-border bg-surface-raised"
-          >
-            <div className="h-full rounded-full bg-reward" style={{ width: `${pct}%` }} />
-          </div>
+          <ProgressBar value={pct} tone="reward" label="Achievements unlocked" />
         </div>
       ) : (
         <p className="text-xs text-text-muted">No achievements for this game.</p>

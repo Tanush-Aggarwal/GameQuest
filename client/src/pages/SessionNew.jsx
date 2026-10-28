@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, RefreshCw, Search } from 'lucide-react';
+import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -28,10 +29,14 @@ function GamePicker({ onPick }) {
   const { status, data, error, retry } = useAsync(load);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
+      <div>
+        <h2 className="font-heading text-base font-bold text-text">Pick a game</h2>
+        <p className="text-xs text-text-muted">Search the catalog; the session page uses its art.</p>
+      </div>
       <div className="relative max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-        <Input type="search" aria-label="Search for a game" placeholder="Which game are you playing?" className="pl-9" value={text} onChange={(e) => setText(e.target.value)} />
+        <Input type="search" aria-label="Search for a game" placeholder="Which game are you playing?" className="h-12 pl-9" value={text} onChange={(e) => setText(e.target.value)} />
       </div>
       {!searchable && <p className="text-sm text-text-muted">Type at least 2 letters of the game’s name.</p>}
       {searchable && status === 'loading' && <Skeleton className="h-24 w-full" role="status" aria-label="Searching games" />}
@@ -40,12 +45,18 @@ function GamePicker({ onPick }) {
         <EmptyState icon={Search} title={`No games found for “${query}”`} description="Try a different spelling." />
       )}
       {searchable && status === 'success' && data.items.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {data.items.map((g) => (
             <li key={g.id}>
-              <button type="button" onClick={() => onPick(g)} className="flex min-h-11 w-full items-center gap-3 rounded-card border border-border bg-surface p-2 text-left hover:bg-surface-raised">
-                <div className="w-10 shrink-0 overflow-hidden rounded-control"><GameCover game={g} compact /></div>
-                <span className="text-sm font-semibold">{g.title}</span>
+              <button
+                type="button"
+                onClick={() => onPick(g)}
+                className="group flex w-full flex-col gap-2 rounded-card text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
+              >
+                <div className="overflow-hidden rounded-[10px] border border-border shadow-sm transition group-hover:-translate-y-0.5 group-hover:shadow-md">
+                  <GameCover game={g} compact />
+                </div>
+                <span className="line-clamp-2 text-sm font-semibold text-text">{g.title}</span>
               </button>
             </li>
           ))}
@@ -82,7 +93,15 @@ export default function SessionNew() {
       <Link to="/sessions" className="inline-flex min-h-11 w-fit items-center gap-2 text-sm text-text-muted hover:text-text">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Sessions
       </Link>
-      <h1 className="text-2xl font-bold">Schedule a session</h1>
+      <header className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised text-text" aria-hidden="true">
+          <CalendarPlus className="h-5 w-5" />
+        </span>
+        <div>
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-text">Schedule a session</h1>
+          <p className="text-sm text-text-muted">Pick a game, choose a time and invite your friends.</p>
+        </div>
+      </header>
 
       {presetLoading && <Skeleton className="h-24 w-full" role="status" aria-label="Loading game" />}
       {slug && chosen === undefined && preset.status === 'error' && <ErrorState message={preset.error.message} onRetry={preset.retry} />}
@@ -91,14 +110,18 @@ export default function SessionNew() {
 
       {game && (
         <>
-          <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3">
-            <div className="w-12 shrink-0 overflow-hidden rounded-control"><GameCover game={game} compact /></div>
-            <div className="flex-1">
-              <p className="text-xs text-text-muted">Game</p>
-              <p className="font-semibold">{game.title}</p>
+          <BackdropHero art={game} seed={game.title} className="px-5 py-6 sm:px-8">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="w-16 shrink-0 overflow-hidden rounded-[10px] shadow-2xl ring-1 ring-white/20 sm:w-20"><GameCover game={game} compact /></div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-widest text-white/70">Game</p>
+                <p className="truncate font-heading text-2xl font-bold text-white sm:text-3xl">{game.title}</p>
+              </div>
+              <Button variant="ghost" onClick={() => setChosen(null)} aria-label="Change game" className="bg-white/10 text-white ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/20">
+                <RefreshCw className="h-4 w-4" aria-hidden="true" /> Change
+              </Button>
             </div>
-            <Button variant="ghost" onClick={() => setChosen(null)} aria-label="Change game">Change</Button>
-          </div>
+          </BackdropHero>
           <SessionForm gameId={game.id} submitLabel="Schedule session" onSubmit={handleCreate} onCancel={() => navigate('/sessions')} />
         </>
       )}

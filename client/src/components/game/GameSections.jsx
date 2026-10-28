@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, Clock, MessageSquare, Star, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -93,9 +94,7 @@ export function ReviewsSection({ gameId }) {
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-raised font-bold text-xs uppercase text-accent">
-                {r.username ? r.username[0] : 'U'}
-              </div>
+              <Avatar user={{ username: r.username ?? 'U', avatar: r.avatar }} size={32} />
               <span className="text-sm font-semibold">{r.username ?? 'Anonymous'}</span>
             </div>
             <StarRating rating={r.rating} />
@@ -147,9 +146,7 @@ export function FriendsSection({ slug }) {
           className="flex items-center justify-between gap-3 rounded-card border border-border bg-surface p-3"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-raised font-bold text-sm uppercase text-accent">
-              {f.username ? f.username[0] : 'F'}
-            </div>
+            <Avatar user={{ username: f.username ?? 'F', avatar: f.avatar }} size={40} />
             <div className="min-w-0">
               <Link
                 to={`/u/${f.username}`}

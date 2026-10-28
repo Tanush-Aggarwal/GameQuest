@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarDays, Check, Search, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
+import { CalendarDays, Check, Compass, Inbox, Search, Sparkles, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -17,6 +18,7 @@ import {
   declineRequest,
   listFriends,
   listRequests,
+  discoverUsers,
   searchUsers,
   sendFriendRequest,
   unfriend,
@@ -25,10 +27,10 @@ import {
 import { RecommendationsTab } from '@/components/recommendations/RecommendationsTab.jsx';
 
 const TABS = [
-  ['friends', 'Friends'],
-  ['requests', 'Requests'],
-  ['recommendations', 'Recommendations'],
-  ['find', 'Find people'],
+  ['friends', 'Friends', Users],
+  ['requests', 'Requests', Inbox],
+  ['recommendations', 'Recommendations', Sparkles],
+  ['find', 'Find people', Compass],
 ];
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -42,20 +44,25 @@ function ListSkeleton() {
   );
 }
 
-// A person's row sits on their currently playing game art (or art picked from their name), so the lists are never flat grey cards.
+// A person's card: their art behind a soft scrim, so the lists are never flat grey boxes.
 const Row = ({ children, art, seed }) => (
-  <ArtPanel as="li" art={art} seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-3">
+  <ArtPanel as="li" art={art} seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-4 transition-shadow hover:shadow-md">
     {children}
   </ArtPanel>
 );
-const PlayerLink = ({ username }) => (
-  <Link to={`/u/${username}`} className="flex min-h-11 items-center gap-3 rounded-control font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-    <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/25 text-sm uppercase">
-      {username.slice(0, 1)}
-    </span>
-    {username}
-  </Link>
+// The link's name is the username alone (the picture is decorative), with an optional line underneath.
+const PlayerLink = ({ user, sub }) => (
+  <div className="flex min-w-0 items-center gap-3">
+    <Avatar user={user} size={44} ring />
+    <div className="flex min-w-0 flex-col">
+      <Link to={`/u/${user.username}`} className="truncate rounded-control font-semibold text-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text">
+        {user.username}
+      </Link>
+      {sub && <span className="truncate text-xs text-text-muted">{sub}</span>}
+    </div>
+  </div>
 );
+const since = (date) => (date ? `Friends since ${new Date(date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}` : null);
 
 // A destructive action asks once, inline, before it runs.
 function ConfirmButton({ label, confirmLabel, icon: Icon, onConfirm, ariaLabel }) {
@@ -99,11 +106,11 @@ function FriendsTab() {
     return <EmptyState icon={Users} title="No friends yet" description="Find people by username and send a request." actionLabel="Find people" actionTo="/friends?tab=find" />;
   }
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="grid gap-3 lg:grid-cols-2">
       {friends.map((f) => (
         <Row key={f.id} art={f.currentlyPlaying} seed={f.username}>
           <div className="flex min-w-0 items-center gap-3">
-            <PlayerLink username={f.username} />
+            <PlayerLink user={f} sub={since(f.since)} />
             {f.currentlyPlaying && (
               <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-bg/70 px-2.5 py-0.5 text-xs text-text-muted">
                 <span className="h-1.5 w-1.5 rounded-full bg-status-playing animate-pulse" aria-hidden="true" />
@@ -151,7 +158,7 @@ function RequestsTab() {
           <ul className="flex flex-col gap-2">
             {requests.incoming.map((r) => (
               <Row key={r.id} seed={r.user.username}>
-                <PlayerLink username={r.user.username} />
+                <PlayerLink user={r.user} />
                 <div className="flex gap-1">
                   <Button onClick={() => resolve(r, 'incoming', acceptRequest, `You and ${r.user.username} are now friends`)} aria-label={`Accept ${r.user.username}`}>
                     <Check className="h-4 w-4" aria-hidden="true" /> Accept
@@ -171,7 +178,7 @@ function RequestsTab() {
           <ul className="flex flex-col gap-2">
             {requests.outgoing.map((r) => (
               <Row key={r.id} seed={r.user.username}>
-                <PlayerLink username={r.user.username} />
+                <PlayerLink user={r.user} />
                 <Button variant="ghost" onClick={() => resolve(r, 'outgoing', cancelRequest, 'Request cancelled')} aria-label={`Cancel request to ${r.user.username}`}>
                   <X className="h-4 w-4" aria-hidden="true" /> Cancel
                 </Button>
@@ -195,23 +202,55 @@ function FindTab() {
   }, [text]);
 
   const searchable = query.length >= 2;
+  // Before anything is typed: everyone with a public profile, so there is always someone to add.
+  const loadPeople = useCallback(async (signal) => {
+    try {
+      return await discoverUsers({ signal });
+    } catch {
+      return [];
+    }
+  }, []);
+  const people = useAsync(loadPeople);
+  const [discovered, setDiscovered] = useLayered(people.data);
   const load = useCallback((signal) => (searchable ? searchUsers(query, { signal }) : Promise.resolve([])), [query, searchable]);
   const { status, data, error, retry } = useAsync(load);
   const [results, setResults] = useLayered(data);
 
   async function add(user) {
     const previous = results;
-    setResults(results.map((u) => (u.id === user.id ? { ...u, relation: 'pending_out' } : u)));
+    const previousPeople = discovered;
+    const mark = (list, relation) => (list ?? []).map((u) => (u.id === user.id ? { ...u, relation } : u));
+    setResults(mark(results, 'pending_out'));
+    setDiscovered(mark(discovered, 'pending_out'));
     try {
       const sent = await sendFriendRequest(user.username);
       // A request that crosses theirs is accepted on the spot.
-      if (sent.status === 'accepted') setResults(previous.map((u) => (u.id === user.id ? { ...u, relation: 'friend' } : u)));
+      if (sent.status === 'accepted') {
+        setResults(mark(previous, 'friend'));
+        setDiscovered(mark(previousPeople, 'friend'));
+      }
       toast.success(sent.status === 'accepted' ? `You and ${user.username} are now friends` : `Request sent to ${user.username}`);
     } catch (err) {
       setResults(previous);
+      setDiscovered(previousPeople);
       toast.error(getErrorInfo(err).message);
     }
   }
+
+  const personRow = (u) => (
+    <Row key={u.id} seed={u.username}>
+      <PlayerLink user={u} sub={u.bio || null} />
+      {u.relation === 'none' ? (
+        <Button onClick={() => add(u)} aria-label={`Add ${u.username} as a friend`}>
+          <UserPlus className="h-4 w-4" aria-hidden="true" /> Add friend
+        </Button>
+      ) : u.relation === 'pending_in' ? (
+        <Link to="/friends?tab=requests" className="text-sm font-semibold text-accent underline">{RELATION_LABEL.pending_in}</Link>
+      ) : (
+        <span className="rounded-full bg-surface-raised px-3 py-1 text-xs font-semibold text-text-muted">{RELATION_LABEL[u.relation]}</span>
+      )}
+    </Row>
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -221,27 +260,20 @@ function FindTab() {
       </div>
 
       {!searchable && <p className="text-sm text-text-muted">Type at least 2 letters of a username.</p>}
+      {!searchable && (discovered ?? []).length > 0 && (
+        <section aria-labelledby="discover-title" className="flex flex-col gap-3">
+          <h2 id="discover-title" className="text-xs font-bold uppercase tracking-widest text-text-muted">Players with public profiles</h2>
+          <ul className="grid gap-3 lg:grid-cols-2">{discovered.map(personRow)}</ul>
+        </section>
+      )}
       {searchable && status === 'loading' && <ListSkeleton />}
       {searchable && status === 'error' && <ErrorState message={error.message} onRetry={retry} />}
       {searchable && status === 'success' && results.length === 0 && (
         <EmptyState icon={Search} title={`No players found for “${query}”`} description="Check the spelling, or ask your friend for their exact username." />
       )}
       {searchable && status === 'success' && results.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {results.map((u) => (
-            <Row key={u.id} seed={u.username}>
-              <PlayerLink username={u.username} />
-              {u.relation === 'none' ? (
-                <Button onClick={() => add(u)} aria-label={`Add ${u.username} as a friend`}>
-                  <UserPlus className="h-4 w-4" aria-hidden="true" /> Add friend
-                </Button>
-              ) : u.relation === 'pending_in' ? (
-                <Link to="/friends?tab=requests" className="text-sm text-accent underline">{RELATION_LABEL.pending_in}</Link>
-              ) : (
-                <span className="text-sm text-text-muted">{RELATION_LABEL[u.relation]}</span>
-              )}
-            </Row>
-          ))}
+        <ul className="grid gap-3 lg:grid-cols-2">
+          {results.map(personRow)}
         </ul>
       )}
     </div>
@@ -269,16 +301,17 @@ export default function Friends() {
         }
       />
       <nav aria-label="Friends sections" className="flex gap-2 overflow-x-auto pb-1">
-        {TABS.map(([key, label]) => (
+        {TABS.map(([key, label, Icon]) => (
           <button
             key={key}
             type="button"
             aria-pressed={key === tab}
             onClick={() => setParams(key === 'friends' ? {} : { tab: key })}
-            className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control border px-3 text-sm ${key === tab ? 'border-accent bg-surface-raised text-text' : 'border-border text-text-muted hover:text-text'}`}
+            className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors ${key === tab ? 'border-text bg-text text-bg' : 'border-border bg-surface text-text-muted hover:border-text hover:text-text'}`}
           >
+            <Icon className="h-4 w-4" aria-hidden="true" />
             {label}
-            {key === 'requests' && waiting > 0 && <span className="rounded-full bg-accent px-2 text-xs text-accent-fg tabular-nums" aria-label={`${waiting} waiting`}>{waiting}</span>}
+            {key === 'requests' && waiting > 0 && <span className="rounded-full bg-[var(--secondary-accent)] px-2 text-xs text-white tabular-nums" aria-label={`${waiting} waiting`}>{waiting}</span>}
           </button>
         ))}
       </nav>

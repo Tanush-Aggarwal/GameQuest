@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ProgressBar } from '@/components/ui/ProgressBar.jsx';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Gamepad2, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Gamepad2, Sparkles, TrendingUp } from 'lucide-react';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { CoverImage } from '@/components/games/GameCard.jsx';
@@ -37,43 +38,56 @@ export function PlayNextCard({ item }) {
   return (
     <li className={`${CARD} gq-play-next-card`}>
       <div
-        className="group flex h-full flex-col gap-2"
+        className="group flex h-full flex-col gap-3 rounded-card border border-border bg-surface p-2 pb-3 shadow-sm transition-[transform,box-shadow,border-color] delay-0 duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:delay-150 hover:border-[color-mix(in_srgb,var(--text)_25%,var(--border))] hover:shadow-[0_18px_36px_-14px_rgba(21,23,19,0.35)] motion-safe:hover:-translate-y-1 focus-within:border-text"
         onMouseEnter={() => previewGame(item)}
         onFocus={() => previewGame(item)}
         onMouseLeave={clearPreview}
         onBlur={clearPreview}
       >
         <Link to={`/library/${item.entryId}`} className="flex flex-col gap-2 rounded-card">
-          <div className="gq-play-next-cover relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-transform group-hover:border-accent motion-safe:group-hover:-translate-y-0.5">
+          <div className="gq-play-next-cover relative aspect-[3/4] w-full overflow-hidden rounded-[8px] bg-surface-raised">
             <CoverImage
               cover={item.cover}
               title={item.title}
               alt=""
               sizes="(min-width: 640px) 192px, 160px"
-              className="h-full w-full"
+              className="h-full w-full transition-transform delay-0 duration-500 ease-[cubic-bezier(.16,1,.3,1)] group-hover:delay-150 motion-safe:group-hover:scale-[1.04]"
             />
             {/* solid pill: the status colours must keep 4.5:1 even over a white cover */}
             <span className="absolute left-2 top-2 rounded-full bg-bg px-2 py-1">
               <StatusBadge status={item.status} />
             </span>
             {progress > 0 && (
-              <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2 bg-bg/80">
-                <div className="h-full bg-accent" style={{ width: `${progress}%` }} />
+              <div aria-hidden="true" className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2.5 pb-2 pt-6">
+                <div className="flex items-center gap-2">
+                  <ProgressBar value={progress} onDark className="!h-1.5 flex-1" />
+                  <span className="text-[11px] font-bold tabular-nums text-white">{progress}%</span>
+                </div>
               </div>
             )}
           </div>
-          <p className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-accent">
+          <p className="line-clamp-1 px-1 text-sm font-bold leading-snug text-text group-hover:text-[var(--accent-text)]" title={item.title}>
             {item.title}
             {progress > 0 && <span className="sr-only">, {progress}% done</span>}
           </p>
         </Link>
-        <div className="flex min-w-0 flex-col gap-2">
-          {item.timeToBeatMain != null && <p className="text-xs tabular-nums text-text-muted">~{item.timeToBeatMain}h to beat</p>}
+        <div className="-mt-1 flex min-w-0 flex-col gap-2 px-1">
+          {item.timeToBeatMain != null && (
+            <p className="flex items-center gap-1 text-xs tabular-nums text-text-muted">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />~{item.timeToBeatMain}h to beat
+            </p>
+          )}
           {reasons.length > 0 && (
             <ul aria-label={`Why ${item.title}`} className="flex flex-wrap gap-1">
               {reasons.map((reason) => (
-                <li key={reason} className="rounded-full border border-border/70 bg-bg/70 px-2 py-0.5 text-xs leading-snug text-text">
-                  {reason}
+                // one tidy line each; the full reason is in the tooltip
+                <li
+                  key={reason}
+                  title={reason}
+                  className="flex max-w-full items-center gap-1 truncate rounded-full bg-bg px-2 py-0.5 text-[11px] font-medium leading-5 text-text-muted"
+                >
+                  <Sparkles className="h-3 w-3 shrink-0 text-[var(--secondary-accent)]" aria-hidden="true" />
+                  <span className="truncate">{reason}</span>
                 </li>
               ))}
             </ul>
@@ -121,12 +135,15 @@ export function PlayNextSection({ playNext }) {
   }
 
   return (
-    <ArtPanel aria-labelledby="play-next-title" art={items[0]} seed="home-next" className="gq-editorial-panel gq-play-next-section flex flex-col gap-4 py-5">
+    <ArtPanel aria-labelledby="play-next-title" art={items[0]} seed="home-next" className="gq-editorial-panel gq-play-next-section flex flex-col gap-5 px-5 py-5 sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="play-next-title" className="flex items-center gap-2 font-heading text-lg font-bold">
-          <TrendingUp size={18} className="text-accent" aria-hidden="true" />
-          What to play next
-        </h2>
+        <div>
+          <h2 id="play-next-title" className="flex items-center gap-2 font-heading text-lg font-bold text-text">
+            <TrendingUp size={18} className="text-[var(--secondary-accent)]" aria-hidden="true" />
+            What to play next
+          </h2>
+          <p className="mt-0.5 text-xs text-text-muted">Picked from your library, your taste and how long each game takes.</p>
+        </div>
         {edges.overflow && (
           <div className="hidden gap-1 md:flex">
             <Button variant="ghost" aria-label="Scroll suggestions left" onClick={() => scrollBy(-1)} disabled={!edges.left} className="px-3">

@@ -29,7 +29,7 @@ function Choice({ game, chosen, onPick }) {
         aria-label={chosen ? `${game.title} (already a favourite)` : game.title}
         className="group flex w-20 flex-col gap-1 text-left disabled:opacity-50 sm:w-24"
       >
-        <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-control border border-border group-hover:border-accent group-disabled:group-hover:border-border">
+        <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-control border border-border group-hover:border-text group-disabled:group-hover:border-border">
           <CoverImage cover={game.cover} title={game.title} compact className="h-full w-full" />
           {chosen && (
             <span className="absolute inset-0 flex items-center justify-center bg-bg/70">
@@ -114,7 +114,7 @@ export function FavouritePicker({ slot, chosenIds, onPick, onClose }) {
       role="group"
       aria-labelledby={titleId}
       onKeyDown={onKeyDown}
-      className="flex flex-col gap-4 rounded-card border border-accent/40 bg-bg/70 p-4"
+      className="flex flex-col gap-4 rounded-card border border-border bg-bg/70 p-4"
     >
       <div className="flex items-center justify-between gap-3">
         <h3 id={titleId} className="text-sm font-semibold">

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ProgressBar } from '@/components/ui/ProgressBar.jsx';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Clock, Layers, LayoutGrid, Library as LibraryIcon, List, Search, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { LIBRARY_STATUSES } from '@gamequest/shared';
+import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
@@ -22,7 +24,7 @@ const PAGE_SIZE = 24;
 const SEARCH_DELAY_MS = 300;
 const TABS = ['all', ...LIBRARY_STATUSES];
 const tabLabel = (t) => (t === 'all' ? 'All' : STATUS_META[t].label);
-const SELECT = 'h-11 rounded-control border border-border bg-surface-raised px-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent';
+const SELECT = 'w-full sm:w-auto sm:min-w-[11rem]';
 
 const minutesPlayed = (entry) => (entry.ownerships ?? []).reduce((s, o) => s + (o.playtimeMin ?? 0), 0) + (entry.loggedMinutes ?? 0);
 const hoursLabel = (minutes) => (minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`);
@@ -52,8 +54,8 @@ function LibraryCard({ entry, onMove, onRemove, busy }) {
   const slug = game?.slug;
   return (
     <li className="group flex flex-col gap-2">
-      <div className="relative overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-colors group-hover:border-accent group-focus-within:border-accent">
-        <Link to={game ? `/games/${game.slug}` : '/library'} aria-label={game?.title ?? 'Unknown game'} className="block">
+      <div className="relative overflow-hidden rounded-card border border-border bg-surface-raised shadow-lg transition-colors group-hover:border-text group-focus-within:border-text">
+        <Link to={`/library/${entry.id}`} aria-label={game?.title ?? 'Unknown game'} className="block">
           <SharedCover slug={slug}>{game ? <GameCover game={game} compact /> : <div className="aspect-[3/4] bg-surface-raised" />}</SharedCover>
         </Link>
         {/* solid pill: the status colours keep their contrast over any cover */}
@@ -68,8 +70,8 @@ function LibraryCard({ entry, onMove, onRemove, busy }) {
           triggerClassName="absolute right-2 top-2 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 data-[state=open]:opacity-100"
         />
         {entry.manualProgress > 0 && (
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1.5 bg-bg/80">
-            <div className="h-full bg-accent" style={{ width: `${entry.manualProgress}%` }} />
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-5">
+            <ProgressBar value={entry.manualProgress} onDark className="!h-1.5" />
           </div>
         )}
       </div>
@@ -120,11 +122,11 @@ function LibraryRow({ entry, onMove, onRemove, busy }) {
   return (
     <li className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3.5 transition-colors hover:bg-surface-raised/40">
       <div className="flex items-center gap-3.5">
-        <Link to={game ? `/games/${game.slug}` : '/library'} className="h-16 w-12 shrink-0 overflow-hidden rounded border border-border bg-surface-raised">
+        <Link to={`/library/${entry.id}`} className="h-16 w-12 shrink-0 overflow-hidden rounded border border-border bg-surface-raised">
           <CoverImage cover={game?.cover} title={game?.title} compact className="h-full w-full" />
         </Link>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <Link to={game ? `/games/${game.slug}` : '/library'} className="truncate text-sm font-semibold hover:text-accent">
+          <Link to={`/library/${entry.id}`} className="truncate text-sm font-semibold hover:text-accent">
             {game?.title ?? 'Unknown game'}
           </Link>
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -148,9 +150,7 @@ function LibraryRow({ entry, onMove, onRemove, busy }) {
         </div>
         {entry.manualProgress > 0 && (
           <div className="hidden items-center gap-2 sm:flex">
-            <div className="h-2 w-20 overflow-hidden rounded-full border border-border/50 bg-surface-raised">
-              <div className="h-full rounded-full bg-accent" style={{ width: `${entry.manualProgress}%` }} />
-            </div>
+            <ProgressBar value={entry.manualProgress} className="w-24" />
             <span className="text-xs font-medium tabular-nums text-text-muted">{entry.manualProgress}%</span>
           </div>
         )}
@@ -320,7 +320,7 @@ export default function Library() {
                   aria-pressed={active}
                   onClick={() => setParams(t === 'all' ? {} : { status: t })}
                   className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control border px-3 text-sm font-medium transition-colors ${
-                    active ? 'border-accent bg-surface-raised text-text shadow-sm' : 'border-border text-text-muted hover:text-text'
+                    active ? 'border-text bg-surface-raised text-text shadow-sm' : 'border-border text-text-muted hover:text-text'
                   }`}
                 >
                   {tabLabel(t)} {count !== undefined && <span className="tabular-nums text-text-muted">{count}</span>}
@@ -342,32 +342,32 @@ export default function Library() {
               />
             </div>
             {facets?.platforms?.length > 0 && (
-              <select aria-label="Filter by platform" value={platform} onChange={(e) => setPlatform(e.target.value)} className={SELECT}>
+              <FancySelect aria-label="Filter by platform" value={platform} onChange={(e) => setPlatform(e.target.value)} className={SELECT}>
                 <option value="">All platforms</option>
                 {facets.platforms.map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>
                 ))}
-              </select>
+              </FancySelect>
             )}
             {facets?.genres?.length > 0 && (
-              <select aria-label="Filter by genre" value={genre} onChange={(e) => setGenre(e.target.value)} className={SELECT}>
+              <FancySelect aria-label="Filter by genre" value={genre} onChange={(e) => setGenre(e.target.value)} className={SELECT}>
                 <option value="">All genres</option>
                 {facets.genres.map((g) => (
                   <option key={g} value={g}>
                     {g}
                   </option>
                 ))}
-              </select>
+              </FancySelect>
             )}
-            <select aria-label="Sort library" value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={SELECT}>
+            <FancySelect aria-label="Sort library" value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={SELECT}>
               <option value="default">Recently added</option>
               <option value="title">Title (A-Z)</option>
               <option value="playtime">Most played</option>
               <option value="progress">Highest progress</option>
               <option value="timeToBeat">Shortest time to beat</option>
-            </select>
+            </FancySelect>
 
             {filtering && (
               <Button variant="ghost" onClick={clearFilters}>

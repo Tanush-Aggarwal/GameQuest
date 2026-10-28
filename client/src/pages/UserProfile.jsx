@@ -24,6 +24,8 @@ import { CoverImage } from '@/components/games/GameCard.jsx';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { LARGE_TILE } from '@/components/profile/FavouriteTiles.jsx';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { TrophyShelf } from '@/components/profile/TrophyShelf.jsx';
+import { LevelGuide } from '@/components/profile/LevelGuide.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -62,14 +64,14 @@ function UserAvatar({ user, size = 'lg' }) {
         src={user.avatar}
         alt={user.username}
         onError={() => setFailed(true)}
-        className={`${sizeClasses} rounded-full object-cover border-2 border-accent shadow-md flex-shrink-0 bg-surface-raised`}
+        className={`${sizeClasses} rounded-full object-cover border-2 border-white/80 shadow-md flex-shrink-0 bg-surface-raised`}
       />
     );
   }
 
   return (
     <div
-      className={`${sizeClasses} rounded-full bg-gradient-to-br from-accent/90 to-purple-800 text-text font-bold font-heading flex items-center justify-center border-2 border-accent/40 shadow-md flex-shrink-0`}
+      className={`${sizeClasses} rounded-full bg-gradient-to-br from-accent/90 to-purple-800 text-text font-bold font-heading flex items-center justify-center border-2 border-white/60 shadow-md flex-shrink-0`}
       aria-label={`${user?.username} avatar`}
     >
       {initials}
@@ -98,7 +100,7 @@ function RelationActions({ profile, setProfile }) {
 
   if (relation === 'self') {
     return (
-      <Link to="/profile" className={buttonVariants({ variant: 'secondary' })}>
+      <Link to="/profile" className={buttonVariants({ variant: 'secondary', className: 'border-transparent bg-white text-[#14161a] hover:bg-white/90' })}>
         Edit my profile
       </Link>
     );
@@ -192,7 +194,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
           {games.map((game) => (
             <li key={game.id} className={LARGE_TILE}>
               <Link to={`/games/${game.slug}`} className="group flex flex-col gap-1.5">
-                <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised transition-colors group-hover:border-accent">
+                <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-raised transition-colors group-hover:border-text">
                   <CoverImage
                     cover={game.cover}
                     title={game.title}
@@ -221,65 +223,6 @@ function FavouriteShowcase({ games = [], isSelf }) {
     </ArtPanel>
   );
 }
-function TrophyShelf({ stats }) {
-  if (!stats) return null;
-
-  const trophies = [];
-
-  // Collector
-  if (stats.games >= 25) trophies.push({ title: 'Master Collector', tier: 'Platinum', color: 'var(--trophy-platinum)', desc: '25+ games owned' });
-  else if (stats.games >= 10) trophies.push({ title: 'Veteran Collector', tier: 'Gold', color: 'var(--trophy-gold)', desc: '10+ games owned' });
-  else if (stats.games >= 5) trophies.push({ title: 'Avid Collector', tier: 'Silver', color: 'var(--trophy-silver)', desc: '5+ games owned' });
-  else if (stats.games >= 1) trophies.push({ title: 'Apprentice', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: 'First game added' });
-
-  // Finisher
-  if (stats.completed >= 10) trophies.push({ title: 'Legendary Finisher', tier: 'Platinum', color: 'var(--trophy-platinum)', desc: '10+ games completed' });
-  else if (stats.completed >= 5) trophies.push({ title: 'Master Finisher', tier: 'Gold', color: 'var(--trophy-gold)', desc: '5+ games completed' });
-  else if (stats.completed >= 2) trophies.push({ title: 'Dedicated Finisher', tier: 'Silver', color: 'var(--trophy-silver)', desc: '2+ games completed' });
-  else if (stats.completed >= 1) trophies.push({ title: 'First Quest Cleared', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: '1st game finished' });
-
-  // Hours
-  if (stats.hours >= 100) trophies.push({ title: 'Century Master', tier: 'Platinum', color: 'var(--trophy-platinum)', desc: '100+ hours logged' });
-  else if (stats.hours >= 50) trophies.push({ title: 'Dedicated Gamer', tier: 'Gold', color: 'var(--trophy-gold)', desc: '50+ hours logged' });
-  else if (stats.hours >= 20) trophies.push({ title: 'Explorer', tier: 'Silver', color: 'var(--trophy-silver)', desc: '20+ hours logged' });
-  else if (stats.hours >= 5) trophies.push({ title: 'Initiate', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: '5+ hours logged' });
-
-  // Reviews
-  if (stats.reviews >= 5) trophies.push({ title: 'Master Critic', tier: 'Gold', color: 'var(--trophy-gold)', desc: '5+ reviews written' });
-  else if (stats.reviews >= 2) trophies.push({ title: 'Columnist', tier: 'Silver', color: 'var(--trophy-silver)', desc: '2+ reviews written' });
-  else if (stats.reviews >= 1) trophies.push({ title: 'Voice of the Player', tier: 'Bronze', color: 'var(--trophy-bronze)', desc: '1st review posted' });
-
-  if (!trophies.length) return null;
-
-  return (
-    <ArtPanel aria-labelledby="trophies-title" seed="profile-trophies" className="flex flex-col gap-3 p-5">
-      <h2 id="trophies-title" className="text-lg font-semibold font-heading flex items-center gap-2">
-        <Trophy className="h-4 w-4 text-[var(--reward)]" aria-hidden="true" />
-        Trophies & Milestones
-      </h2>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-        {trophies.map((t) => (
-          <div
-            key={t.title}
-            className="flex items-center gap-3 rounded-card border border-border/60 bg-bg/70 p-3"
-          >
-            <div
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border"
-              style={{ borderColor: t.color, backgroundColor: `color-mix(in srgb, ${t.color} 12%, transparent)` }}
-            >
-              <Trophy className="h-5 w-5" style={{ color: t.color }} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold" style={{ color: t.color }}>{t.title}</p>
-              <p className="truncate text-xs text-text-muted">{t.tier} · {t.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </ArtPanel>
-  );
-}
-
 function PublicCollections({ username }) {
   const load = useCallback((signal) => getProfileCollections(username, { signal }), [username]);
   const { status, data, error, retry } = useAsync(load);
@@ -327,6 +270,12 @@ export default function UserProfile() {
                 <UserAvatar user={profile.user} size="lg" />
                 <div>
                   <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-5xl">{profile.user.username}</h1>
+                  {profile.stats?.level != null && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold text-white">Level {profile.stats.level}</span>
+                      <LevelGuide level={profile.stats.level} xp={profile.stats.xp} onDark />
+                    </div>
+                  )}
                   <p className="mt-1 text-sm text-text-muted">
                     Member since {new Date(profile.user.memberSince).toLocaleDateString(undefined, { dateStyle: 'long' })}
                   </p>
@@ -383,7 +332,7 @@ export default function UserProfile() {
 
                 {/* Side column: achievements and shared collections */}
                 <aside className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
-                  <TrophyShelf stats={profile.stats} />
+                  <TrophyShelf stats={profile.stats} isSelf={profile.relation === 'self'} />
                   <section aria-labelledby="collections-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
                     <h2 id="collections-title" className="flex items-center gap-2 text-lg font-semibold font-heading">
                       <Layers className="h-4 w-4 text-[var(--secondary-accent)]" aria-hidden="true" /> Collections

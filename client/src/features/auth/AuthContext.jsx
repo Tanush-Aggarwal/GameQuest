@@ -67,6 +67,10 @@ export function AuthProvider({ children }) {
         setUser(u);
         setStatus('authenticated');
       },
+      // Local changes to the signed-in user (a new avatar) show everywhere at once, without a reload.
+      updateUser(patch) {
+        setUser((u) => (u ? { ...u, ...patch } : u));
+      },
       async logout() {
         try {
           await authApi.logout();

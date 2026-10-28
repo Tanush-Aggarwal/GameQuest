@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Gamepad2, Heart, Layers, Star } from 'lucide-react';
+import { Gamepad2, Layers, Star } from 'lucide-react';
 import { useMotionOk } from '@/lib/motion.js';
 
 /**
@@ -120,11 +120,6 @@ export function GameCard({ game, shared = true }) {
             <GameCover game={game} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
           )}
         </SharedCover>
-
-        {/* Top-right heart / wishlist icon */}
-        <div className="absolute top-2.5 right-2.5 rounded-full bg-black/40 p-1.5 backdrop-blur-xs text-white/80 transition-colors group-hover:text-white" aria-hidden="true">
-          <Heart className="h-3.5 w-3.5" />
-        </div>
 
         {/* Bottom dark gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 via-45% to-transparent pointer-events-none" />

@@ -10,7 +10,7 @@ import { CollectionForm } from '@/components/collections/CollectionForm.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getErrorInfo } from '@/services/api.js';
-import { createCollection, listCollections } from '@/services/collectionsApi.js';
+import { addCollectionItem, createCollection, listCollections } from '@/services/collectionsApi.js';
 
 export default function Collections() {
   const navigate = useNavigate();
@@ -22,10 +22,20 @@ export default function Collections() {
 
   const setCreating = (on) => setParams(on ? { new: '1' } : {}, { replace: true });
 
-  async function handleCreate(payload) {
+  async function handleCreate(payload, { entryIds = [] } = {}) {
     try {
       const created = await createCollection(payload);
-      toast.success(`Created "${created.name}"`);
+      // Games picked in the form go in one by one, in the order they were picked; one failure does not stop the rest.
+      let added = 0;
+      for (const entryId of entryIds) {
+        try {
+          await addCollectionItem(created.id, { entryId });
+          added += 1;
+        } catch {
+          // skipped
+        }
+      }
+      toast.success(added ? `Created "${created.name}" with ${added} game${added === 1 ? '' : 's'}` : `Created "${created.name}"`);
       navigate(`/collections/${created.id}`);
     } catch (err) {
       const info = getErrorInfo(err);

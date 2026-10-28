@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, Clock, Gamepad2, Layers, Play, Plus, RefreshCw, Star, Trophy, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -20,7 +21,7 @@ const TONE = {
   dropped: 'bg-[color-mix(in_srgb,var(--status-dropped)_12%,transparent)] text-[var(--status-dropped)]',
   review: 'bg-[color-mix(in_srgb,var(--reward)_14%,transparent)] text-[var(--reward)]',
   collection: 'bg-[color-mix(in_srgb,var(--secondary-accent)_12%,transparent)] text-[var(--secondary-accent)]',
-  session: 'bg-[var(--accent)] text-[var(--accent-fg)]',
+  session: 'bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]',
 };
 
 // One sentence per activity type; the game and collection names are links.
@@ -89,9 +90,21 @@ function ActivityRow({ item, showActor }) {
   const { icon: Icon, tone, body } = describe(item);
   return (
     <li className="flex items-start gap-3 rounded-control px-2 py-3 transition-colors hover:bg-bg">
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone}`}>
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
-      </span>
+      {showActor ? (
+        // the friend's picture, with what they did as a small badge on its corner
+        <span className="relative shrink-0">
+          <Avatar user={item.actor} size={38} />
+          <span className="absolute -bottom-1 -right-1 rounded-full bg-surface p-[2px]">
+            <span className={`flex h-5 w-5 items-center justify-center rounded-full ${tone}`}>
+              <Icon className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
+            </span>
+          </span>
+        </span>
+      ) : (
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone}`}>
+          <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
+        </span>
+      )}
       <div className="min-w-0 flex-1 text-sm leading-6 text-text-muted">
         {showActor && (
           <Link to={`/u/${item.actor.username}`} className="font-semibold text-text hover:underline">{item.actor.username}</Link>

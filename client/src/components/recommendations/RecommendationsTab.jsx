@@ -1,4 +1,5 @@
 import { CoverImage } from '@/components/games/GameCard.jsx';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Clock, Heart, Inbox, Send, Sparkles, Star, ThumbsDown, Trophy, Trash2 } from 'lucide-react';
@@ -98,7 +99,7 @@ export function RecommendationsTab() {
                 onClick={() => setStatusFilter(st)}
                 className={`rounded-[var(--radius-control)] px-2.5 py-1 capitalize transition-colors ${
                   statusFilter === st
-                    ? 'bg-[var(--accent)] text-[var(--accent-fg)] font-semibold'
+                    ? 'bg-text text-bg font-semibold'
                     : 'text-[var(--text-muted)] hover:bg-[var(--surface-raised)]'
                 }`}
               >
@@ -242,7 +243,7 @@ function RecommendationCard({ item, isInbox, onRespond, onDelete }) {
                   ? 'bg-[var(--success)]/15 text-[var(--success)] border border-[var(--success)]/30'
                   : item.status === 'declined'
                   ? 'bg-[var(--danger)]/15 text-[var(--danger)] border border-[var(--danger)]/30'
-                  : 'bg-[var(--accent)]/15 text-accent border border-[var(--accent)]/30'
+                  : 'bg-surface-raised text-text border border-border/30'
               }`}
             >
               {item.status}
@@ -251,8 +252,8 @@ function RecommendationCard({ item, isInbox, onRespond, onDelete }) {
 
           <p className="text-xs text-[var(--text-muted)] mt-1">
             {isInbox ? 'Recommended by' : 'Sent to'}{' '}
-            <Link to={`/u/${otherUser.username}`} className="font-semibold hover:underline text-[var(--text)]">
-              @{otherUser.username}
+            <Link to={`/u/${otherUser.username}`} className="inline-flex items-center gap-1.5 align-middle font-semibold hover:underline text-[var(--text)]">
+              <Avatar user={otherUser} size={20} />@{otherUser.username}
             </Link>
           </p>
 

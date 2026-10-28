@@ -117,7 +117,7 @@ export function createCollectionService({
     return {
       id: String(collection._id),
       ownerId: String(collection.ownerId),
-      owner: owner ? { id: String(owner._id), username: owner.username } : null,
+      owner: owner ? { id: String(owner._id), username: owner.username, avatar: owner.avatar ?? null } : null,
       name: collection.name,
       description: collection.description ?? '',
       visibility: collection.visibility,

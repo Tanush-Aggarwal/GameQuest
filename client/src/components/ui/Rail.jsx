@@ -41,7 +41,7 @@ export function Rail({ label, children, className, outsideArrows = false }) {
   }
 
   const arrow =
-    'absolute top-1/3 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[#16181D]/90 text-white shadow-xl transition hover:border-[#C8F135] hover:bg-[#16181D] disabled:opacity-0 disabled:pointer-events-none md:flex';
+    'absolute top-1/3 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[#16181D]/90 text-white shadow-xl transition hover:border-white/60 hover:bg-[#16181D] disabled:opacity-0 disabled:pointer-events-none md:flex';
   const leftPos = outsideArrows ? '-left-6 sm:-left-7' : '-left-3';
   const rightPos = outsideArrows ? '-right-6 sm:-right-7' : '-right-3';
 

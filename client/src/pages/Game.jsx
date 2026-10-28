@@ -51,89 +51,49 @@ function Facts({ game }) {
   );
 }
 
+// Time to beat as three comparable cards: each shows its hours big and a bar scaled to the longest, so the gap
+// between a quick run and a completionist run is obvious at a glance.
 function TimeToBeat({ timeToBeat }) {
-  const rawValues = [
-    { key: 'main', label: 'Main', value: timeToBeat?.main },
-    { key: 'extras', label: 'Main + extras', value: timeToBeat?.extras },
-    { key: 'full', label: 'Completionist', value: timeToBeat?.full },
+  const items = [
+    { key: 'main', label: 'Main story', hint: 'Just the story', value: timeToBeat?.main, color: 'var(--status-playing)' },
+    { key: 'extras', label: 'Main + extras', hint: 'Story and side content', value: timeToBeat?.extras, color: 'var(--secondary-accent)' },
+    { key: 'full', label: 'Completionist', hint: 'Everything, 100%', value: timeToBeat?.full, color: 'var(--status-completed)' },
   ].filter((item) => item.value != null);
 
-  if (!rawValues.length && !timeToBeat?.endless) return null;
-
-  const maxVal = Math.max(...rawValues.map((v) => v.value), 1);
-  const items = rawValues.map((item) => ({
-    ...item,
-    pct: Math.min(100, Math.max(0, (item.value / maxVal) * 100)),
-  }));
-
-  const mainItem = items.find((v) => v.key === 'main') || items[0];
-  const lastItem = items[items.length - 1];
-
-  const mainPct = mainItem ? mainItem.pct : 0;
-  const lastPct = lastItem ? lastItem.pct : 0;
+  if (!items.length && !timeToBeat?.endless) return null;
+  const max = Math.max(...items.map((v) => v.value), 1);
 
   return (
     <section className="mt-8 border-t border-border pt-6" aria-labelledby="time-to-beat">
-      <div className="mb-6 flex items-center gap-2">
+      <div className="mb-4 flex items-center gap-2">
         <Clock3 className="h-4 w-4 text-text-muted" aria-hidden="true" />
         <h3 id="time-to-beat" className="text-sm font-semibold text-text">Time to beat</h3>
       </div>
       {timeToBeat?.endless && (
-        <p className="mb-4 text-sm text-text-muted">Endless: multiplayer / live service</p>
+        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-text-muted">
+          <span className="h-2 w-2 rounded-full bg-[var(--status-completed)]" aria-hidden="true" />
+          Endless: multiplayer / live service
+        </p>
       )}
-
       {items.length > 0 && (
-        <div className="relative pt-2 pb-14">
-          {/* Base track */}
-          <div className="absolute left-0 right-0 top-3.5 h-1.5 rounded-full bg-surface-raised" />
-
-          {/* Lighter lime tint up to last marker */}
-          {lastPct > 0 && (
-            <div
-              className="absolute left-0 top-3.5 h-1.5 rounded-full bg-[#C8F135]/40"
-              style={{ width: `${lastPct}%` }}
-            />
-          )}
-
-          {/* Solid lime up to main marker */}
-          {mainPct > 0 && (
-            <div
-              className="absolute left-0 top-3.5 h-1.5 rounded-full bg-[#C8F135]"
-              style={{ width: `${mainPct}%` }}
-            />
-          )}
-
-          {/* Markers and centered labels/hours */}
-          {items.map((item, idx) => {
-            const prev = idx > 0 ? items[idx - 1] : null;
-            const isCrowded = prev && (item.pct - prev.pct < 18);
-
-            return (
-              <div
-                key={item.key}
-                className="absolute top-2"
-                style={{ left: `${item.pct}%` }}
-              >
-                <span className="block h-4 w-4 -translate-x-1/2 rounded-full border-2 border-text bg-bg shadow-sm" />
-                <div
-                  className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center ${
-                    isCrowded ? 'top-6 pt-3' : 'top-6'
-                  }`}
-                >
-                  <span className="whitespace-nowrap text-xs font-medium text-text-muted">
-                    {item.label}
-                  </span>
-                  <span className="whitespace-nowrap text-sm font-bold text-text">
-                    {timeToBeat.lowConfidence ? '~' : ''}{item.value}h
-                    {timeToBeat.lowConfidence && (
-                      <span className="ml-1 text-[10px] font-normal text-text-muted">few reports</span>
-                    )}
-                  </span>
-                </div>
+        <ul className="grid gap-3 sm:grid-cols-3">
+          {items.map((item) => (
+            <li key={item.key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{item.label}</span>
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} aria-hidden="true" />
               </div>
-            );
-          })}
-        </div>
+              <p className="font-heading text-3xl font-bold tabular-nums leading-none text-text">
+                {item.value}
+                <span className="ml-1 text-base font-semibold text-text-muted">h</span>
+              </p>
+              <div className="h-2 overflow-hidden rounded-full bg-surface-raised" aria-hidden="true">
+                <div className="h-full rounded-full" style={{ width: `${Math.max(6, (item.value / max) * 100)}%`, backgroundColor: item.color }} />
+              </div>
+              <span className="text-xs text-text-muted">{item.hint}</span>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
@@ -184,7 +144,7 @@ function TrailerTiles({ slug, onPlay }) {
   const { status, data, error, retry } = useAsync(load);
   if (status === 'loading') return <Skeleton className="aspect-video w-full" role="status" aria-label="Loading trailers" />;
   if (status === 'error') return <ErrorState message={error.message} onRetry={retry} />;
-  return <>{(data ?? []).map((trailer) => <button key={trailer.videoId} type="button" onClick={onPlay} className="group relative aspect-video overflow-hidden rounded-control border border-border bg-surface-raised text-left"><img src={`https://i.ytimg.com/vi/${trailer.videoId}/hqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#C8F135] text-black"><Play className="h-5 w-5 fill-current" aria-hidden="true" /></span></span><span className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 text-xs font-medium text-white">{trailer.label}</span></button>)}</>;
+  return <>{(data ?? []).map((trailer) => <button key={trailer.videoId} type="button" onClick={onPlay} className="group relative aspect-video overflow-hidden rounded-control border border-border bg-surface-raised text-left"><img src={`https://i.ytimg.com/vi/${trailer.videoId}/hqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111311] shadow-lg"><Play className="h-5 w-5 fill-current" aria-hidden="true" /></span></span><span className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 text-xs font-medium text-white">{trailer.label}</span></button>)}</>;
 }
 
 function Requirements({ data }) {

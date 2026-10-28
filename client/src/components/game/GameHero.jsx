@@ -56,8 +56,10 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
 
   return (
     <>
-      <BackdropHero art={game} seed={game.title} className="gq-game-hero relative w-full overflow-hidden !rounded-none !border-0 !border-b !border-white/10 !bg-[#0B0C0F] text-white">
-        <div className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pt-4 pb-8 sm:px-8 sm:pt-6 sm:pb-8">
+      <BackdropHero art={game} seed={game.title} className="gq-game-hero relative overflow-hidden !border-0 !bg-[#0B0C0F] text-white">
+        {/* fades the art into the light page below, so the header and content read as one page */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-b from-transparent to-[var(--bg)]" />
+        <div className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pt-4 pb-14 sm:px-8 sm:pt-6 sm:pb-16">
           <div className="flex items-center gap-2 text-sm text-white/65">
             <Link to="/explore" className="inline-flex items-center gap-2 hover:text-white">
               <span aria-hidden="true">←</span> Explore
@@ -67,28 +69,28 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
           </div>
 
           <div className="flex flex-col gap-7 md:flex-row md:items-end md:gap-9">
-            <SharedCover slug={game.slug} className="w-40 shrink-0 self-center overflow-hidden rounded-[10px] border-2 border-[#C8F135] shadow-2xl sm:w-48 lg:w-56 md:self-end">
+            <SharedCover slug={game.slug} className="w-40 shrink-0 self-center overflow-hidden rounded-[14px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:w-48 lg:w-56 md:self-end">
               <GameCover game={game} className="h-full w-full object-cover" />
             </SharedCover>
 
             <div className="flex min-w-0 max-w-3xl flex-1 flex-col gap-4">
               {platforms.length > 0 && (
-                <ul aria-label="Platforms" className="flex flex-wrap gap-3 text-xs font-medium text-white/75">
+                <ul aria-label="Platforms" className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wider text-white/80">
                   {platforms.map((name) => {
                     const Icon = platformIcon(name);
                     return <li key={name} className="inline-flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" aria-hidden="true" />{name}</li>;
                   })}
                 </ul>
               )}
-              <h1 tabIndex={-1} className="font-heading text-4xl font-bold leading-none tracking-tight text-white focus:outline-none sm:text-6xl">{game.title}</h1>
+              <h1 tabIndex={-1} className="font-heading text-4xl font-bold leading-[0.95] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] focus:outline-none sm:text-5xl lg:text-6xl">{game.title}</h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70">
-                {rating && <span className="inline-flex items-center gap-1 font-semibold text-white"><Star className="h-4 w-4 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />{rating}</span>}
+                {rating && <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 font-semibold text-white ring-1 ring-white/15 backdrop-blur-sm"><Star className="h-4 w-4 fill-[#F5A04A] text-[#F5A04A]" aria-hidden="true" />{rating}</span>}
                 {rating && <span aria-hidden="true">•</span>}
                 {[developer, year].filter(Boolean).map((value, index) => <span key={value}>{index > 0 && <span className="mr-3" aria-hidden="true">•</span>}{value}</span>)}
               </div>
               {game.genres?.length > 0 && (
                 <ul aria-label="Genres" className="flex flex-wrap gap-2">
-                  {game.genres.map((genre) => <li key={genre} className="rounded-full bg-black/35 px-3 py-1 text-xs text-white/80">{genre}</li>)}
+                  {game.genres.map((genre) => <li key={genre} className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">{genre}</li>)}
                 </ul>
               )}
 
@@ -113,7 +115,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
                     </DropdownMenu.Portal>
                   </DropdownMenu.Root>
                 )}
-                <Button variant="secondary" onClick={() => setTrailerOpen(true)} ref={triggerRef} className="border-white/30 bg-transparent text-white hover:bg-white/10">
+                <Button variant="secondary" onClick={() => setTrailerOpen(true)} ref={triggerRef} className="border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20">
                   <Play className="h-4 w-4 fill-current" aria-hidden="true" /> Watch trailer
                 </Button>
                 <DropdownMenu.Root>

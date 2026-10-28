@@ -382,10 +382,18 @@ describe('Explore filters for the results', () => {
 });
 
 describe('Explore trending carousel', () => {
+  // The carousel shuffles its games; pin Math.random so the order is the catalog's order in these tests.
+  let randomSpy;
+  beforeEach(() => {
+    randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.9999);
+  });
   const slide = (n) => ({ ...game(`t${n}`, `Trending ${n}`), backdrop: `https://img/t${n}.jpg`, genres: ['RPG', 'Action'], summary: `Summary ${n}` });
   const five = { items: [1, 2, 3, 4, 5, 6].map(slide), nextCursor: null, warnings: [] };
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    randomSpy.mockRestore();
+  });
 
   it('shows the most popular game with a link, at most five slides, and labelled dots', async () => {
     mockCatalog({ carousel: five, main: { items: [game('a', 'Alpha')], nextCursor: null, warnings: [] } });
@@ -415,7 +423,7 @@ describe('Explore trending carousel', () => {
     expect(within(region).getByRole('heading', { level: 2 })).toHaveTextContent('Trending 3');
   });
 
-  it('advances by itself, can be paused, and holds still while the pointer is on it', async () => {
+  it('advances by itself and holds still while the pointer is on it', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true }); // before the carousel starts its timer
     mockCatalog({ carousel: five });
     renderAt('/explore');
@@ -431,14 +439,6 @@ describe('Explore trending carousel', () => {
     fireEvent.pointerLeave(region, { pointerType: 'mouse' });
     await act(async () => vi.advanceTimersByTime(ADVANCE));
     expect(title()).toBe('Trending 3');
-
-    fireEvent.click(within(region).getByRole('button', { name: 'Pause auto-advance' }));
-    await act(async () => vi.advanceTimersByTime(ADVANCE * 3));
-    expect(title()).toBe('Trending 3');
-    expect(within(region).getByRole('button', { name: 'Resume auto-advance' })).toBeInTheDocument();
-    fireEvent.click(within(region).getByRole('button', { name: 'Resume auto-advance' }));
-    await act(async () => vi.advanceTimersByTime(ADVANCE));
-    expect(title()).toBe('Trending 4');
   });
 
   it('a touch tap does not leave it held (only a mouse pointer holds it still)', async () => {
@@ -477,7 +477,7 @@ describe('Explore trending carousel', () => {
     expect(region.querySelector('[aria-live]')).not.toBeNull();
   });
 
-  it('does not move by itself, and has no pause button, when the viewer prefers reduced motion', async () => {
+  it('does not move by itself when the viewer prefers reduced motion', async () => {
     reducedMotion.value = true;
     try {
       vi.useFakeTimers({ shouldAdvanceTime: true });

@@ -6,7 +6,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-accent text-accent-fg hover:brightness-110',
+        // Dark by default: lime is kept for the few hero calls to action that sit on game art.
+        primary: 'bg-text text-bg shadow-sm hover:bg-[#2b2e28]',
         secondary: 'border border-border bg-surface-raised text-text hover:bg-border',
         ghost: 'text-text-muted hover:bg-surface-raised hover:text-text',
       },

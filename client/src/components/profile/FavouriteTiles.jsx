@@ -46,8 +46,8 @@ export function FavouriteTiles({ slots, openSlot, onOpen, onRemove }) {
               aria-label={`Add favourite game ${i + 1}`}
               aria-expanded={openSlot === i}
               className={cn(
-                'flex aspect-[3/4] w-full flex-col items-center justify-center gap-1 rounded-card border border-dashed bg-bg/50 text-text-muted transition-colors hover:border-accent hover:text-text',
-                openSlot === i ? 'border-accent text-text' : 'border-border',
+                'flex aspect-[3/4] w-full flex-col items-center justify-center gap-1 rounded-card border border-dashed bg-bg/50 text-text-muted transition-colors hover:border-text hover:text-text',
+                openSlot === i ? 'border-text text-text' : 'border-border',
               )}
             >
               <Plus className="h-6 w-6" aria-hidden="true" />

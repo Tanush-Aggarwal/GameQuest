@@ -1,11 +1,13 @@
 import { useCallback, useId, useState } from 'react';
 import { createCollectionSchema } from '@gamequest/shared';
+import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { RuleBuilder } from './RuleBuilder.jsx';
+import { GamePicker } from './GamePicker.jsx';
 import { VISIBILITY_OPTIONS } from './badges.jsx';
 
-const selectClass = 'min-h-11 w-full rounded-control border border-border bg-surface px-2 text-sm text-text';
+const selectClass = 'w-full';
 
 // Create (type is chosen) or edit (type is fixed) a collection. Validates with the shared schema before submitting.
 export function CollectionForm({ initial, submitLabel, onSubmit, onCancel }) {
@@ -19,6 +21,7 @@ export function CollectionForm({ initial, submitLabel, onSubmit, onCancel }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [picked, setPicked] = useState(() => new Set());
 
   const handleRules = useCallback((next) => setRuleState(next), []);
 
@@ -37,7 +40,10 @@ export function CollectionForm({ initial, submitLabel, onSubmit, onCancel }) {
     setFormError(null);
     setSubmitting(true);
     try {
-      await onSubmit(editing ? { name: parsed.data.name, description: parsed.data.description, visibility, ...(type === 'smart' && { rules: parsed.data.rules }) } : parsed.data);
+      await onSubmit(
+        editing ? { name: parsed.data.name, description: parsed.data.description, visibility, ...(type === 'smart' && { rules: parsed.data.rules }) } : parsed.data,
+        { entryIds: !editing && type === 'manual' ? [...picked] : [] },
+      );
     } catch (err) {
       setFormError(err.message ?? 'Could not save the collection');
     } finally {
@@ -68,19 +74,19 @@ export function CollectionForm({ initial, submitLabel, onSubmit, onCancel }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor={`${id}-vis`} className="text-sm font-medium">Who can see it</label>
-          <select id={`${id}-vis`} className={selectClass} value={visibility} onChange={(e) => setVisibility(e.target.value)}>
+          <FancySelect id={`${id}-vis`} className={selectClass} value={visibility} onChange={(e) => setVisibility(e.target.value)}>
             {VISIBILITY_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
-          </select>
+          </FancySelect>
         </div>
         {!editing && (
           <div className="flex flex-col gap-1">
             <label htmlFor={`${id}-type`} className="text-sm font-medium">Type</label>
-            <select id={`${id}-type`} className={selectClass} value={type} onChange={(e) => setType(e.target.value)}>
+            <FancySelect id={`${id}-type`} className={selectClass} value={type} onChange={(e) => setType(e.target.value)}>
               <option value="manual">Manual — I pick the games</option>
               <option value="smart">Smart — filled by rules</option>
-            </select>
+            </FancySelect>
           </div>
         )}
       </div>
@@ -91,6 +97,8 @@ export function CollectionForm({ initial, submitLabel, onSubmit, onCancel }) {
           {errors.rules && <p className="mt-1 text-sm text-danger">{errors.rules}</p>}
         </div>
       )}
+
+      {!editing && type === 'manual' && <GamePicker selected={picked} onChange={setPicked} />}
 
       {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
 

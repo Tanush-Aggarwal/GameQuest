@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { ProgressBar } from '@/components/ui/ProgressBar.jsx';
+import { LevelGuide } from '@/components/profile/LevelGuide.jsx';
 import { Link } from 'react-router-dom';
 import {
   ExternalLink,
@@ -18,6 +20,7 @@ import { FavouritePicker } from '@/components/profile/FavouritePicker.jsx';
 import { SteamLinkCard } from '@/components/steam/SteamLinkCard.jsx';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
@@ -53,6 +56,7 @@ function EditProfileSection({ profile }) {
 }
 
 function ProfileEditor({ initialProfile, onSaved }) {
+  const auth = useAuth();
   const [avatar, setAvatar] = useState(initialProfile?.avatar ?? '');
   const [showCustomUrl, setShowCustomUrl] = useState(() => Boolean(initialProfile?.avatar && !AVATAR_PRESETS.some((p) => p.url === initialProfile.avatar)));
   const [bio, setBio] = useState(initialProfile?.bio ?? '');
@@ -127,6 +131,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
         bio: bio.trim(),
         favouriteGames: slots.filter(Boolean).map((g) => g.id),
       });
+      auth?.updateUser?.({ avatar: avatar.trim() || null });
       toast.success('Profile updated successfully');
       if (onSaved) onSaved(savedUser);
     } catch (err) {
@@ -156,7 +161,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
                     title={p.label}
                     className={`group relative h-12 w-12 rounded-full overflow-hidden border-2 transition-all ${
                       isSelected
-                        ? 'border-[#C8F135] ring-2 ring-[#C8F135]/40 scale-105'
+                        ? 'border-text ring-2 ring-text/25 scale-105'
                         : 'border-border/60 hover:border-text-muted opacity-80 hover:opacity-100'
                     }`}
                   >
@@ -193,7 +198,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
                     value={avatar}
                     onChange={(e) => setAvatar(e.target.value)}
                     placeholder="https://example.com/avatar.jpg"
-                    className="w-full min-h-11 rounded-control border border-border bg-bg px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                    className="w-full min-h-11 rounded-control border border-border bg-bg px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-text"
                   />
                 </div>
               )}
@@ -214,7 +219,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Tell your friends about your gaming tastes, favorite genres, or current goals..."
-            className="w-full rounded-control border border-border bg-bg p-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+            className="w-full rounded-control border border-border bg-bg p-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-text resize-none"
           />
         </div>
 
@@ -261,7 +266,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
             <Button
               type="submit"
               disabled={saving}
-              className="bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-105 text-xs font-bold shadow-sm"
+              className="text-xs font-bold shadow-sm"
             >
               <Save className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
               {saving ? 'Saving...' : 'Save Profile'}
@@ -293,16 +298,11 @@ function PrivacySetting({ profile }) {
   return (
     <div className="flex w-full flex-col gap-1.5 rounded-card border border-border/60 bg-bg/70 p-5">
       <label htmlFor={id} className="text-sm font-semibold text-text">Who can see my profile</label>
-      <select
-        id={id}
-        value={current.user.privacy}
-        onChange={(e) => change(e.target.value)}
-        className="min-h-11 w-full rounded-control border border-border bg-surface px-3 text-sm text-text focus:outline-none focus:ring-1 focus:ring-accent"
-      >
+      <FancySelect id={id} value={current.user.privacy} onChange={(e) => change(e.target.value)} className="w-full">
         {PROFILE_PRIVACY.map((p) => (
           <option key={p} value={p}>{PRIVACY_LABELS[p]}</option>
         ))}
-      </select>
+      </FancySelect>
       <p className="text-xs text-text-muted mt-1">Games you hide from friends stay hidden at every level.</p>
     </div>
   );
@@ -515,7 +515,7 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center font-heading text-3xl font-bold text-[var(--accent-fg)] bg-[var(--accent)]">
+              <span className="flex h-full w-full items-center justify-center font-heading text-3xl font-bold text-white bg-white/15">
                 {username?.charAt(0).toUpperCase() || 'U'}
               </span>
             )}
@@ -527,26 +527,15 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
             </h2>
 
             {/* Level + thin XP progress bar */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-[var(--accent)] whitespace-nowrap">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="text-xs font-bold text-white whitespace-nowrap">
                 Level {level}
               </span>
-              <div
-                className="h-1.5 w-28 sm:w-36 rounded-full bg-white/20 overflow-hidden"
-                role="progressbar"
-                aria-valuenow={xpPct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Level XP progress"
-              >
-                <div
-                  className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
-                  style={{ width: `${xpPct}%` }}
-                />
-              </div>
+              <ProgressBar value={xpPct} tone="reward" onDark label="Level XP progress" className="!h-1.5 w-28 sm:w-36" />
               <span className="text-[11px] tabular-nums text-[#9AA3B2] whitespace-nowrap">
                 {xp} / {nextXp} XP
               </span>
+              <LevelGuide level={level} xp={xp} breakdown={summary?.breakdown} onDark />
             </div>
 
             {/* Member since */}

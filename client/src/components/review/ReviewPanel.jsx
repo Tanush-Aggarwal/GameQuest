@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
@@ -169,8 +170,9 @@ function ReviewCard({ review, isOwn, onEdit, onDelete }) {
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
+          <Avatar user={{ username: review.username ?? '?', avatar: review.avatar }} size={28} />
           <span className="text-sm font-medium">{review.username ?? 'Unknown'}</span>
-          {isOwn && <span className="text-xs px-1.5 py-0.5 rounded bg-accent text-accent-fg">You</span>}
+          {isOwn && <span className="text-xs px-1.5 py-0.5 rounded bg-surface-raised text-text">You</span>}
           <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map((n) => (
               <Star

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { artImageUrl } from '@/lib/art.js';
 import { Link } from 'react-router-dom';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -42,6 +43,37 @@ const hours = (minutes) => {
   return `${h} ${h === 1 ? 'hour' : 'hours'}`;
 };
 
+// Picks wide art that actually fits a wide banner: the backdrop first, then sharp screenshots. An image that is
+// far from banner-shaped (a square logo, a thin strip) or too small would look stretched or zoomed in, so it is
+// skipped for the next candidate once its real size is known.
+const fitsBanner = (img) => {
+  const ratio = img.naturalWidth / img.naturalHeight;
+  return ratio >= 1.5 && ratio <= 2.6 && img.naturalWidth >= 1000;
+};
+function WideArt({ game, visible, eager }) {
+  const candidates = [
+    game.backdrop,
+    ...(game.screenshots ?? []).slice(0, 3),
+  ]
+    .filter(Boolean)
+    .map((u) => artImageUrl(u, 'hero'));
+  const [i, setI] = useState(0);
+  const src = candidates[Math.min(i, candidates.length - 1)];
+  const last = i >= candidates.length - 1;
+  return (
+    <img
+      src={src}
+      alt=""
+      onLoad={(e) => {
+        if (!last && !fitsBanner(e.currentTarget)) setI((n) => n + 1);
+      }}
+      onError={() => !last && setI((n) => n + 1)}
+      className={`absolute inset-0 h-full w-full object-cover object-[center_30%] transition-opacity duration-700 motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
+      loading={eager ? 'eager' : 'lazy'}
+    />
+  );
+}
+
 export function HomeHero({ username, dashboard, playNext }) {
   return (
     <div className="flex flex-col">
@@ -83,7 +115,7 @@ function HeroBody({ dashboard, playNext }) {
     let active = true;
     getFeaturedGames({ limit: 5 })
       .then((data) => {
-        if (active) setSlides((data?.items ?? []).filter((g) => g.backdrop));
+        if (active) setSlides((data?.items ?? []).filter((g) => g.backdrop || g.screenshots?.length));
       })
       .catch(() => {});
     return () => {
@@ -127,13 +159,7 @@ function HeroBody({ dashboard, playNext }) {
       <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
         {slides.length > 0
           ? slides.map((g, i) => (
-              <img
-                key={g.id}
-                src={g.backdrop}
-                alt=""
-                className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 motion-reduce:transition-none ${i === slide ? 'opacity-100' : 'opacity-0'}`}
-                loading={i === 0 ? 'eager' : 'lazy'}
-              />
+              <WideArt key={g.id} game={g} visible={i === slide} eager={i === 0} />
             ))
           : <img src={game?.backdrop || '/assets/hero-fantasy.jpg'} alt="" className="absolute inset-0 h-full w-full object-cover object-center" loading="eager" />}
         {/* Dark left-side gradient scrim behind text */}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils.js';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { getAccountSummary } from '@/services/accountApi.js';
 import { DESKTOP_NAV_ITEMS } from './navItems.js';
@@ -25,7 +26,7 @@ export function SideRail() {
     };
   }, [user]);
 
-  const avatar = summary?.avatar || user?.avatar;
+  const avatar = user?.avatar ?? summary?.avatar ?? null;
   const level = summary?.level ?? 1;
 
   return (
@@ -72,17 +73,7 @@ export function SideRail() {
             to="/profile"
             className="flex items-center gap-2.5 rounded-[10px] bg-[#181A18] border border-white/5 p-2 transition-colors hover:border-white/10 group"
           >
-            {avatar ? (
-              <img
-                src={avatar}
-                alt=""
-                className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/10"
-              />
-            ) : (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-xs font-bold ring-1 ring-white/10">
-                {user.username?.charAt(0).toUpperCase() ?? 'U'}
-              </span>
-            )}
+            <Avatar user={{ ...user, avatar }} size={32} className="ring-1 ring-white/10" />
             <span className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-white truncate group-hover:text-[var(--accent)] transition-colors">
                 {user.username}

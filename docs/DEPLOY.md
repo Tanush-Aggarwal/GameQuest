@@ -6,7 +6,7 @@ Production layout:
 Browser ──> Vercel (React app, https://<app>.vercel.app)
               │  /api/*  is rewritten (proxied) by vercel.json
               ▼
-            Render (Express API, https://gamequest-api.onrender.com) ──> MongoDB Atlas
+            Render (Express API, https://gamequest-jou3.onrender.com) ──> MongoDB Atlas
 ```
 
 The browser only ever talks to the Vercel domain, so auth cookies are first-party
@@ -102,3 +102,15 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
 - **Every push to `main`** redeploys both Render and Vercel automatically.
 - **Seeding the demo account on production:** run `npm run seed` locally with `MONGODB_URI` in
   `server/.env` pointing at the same Atlas database.
+
+## Live deployment (28 Oct 2026)
+
+| Part | URL |
+| --- | --- |
+| Client (Vercel) | https://gamequest-five.vercel.app |
+| API (Render) | https://gamequest-jou3.onrender.com (health: `/api/v1/health`) |
+
+- `vercel.json` rewrites `/api/*` to the Render URL above. If the Render service is recreated with another name, update that line and push.
+- Render's free plan sleeps after ~15 minutes without traffic; the first request then takes up to a minute. The client shows a "Waking up the server" page that retries on its own. Before a demo, open the health URL once, or add a free UptimeRobot monitor that pings it every 5 minutes.
+- Atlas DNS: if `querySrv ETIMEOUT` appears locally, switch the network's DNS to 8.8.8.8 / 1.1.1.1 (scripts like `steam:debug` already force public resolvers).
+

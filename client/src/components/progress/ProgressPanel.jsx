@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { progressLevel } from '@/components/ui/ProgressBar.jsx';
 import { toast } from 'sonner';
 import * as Tabs from '@radix-ui/react-tabs';
 import { Plus, Trash2, BookOpen, Clock } from 'lucide-react';
@@ -82,7 +83,9 @@ function ProgressTab({ entryId, status, initialProgress, onSaved }) {
               value={value}
               onChange={(e) => setValue(Number(e.target.value))}
               disabled={completedBlock}
-              className="flex-1 accent-[var(--accent)]"
+              className="gq-range flex-1"
+              style={{ '--p': `${value}%` }}
+              data-level={progressLevel(value)}
               aria-label="Manual progress"
             />
             <span className="tabular-nums text-sm w-10 text-right font-bold">{value}%</span>

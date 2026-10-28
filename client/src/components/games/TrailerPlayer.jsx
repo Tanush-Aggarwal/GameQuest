@@ -30,7 +30,7 @@ function tabLabels(trailers) {
 function Player({ videoId, title }) {
   const [playing, setPlaying] = useState(false);
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-card border border-border bg-surface-raised">
+    <div className="relative aspect-video w-full overflow-hidden rounded-[12px] bg-black shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
       {playing ? (
         <iframe
           title={`${title} trailer`}
@@ -46,18 +46,21 @@ function Player({ videoId, title }) {
           type="button"
           onClick={() => setPlaying(true)}
           aria-label={`Play trailer for ${title}`}
-          className="group absolute inset-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="group absolute inset-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
         >
           <img
             src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+            srcSet={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg 480w, https://i.ytimg.com/vi/${videoId}/sddefault.jpg 640w`}
+            sizes="(min-width: 1024px) 900px, 100vw"
             alt=""
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full scale-[1.34] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.38]"
           />
-          <span className="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/10" aria-hidden="true" />
-          <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-fg shadow-lg motion-safe:transition-transform motion-safe:group-hover:scale-105">
-            <Play className="h-7 w-7 translate-x-0.5" fill="currentColor" aria-hidden="true" />
+          <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" aria-hidden="true" />
+          <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white text-[#111311] shadow-[0_0_0_10px_rgba(255,255,255,0.15)] motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-110">
+            <Play className="h-8 w-8 translate-x-0.5" fill="currentColor" aria-hidden="true" />
           </span>
+          <span className="absolute bottom-4 left-5 text-sm font-semibold text-white/90" aria-hidden="true">Click to play</span>
         </button>
       )}
     </div>
@@ -116,53 +119,75 @@ export function TrailerPlayer({ slug, title }) {
   const labels = tabLabels(list);
 
   return (
-    <section aria-label="Trailer" className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-heading text-sm font-semibold uppercase tracking-wide text-text-muted">Trailer</h2>
-        {list.length > 1 && (
-          <div role="group" aria-label="Choose a trailer" className="flex flex-wrap gap-1">
-            {list.map((t, i) => (
-              <button
-                key={t.videoId}
-                type="button"
-                aria-pressed={t.videoId === current.videoId}
-                onClick={() => setSelected(t.videoId)}
-                className={`min-h-11 rounded-control border px-3 text-xs font-semibold transition-colors ${
-                  t.videoId === current.videoId
-                    ? 'border-accent bg-accent/15 text-text'
-                    : 'border-border bg-surface text-text-muted hover:bg-surface-raised hover:text-text'
-                }`}
-              >
-                {labels[i]}
-              </button>
-            ))}
-          </div>
-        )}
+    <section aria-label="Trailer" className={`grid gap-5 ${list.length > 1 ? 'lg:grid-cols-[minmax(0,1fr)_260px]' : ''}`}>
+      <div className="flex min-w-0 flex-col gap-3">
+        <Player key={current.videoId} videoId={current.videoId} title={title} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold" style={{ color: '#fff' }}>
+            {labels[list.indexOf(current)]}
+            <span className="ml-2 font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>· YouTube</span>
+          </p>
+          {confirming ? (
+            <div role="group" aria-label="Confirm wrong trailer" className="flex flex-wrap items-center gap-2">
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>Hide this video?</span>
+              <Button variant="secondary" onClick={() => wrongTrailer(current.videoId)} disabled={reporting}>
+                {reporting ? 'Hiding…' : 'Yes, it is wrong'}
+              </Button>
+              {/* The safe choice takes focus, so the dialog-less confirm doesn't drop keyboard users */}
+              <Button variant="ghost" autoFocus onClick={() => setConfirming(false)} disabled={reporting} className="text-white hover:bg-white/10">
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-xs transition-colors hover:bg-white/10"
+              style={{ color: 'rgba(255,255,255,0.6)' }}
+            >
+              <Flag className="h-3.5 w-3.5" aria-hidden="true" />
+              Wrong trailer?
+            </button>
+          )}
+        </div>
       </div>
-      <Player key={current.videoId} videoId={current.videoId} title={title} />
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {confirming ? (
-          <div role="group" aria-label="Confirm wrong trailer" className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-text-muted">Hide this video?</span>
-            <Button variant="secondary" onClick={() => wrongTrailer(current.videoId)} disabled={reporting}>
-              {reporting ? 'Hiding…' : 'Yes, it is wrong'}
-            </Button>
-            {/* The safe choice takes focus, so the dialog-less confirm doesn't drop keyboard users */}
-            <Button variant="ghost" autoFocus onClick={() => setConfirming(false)} disabled={reporting}>
-              Cancel
-            </Button>
+
+      {list.length > 1 && (
+        // A playlist of the other videos: a column beside the player on wide screens, a scrolling row below on small ones.
+        <div className="flex min-w-0 flex-col gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {list.length} videos
+          </h2>
+          <div role="group" aria-label="Choose a trailer" className="flex gap-2.5 overflow-x-auto p-1 lg:max-h-[440px] lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden">
+            {list.map((t, i) => {
+              const active = t.videoId === current.videoId;
+              return (
+                <button
+                  key={t.videoId}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setSelected(t.videoId)}
+                  className={`group flex w-44 shrink-0 flex-col gap-1.5 rounded-[10px] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/60 lg:w-full lg:flex-row lg:items-center lg:gap-3 ${
+                    active ? 'bg-white/10 ring-1 ring-inset ring-white/35' : 'hover:bg-white/8'
+                  }`}
+                >
+                  <span className="relative block aspect-video w-full shrink-0 overflow-hidden rounded-[7px] bg-black lg:w-28">
+                    <img src={`https://i.ytimg.com/vi/${t.videoId}/mqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    {active && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/45" aria-hidden="true">
+                        <Play className="h-5 w-5 text-white" fill="currentColor" />
+                      </span>
+                    )}
+                  </span>
+                  <span className="line-clamp-2 text-xs font-semibold leading-snug" style={{ color: active ? '#fff' : 'rgba(255,255,255,0.75)' }}>
+                    {labels[i]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-xs text-text-muted underline-offset-2 hover:text-text hover:underline"
-          >
-            <Flag className="h-3.5 w-3.5" aria-hidden="true" />
-            Wrong trailer?
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

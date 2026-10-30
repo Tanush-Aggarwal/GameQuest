@@ -2,27 +2,47 @@
 
 # 🎮 GameQuest
 
-**One library for every game you own: track progress, decide what to play next, and play together with friends.**
+**One library for every game you own. Track progress, decide what to play next, and play together with friends.**
 
 [![Live demo](https://img.shields.io/badge/Live%20demo-gamequest--five.vercel.app-111?style=for-the-badge&logo=vercel)](https://gamequest-five.vercel.app)
-[![Tutorial video](https://img.shields.io/badge/Video-Click%20to%20Watch-blue?style=for-the-badge&logo=play)](https://youtu.be/YOUR_VIDEO_ID)
+[![Demo video](https://img.shields.io/badge/Demo%20video-Watch%20(10%20min)-c8f135?style=for-the-badge&logo=googledrive&logoColor=111&labelColor=111)](https://drive.google.com/file/d/1QkcqxeMVW4fHQ5YVBrvgfFupEttfW2EY/view?usp=sharing)
+
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Node](https://img.shields.io/badge/Node-20+-339933?logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000?logo=express)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
-![Tests](https://img.shields.io/badge/server%20tests-588%20passing-2ea44f)
+![Tests](https://img.shields.io/badge/server%20tests-600%2B%20passing-2ea44f)
+
+[Live demo](https://gamequest-five.vercel.app) · [Demo video](https://drive.google.com/file/d/1QkcqxeMVW4fHQ5YVBrvgfFupEttfW2EY/view?usp=sharing) · [Roadmap](docs/ROADMAP.md) · [Deploy guide](docs/DEPLOY.md)
 
 </div>
 
 ---
 
-## 📺 Tutorial video
+## The problem
 
-[![GameQuest walkthrough](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://youtu.be/YOUR_VIDEO_ID)
+Having more games doesn't make choosing one any easier. Your games are spread across platforms, the backlog keeps growing, and picking something to play with friends turns into a whole conversation.
 
-A walkthrough of the app: signing up, linking Steam, the library, collections, friends and scheduling a session.
-<!-- To add your video: upload it to YouTube (Unlisted is fine), copy the id after "youtu.be/" or "v=",
-     and replace every YOUR_VIDEO_ID in this file (3 places). -->
+GameQuest puts everything in one place. It keeps one library across platforms, suggests what to play next and explains why, and lets you plan game nights with friends.
+
+## 🎬 Demo video
+
+[**▶ Watch the 10-minute walkthrough**](https://drive.google.com/file/d/1QkcqxeMVW4fHQ5YVBrvgfFupEttfW2EY/view?usp=sharing)
+
+The video follows the app in this order:
+
+| # | Chapter | What you see |
+|---|---|---|
+| 1 | Home dashboard | Your activity, games to discover, what to play next, friends' updates |
+| 2 | Explore & game pages | Browse by genre, search, art, trailers, screenshots, reviews, system requirements |
+| 3 | Tracking a game | Add to library, change status, update progress |
+| 4 | Library & collections | Filters, sorting, reviews, drag-to-reorder collections, recommending a game |
+| 5 | What to play next | The scoring engine and the reason behind each pick |
+| 6 | Steam integration | Link a Steam ID and sync games, playtime and achievements |
+| 7 | Friends & recommendations | Friend profiles, privacy, recommendations you can accept or decline |
+| 8 | Profile, trophies & levels | Avatar, top 4 games, privacy, trophies, XP and levels |
+
+> **Try it yourself:** open the [live demo](https://gamequest-five.vercel.app) and register, or use the demo account from the local setup below. The first request can take up to a minute if the free server has been asleep.
 
 ---
 
@@ -39,7 +59,8 @@ A walkthrough of the app: signing up, linking Steam, the library, collections, f
 | 👥 **Friends** | Requests, blocking, an activity feed, game recommendations and public profiles with privacy settings. |
 | 📅 **Sessions** | Schedule a game night, invite friends, RSVP with a player limit, add a Discord link and download a calendar file. |
 | 🏆 **Levels & trophies** | XP from real activity and trophy tracks with Bronze → Platinum tiers (explained below). |
-| 🎬 **Game pages** | Art header, validated trailers, screenshots, time to beat, system requirements and community reviews. |
+| 🎬 **Game pages** | Art header, trailers and screenshots (Steam media for Steam games), time to beat, system requirements and community reviews. |
+| 🔐 **Accounts** | Email and Google sign-in, email verification and password reset. |
 
 ### How levels work
 
@@ -193,7 +214,7 @@ Only main games, remakes, remasters, expanded games, ports and standalone expans
 ## 🧪 Tests and checks
 
 ```bash
-npm test -w server      # Jest: 588 tests, no database needed
+npm test -w server      # Jest: 600+ tests, no database needed
 npm test -w client      # Vitest + Testing Library
 npm run lint
 npm run build           # production build of the client

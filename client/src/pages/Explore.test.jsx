@@ -160,8 +160,8 @@ describe('Explore endless scrolling', () => {
       expect(await screen.findByRole('link', { name: /Alpha/ })).toBeInTheDocument();
       // no button while scrolling works
       expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
-      const live = observers.filter((o) => !o.gone).at(-1);
-      act(() => live.cb([{ isIntersecting: true }]));
+      // everything comes into view (the rails and the end of the list)
+      act(() => observers.filter((o) => !o.gone).forEach((o) => o.cb([{ isIntersecting: true }])));
       expect(await screen.findByRole('link', { name: /Beta/ })).toBeInTheDocument();
       expect(mainCalls().at(-1)).toEqual(expect.objectContaining({ cursor: 'a' }));
     } finally {
@@ -224,7 +224,7 @@ describe('Explore rails', () => {
         expect.objectContaining({ genre: 'Strategy', limit: 12 }),
       ]),
     );
-    expect(params).toHaveLength(4 + 7); // four themed rails and one per genre
+    expect(params).toHaveLength(4 + 8); // four themed rails and one per featured category
     expect(screen.getByRole('link', { name: /Main Grid Game/ })).toBeInTheDocument(); // the main list is separate
   });
 
@@ -313,7 +313,7 @@ describe('Explore rails', () => {
   it('starts the rails together with the main list, not after it', async () => {
     mockCatalog({ main: () => new Promise(() => {}) }); // the main list never answers
     renderAt('/explore');
-    await vi.waitFor(() => expect(shelfCalls()).toHaveLength(11));
+    await vi.waitFor(() => expect(shelfCalls()).toHaveLength(12));
   });
 
   it('with an IntersectionObserver, a rail below the fold waits until it nears the screen', async () => {
@@ -337,7 +337,7 @@ describe('Explore rails', () => {
       expect(screen.getAllByRole('status', { name: /Loading/ }).length).toBeGreaterThan(5); // placeholders, one per rail
       await act(async () => observers.forEach((o) => o.cb([{ isIntersecting: true }])));
       expect(await screen.findByRole('region', { name: 'Top rated' })).toBeInTheDocument();
-      expect(shelfCalls()).toHaveLength(11);
+      expect(shelfCalls()).toHaveLength(12);
     } finally {
       vi.unstubAllGlobals();
     }

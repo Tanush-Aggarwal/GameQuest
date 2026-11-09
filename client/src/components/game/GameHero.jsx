@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { RatingBadge } from '@/components/ui/RatingBadge.jsx';
 import { HeaderEditor } from '@/components/admin/HeaderEditor.jsx';
 import { useIsAdmin } from '@/hooks/useIsAdmin.js';
+import { ShareGame } from '@/components/game/ShareGame.jsx';
 
 const families = [
   { label: 'PC', test: /\b(pc|windows|linux|steam)\b/i },
@@ -126,6 +127,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
                 <Button variant="secondary" onClick={() => setTrailerOpen(true)} ref={triggerRef} className="border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20">
                   <Play className="h-4 w-4 fill-current" aria-hidden="true" /> Watch trailer
                 </Button>
+                <ShareGame game={game} className="border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" />
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild><Button variant="secondary" aria-label="More game actions" className="h-11 w-11 rounded-full border-white/30 bg-transparent px-0 text-white hover:bg-white/10"><MoreHorizontal className="h-5 w-5" aria-hidden="true" /></Button></DropdownMenu.Trigger>
                   <DropdownMenu.Portal>

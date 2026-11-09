@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Avatar } from '@/components/ui/Avatar.jsx';
+import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
 import { HeaderEditor } from '@/components/admin/HeaderEditor.jsx';
@@ -67,7 +68,7 @@ export default function Admin() {
             <Tabs.Trigger
               key={value}
               value={value}
-              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text data-[state=active]:bg-[#151713] data-[state=active]:text-white"
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text data-[state=active]:bg-text data-[state=active]:text-bg"
             >
               <Icon className="h-4 w-4" aria-hidden="true" /> {label}
             </Tabs.Trigger>
@@ -185,7 +186,7 @@ function GamesPanel() {
               role="radio"
               aria-checked={hidden === value}
               onClick={() => setHidden(value)}
-              className={cn('min-h-9 rounded-full px-3 text-xs font-semibold', hidden === value ? 'bg-[#151713] text-white' : 'text-text-muted hover:text-text')}
+              className={cn('min-h-9 rounded-full px-3 text-xs font-semibold', hidden === value ? 'bg-text text-bg' : 'text-text-muted hover:text-text')}
             >
               {label}
             </button>
@@ -306,10 +307,7 @@ function GameRow({ game, onChange, onEditHeader }) {
 
 function Badge({ children, tone }) {
   return (
-    <span
-      className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', tone === 'muted' ? 'bg-surface-raised text-text-muted' : '')}
-      style={tone === 'muted' ? undefined : { background: 'var(--accent)', color: 'var(--accent-fg)' }}
-    >
+    <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', tone === 'muted' ? 'bg-surface-raised text-text-muted' : 'bg-text text-bg')}>
       {children}
     </span>
   );
@@ -441,19 +439,16 @@ function UsersPanel() {
                     {u.email} · {u.google ? 'Google' : u.emailVerified ? 'Verified' : 'Not verified'}
                   </p>
                 </div>
-                <label className="flex items-center gap-2 text-xs font-semibold text-text-muted">
-                  Role
-                  <select
-                    value={role}
-                    disabled={self || busy === u.id}
-                    title={self ? 'You can’t change your own role' : undefined}
-                    onChange={(e) => change(u, e.target.value)}
-                    className="h-9 rounded-control border border-border bg-bg px-2 text-sm font-semibold text-text disabled:opacity-60"
-                  >
-                    <option value="user">Player</option>
-                    <option value="admin">Administrator</option>
-                  </select>
-                </label>
+                <FancySelect
+                  aria-label={`Role for ${u.username}`}
+                  value={role}
+                  disabled={self || busy === u.id}
+                  onChange={(e) => change(u, e.target.value)}
+                  className="w-40"
+                >
+                  <option value="user">Player</option>
+                  <option value="admin">Administrator</option>
+                </FancySelect>
               </li>
             );
           })}

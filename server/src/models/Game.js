@@ -82,6 +82,9 @@ const gameSchema = new mongoose.Schema(
 // Catalog searches and filters
 gameSchema.index({ title: 'text', summary: 'text' }, { weights: { title: 10, summary: 1 } });
 gameSchema.index({ genres: 1, slug: 1 });
+// Explore categories also match themes and game modes (co-op, open world...).
+gameSchema.index({ themes: 1 });
+gameSchema.index({ gameModes: 1 });
 gameSchema.index({ platforms: 1, slug: 1 });
 gameSchema.index({ 'timeToBeat.main': 1, slug: 1 });
 gameSchema.index({ 'timeToBeat.endless': 1 });

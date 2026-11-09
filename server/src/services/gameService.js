@@ -181,7 +181,9 @@ export function createGameService({
     // Every word of the query must start a word of the title, case-insensitively: "hol" finds "Hollow Knight",
     // "hol kni" too. (A $text search only matches whole words, so a partial name found nothing.)
     if (q) filter.title = { $regex: titlePattern(q), $options: 'i' };
-    if (genre) filter.genres = genre;
+    // A category is an IGDB genre ("Shooter"), theme ("Open world") or game mode ("Co-operative"): match any of them.
+    // In $and, because the cursor below uses the top-level $or.
+    if (genre) filter.$and = [{ $or: [{ genres: genre }, { themes: genre }, { gameModes: genre }] }];
     if (platform) filter.platforms = platform;
     if (maxHours || minHours) {
       filter['timeToBeat.main'] = { ...(minHours && { $gte: minHours }), ...(maxHours && { $lte: maxHours }) };

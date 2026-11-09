@@ -212,6 +212,23 @@ describe('gameService.search (cache-first)', () => {
     expect(p2.nextCursor).toBeNull();
   });
 
+  it('a category matches genres, themes or game modes, and still pages by cursor', async () => {
+    const ctx = setupCatalog({
+      seed: [
+        stored('Alpha', { genres: ['Shooter'], gameModes: ['Co-operative', 'Multiplayer'] }),
+        stored('Beta', { genres: ['Puzzle'], themes: ['Open world'], gameModes: ['Single player'] }),
+        stored('Gamma', { genres: ['RPG'], themes: ['Open world'], gameModes: ['Co-operative'] }),
+      ],
+    });
+    await ctx.seed;
+    const s = ctx.gameService;
+    expect((await s.search({ genre: 'Co-operative', limit: 20 })).items.map((g) => g.slug)).toEqual(['alpha', 'gamma']);
+    expect((await s.search({ genre: 'Open world', limit: 20 })).items.map((g) => g.slug)).toEqual(['beta', 'gamma']);
+    const p1 = await s.search({ genre: 'Co-operative', limit: 1 });
+    expect(p1.items.map((g) => g.slug)).toEqual(['alpha']);
+    expect((await s.search({ genre: 'Co-operative', limit: 1, cursor: p1.nextCursor })).items.map((g) => g.slug)).toEqual(['gamma']);
+  });
+
   it('minRating and minHours filter, and every filtered list stays in popularity order', async () => {
     const ctx = setupCatalog({
       seed: [

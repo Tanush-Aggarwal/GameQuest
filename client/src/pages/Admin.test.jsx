@@ -89,7 +89,8 @@ describe('Admin console', () => {
     withAuth(<Admin />);
     await userEvent.click(screen.getByRole('tab', { name: /users/i }));
     const list = await screen.findByRole('list', { name: 'Users' });
-    const [mine, theirs] = within(list).getAllByRole('combobox');
+    const mine = within(list).getByRole('combobox', { name: 'Role for boss' });
+    const theirs = within(list).getByRole('combobox', { name: 'Role for ana' });
     expect(mine).toBeDisabled();
     await userEvent.selectOptions(theirs, 'admin');
     expect(api.setUserRole).toHaveBeenCalledWith('u2', 'admin');

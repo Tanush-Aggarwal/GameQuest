@@ -499,8 +499,7 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
               {user.role === 'admin' && (
                 <Link
                   to="/admin"
-                  className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition hover:brightness-110"
-                  style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/25 hover:border-white/30"
                 >
                   <Shield className="h-3.5 w-3.5" aria-hidden="true" /> Admin console
                 </Link>

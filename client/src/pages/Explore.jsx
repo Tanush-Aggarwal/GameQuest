@@ -19,16 +19,69 @@ const DEBOUNCE_MS = 300;
 const DAY_MS = 86_400_000;
 const SELECT = 'w-full sm:w-auto sm:min-w-[11rem]';
 
-const GENRES = [
-  { id: 'all', label: 'All Games' },
-  { id: 'Role-playing (RPG)', label: 'RPGs' },
-  { id: 'Indie', label: 'Indies' },
-  { id: 'Adventure', label: 'Adventure' },
-  { id: 'Platform', label: 'Platformers' },
-  { id: 'Puzzle', label: 'Puzzles' },
-  { id: 'Shooter', label: 'Shooters' },
-  { id: 'Strategy', label: 'Strategy' },
+// Categories match a game's IGDB genres, themes or game modes (the API checks all three), so play styles like
+// co-op sit next to genres. `top` ones get a pill in the main row; `rail` ones also get a shelf on the default page.
+const CATEGORY_GROUPS = [
+  {
+    title: 'Genres',
+    items: [
+      { id: 'Role-playing (RPG)', label: 'RPGs', top: true, rail: true },
+      { id: 'Shooter', label: 'Shooters', top: true, rail: true },
+      { id: 'Adventure', label: 'Adventure', top: true, rail: true },
+      { id: 'Indie', label: 'Indies', top: true, rail: true },
+      { id: 'Strategy', label: 'Strategy', top: true, rail: true },
+      { id: 'Platform', label: 'Platformers', rail: true },
+      { id: 'Puzzle', label: 'Puzzles', rail: true },
+      { id: 'Racing', label: 'Racing', top: true },
+      { id: 'Sport', label: 'Sports', top: true },
+      { id: 'Fighting', label: 'Fighting' },
+      { id: 'Simulator', label: 'Simulation', top: true },
+      { id: "Hack and slash/Beat 'em up", label: "Hack & slash" },
+      { id: 'Tactical', label: 'Tactical' },
+      { id: 'Real Time Strategy (RTS)', label: 'Real-time strategy' },
+      { id: 'Turn-based strategy (TBS)', label: 'Turn-based strategy' },
+      { id: 'Arcade', label: 'Arcade' },
+      { id: 'Point-and-click', label: 'Point & click' },
+      { id: 'Visual Novel', label: 'Visual novels' },
+      { id: 'Card & Board Game', label: 'Card & board' },
+      { id: 'MOBA', label: 'MOBA' },
+      { id: 'Music', label: 'Music & rhythm' },
+    ],
+  },
+  {
+    title: 'Play style',
+    items: [
+      { id: 'Co-operative', label: 'Co-op', top: true, rail: true },
+      { id: 'Multiplayer', label: 'Multiplayer', top: true },
+      { id: 'Single player', label: 'Single player' },
+      { id: 'Split screen', label: 'Split screen', top: true },
+      { id: 'Massively Multiplayer Online (MMO)', label: 'MMO' },
+      { id: 'Battle Royale', label: 'Battle royale' },
+    ],
+  },
+  {
+    title: 'Themes',
+    items: [
+      { id: 'Open world', label: 'Open world', top: true },
+      { id: 'Action', label: 'Action', top: true },
+      { id: 'Horror', label: 'Horror', top: true },
+      { id: 'Survival', label: 'Survival' },
+      { id: 'Fantasy', label: 'Fantasy' },
+      { id: 'Science fiction', label: 'Sci-fi' },
+      { id: 'Sandbox', label: 'Sandbox' },
+      { id: 'Stealth', label: 'Stealth' },
+      { id: 'Mystery', label: 'Mystery' },
+      { id: 'Thriller', label: 'Thriller' },
+      { id: 'Comedy', label: 'Comedy' },
+      { id: 'Historical', label: 'Historical' },
+      { id: 'Warfare', label: 'Warfare' },
+      { id: 'Party', label: 'Party' },
+      { id: 'Kids', label: 'Family & kids' },
+      { id: '4X (explore, expand, exploit, and exterminate)', label: '4X' },
+    ],
+  },
 ];
+const CATEGORIES = CATEGORY_GROUPS.flatMap((g) => g.items);
 
 // Catalog platform names as IGDB spells them (what the `platform` filter matches).
 const PLATFORMS = ['PC (Microsoft Windows)', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X|S', 'Xbox One', 'Nintendo Switch', 'Nintendo Switch 2'];
@@ -54,7 +107,7 @@ const buildRails = (today) => [
   { id: 'top', title: 'Top rated', subtitle: 'Best rated by critics and players', icon: Star, params: { sort: 'rating', minRating: 80 } },
   { id: 'new', title: 'New & upcoming', subtitle: 'Out in the last two months or on the way', icon: Sparkles, params: { releasedAfter: isoDaysAgo(60, today) } },
   { id: 'short', title: 'Under 10 hours', subtitle: 'Quick weekend wins', icon: Clock, params: { maxHours: 10 } },
-  ...GENRES.filter((g) => g.id !== 'all').map((g) => ({ id: `genre-${g.id}`, title: g.label, subtitle: 'Popular in this genre', icon: Flame, params: { genre: g.id } })),
+  ...CATEGORIES.filter((c) => c.rail).map((c) => ({ id: `genre-${c.id}`, title: c.label, subtitle: 'Popular right now', icon: Flame, params: { genre: c.id } })),
 ];
 
 // The catalog query behind the main list for the current URL.
@@ -237,23 +290,8 @@ export default function Explore() {
         )}
       </div>
 
-      {/* Genre pills */}
-      <div className="gq-genre-index scrollbar-none flex gap-2 overflow-x-auto pb-1" aria-label="Browse by genre">
-        {GENRES.map((g) => {
-          const active = selectedGenre === g.id;
-          return (
-            <button
-              key={g.id}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setFilter('genre', g.id)}
-              className={`gq-genre-tab inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold transition-colors ${active ? 'is-active' : ''}`}
-            >
-              {g.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Categories: grouped in tabs (Popular, Genres, Play style, Themes) */}
+      <CategoryPicker selected={selectedGenre} onSelect={(id) => setFilter('genre', id)} />
 
       {/* Rails (default browse only). Each loads on its own as it nears the screen, so none waits for, or hides, another. */}
       {isDefaultBrowse && (
@@ -338,5 +376,67 @@ export default function Explore() {
         </>
       )}
     </section>
+  );
+}
+
+// Categories in tabs: Popular (the common ones) and every group on its own, each a wrapping set of pills, so no pill is
+// ever cut off or hidden in a sideways scroll. Opens on the tab that holds the chosen category.
+function CategoryPicker({ selected, onSelect }) {
+  const groups = [{ title: 'Popular', items: CATEGORIES.filter((c) => c.top) }, ...CATEGORY_GROUPS];
+  const holder = groups.find((g) => g.items.some((c) => c.id === selected));
+  const [tab, setTab] = useState(holder?.title ?? 'Popular');
+  const items = groups.find((g) => g.title === tab)?.items ?? [];
+  const current = CATEGORIES.find((c) => c.id === selected);
+  const pill = (id, label, active) => (
+    <button
+      key={id}
+      type="button"
+      aria-pressed={active}
+      onClick={() => onSelect(active && id !== 'all' ? 'all' : id)}
+      className={`gq-genre-tab inline-flex min-h-10 items-center px-3 text-sm font-semibold transition-colors ${active ? 'is-active' : ''}`}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div className="flex flex-col gap-3 border-b border-border pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div role="tablist" aria-label="Category groups" className="scrollbar-none -mb-px flex gap-5 overflow-x-auto">
+          {groups.map((g) => {
+            const on = g.title === tab;
+            const has = g.items.some((c) => c.id === selected);
+            return (
+              <button
+                key={g.title}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setTab(g.title)}
+                className={`relative inline-flex min-h-10 shrink-0 items-center gap-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text ${
+                  on ? 'text-text' : 'text-text-muted hover:text-text'
+                }`}
+              >
+                {g.title}
+                <span className="text-xs font-medium tabular-nums text-text-muted">{g.items.length}</span>
+                {has && !on && <span className="h-1.5 w-1.5 rounded-full bg-text" aria-label="(has the chosen category)" />}
+                {on && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-text" />}
+              </button>
+            );
+          })}
+        </div>
+        {current && (
+          <p className="flex items-center gap-2 text-sm text-text-muted">
+            Showing <strong className="text-text">{current.label}</strong>
+            <button type="button" onClick={() => onSelect('all')} className="rounded-full px-2 py-1 text-xs font-semibold text-text underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text">
+              Clear
+            </button>
+          </p>
+        )}
+      </div>
+      <div role="tabpanel" aria-label={`${tab} categories`} className="flex flex-wrap gap-2">
+        {tab === 'Popular' && pill('all', 'All Games', selected === 'all')}
+        {items.map((c) => pill(c.id, c.label, selected === c.id))}
+      </div>
+    </div>
   );
 }

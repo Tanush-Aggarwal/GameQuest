@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { jest } from '@jest/globals';
 import { createApp } from '../app.js';
+import { createAdminService } from '../services/adminService.js';
 import { createAuthService } from '../services/authService.js';
 import { createYoutubeAdapter, isVideoId, parseDuration } from '../adapters/content/youtube.js';
 import { CACHE_VERSION, createTrailerService } from '../services/trailerService.js';
@@ -685,12 +686,20 @@ describe('GET /api/v1/games/:slug/trailer and POST .../trailer/report', () => {
     const models = createFakeModels();
     const config = testConfig({ YOUTUBE_API_KEY: KEY });
     const authService = createAuthService({ ...models, config, bcryptRounds: 4, reuseGraceMs: 0 });
-    const app = createApp({ config, logger: silentLogger, authService, trailerService: s.service });
-    return { app, s };
+    const adminService = createAdminService({ Game: s.Game, User: models.User, logger: silentLogger });
+    const app = createApp({ config, logger: silentLogger, authService, trailerService: s.service, adminService });
+    return { app, s, models };
   }
   const register = async (app, name) => {
     const agent = request.agent(app);
     await agent.post('/api/v1/auth/register').send({ username: name, email: `${name}@example.com`, password: 'correct-horse-9' });
+    return agent;
+  };
+  // An administrator: registered, given the role, then logged in again so the session carries it.
+  const registerAdmin = async (app, models, name) => {
+    const agent = await register(app, name);
+    models.User.docs.find((u) => u.usernameLower === name.toLowerCase()).role = 'admin';
+    await agent.post('/api/v1/auth/login').send({ email: `${name}@example.com`, password: 'correct-horse-9' });
     return agent;
   };
 
@@ -718,41 +727,36 @@ describe('GET /api/v1/games/:slug/trailer and POST .../trailer/report', () => {
     expect((await agent.get('/api/v1/games/BAD SLUG/trailer')).status).toBe(400);
   });
 
-  it('validates the report body, hides the video for the reporter, and drops it for everyone after a second user', async () => {
-    const { app, s } = setupApp();
+  it('only administrators can hide a trailer, and it is then gone for everyone', async () => {
+    const { app, s, models } = setupApp();
     await s.mk({ videos: [GAMEPLAY.videoId, LAUNCH.videoId] });
-    const alice = await register(app, 'alice');
-    const bob = await register(app, 'bob');
-    const cara = await register(app, 'cara');
-    await alice.get('/api/v1/games/witcher-3/trailer');
+    const player = await register(app, 'alice');
+    const admin = await registerAdmin(app, models, 'boss');
     const report = (agent, videoId) => agent.post('/api/v1/games/witcher-3/trailer/report').send({ videoId });
 
-    expect((await alice.post('/api/v1/games/witcher-3/trailer/report').send({})).status).toBe(400);
-    expect((await report(alice, '"><script>')).status).toBe(400);
-    expect((await alice.post('/api/v1/games/BAD SLUG/trailer/report').send({ videoId: id('a') })).status).toBe(400);
-    expect((await alice.post('/api/v1/games/missing/trailer/report').send({ videoId: id('a') })).status).toBe(404);
+    expect((await report(player, GAMEPLAY.videoId)).status).toBe(403); // a player can't
+    expect((await admin.post('/api/v1/games/witcher-3/trailer/report').send({})).status).toBe(400);
+    expect((await report(admin, '"><script>')).status).toBe(400);
+    expect((await admin.post('/api/v1/games/missing/trailer/report').send({ videoId: id('a') })).status).toBe(404);
 
-    const first = await report(alice, GAMEPLAY.videoId);
-    expect(first.status).toBe(200);
-    expect(first.body).toMatchObject({ changed: true, dropped: false });
-    expect(first.body.trailers.map((t) => t.videoId)).toEqual([LAUNCH.videoId]);
-    expect((await bob.get('/api/v1/games/witcher-3/trailer')).body.trailers).toHaveLength(2); // one report hides it for alice only
-
-    const second = await report(bob, GAMEPLAY.videoId);
-    expect(second.body).toMatchObject({ changed: true, dropped: true });
-    expect((await cara.get('/api/v1/games/witcher-3/trailer')).body.trailers.map((t) => t.videoId)).toEqual([LAUNCH.videoId]);
+    const hidden = await report(admin, GAMEPLAY.videoId);
+    expect(hidden.status).toBe(200);
+    expect(hidden.body).toMatchObject({ changed: true, dropped: true });
+    expect(hidden.body.trailers.map((t) => t.videoId)).toEqual([LAUNCH.videoId]);
+    expect((await player.get('/api/v1/games/witcher-3/trailer')).body.trailers.map((t) => t.videoId)).toEqual([LAUNCH.videoId]);
+    expect((await report(admin, 'steam-12345')).status).toBe(200); // official Steam trailers can be hidden too
   });
 
-  it('rate-limits reports per user (20 an hour), not per IP', async () => {
-    const { app, s } = setupApp();
+  it('rate-limits hiding per administrator (20 an hour), not per IP', async () => {
+    const { app, s, models } = setupApp();
     await s.mk({ videos: [GAMEPLAY.videoId] });
-    const a = await register(app, 'alice');
-    const b = await register(app, 'bob');
+    const a = await registerAdmin(app, models, 'alice');
+    const b = await registerAdmin(app, models, 'bob');
     for (let i = 0; i < 20; i += 1) expect((await a.post('/api/v1/games/witcher-3/trailer/report').send({ videoId: id('nope') })).status).toBe(200);
     const blocked = await a.post('/api/v1/games/witcher-3/trailer/report').send({ videoId: id('nope') });
     expect(blocked.status).toBe(429);
     expect(blocked.body.error.code).toBe('RATE_LIMITED');
-    expect((await b.post('/api/v1/games/witcher-3/trailer/report').send({ videoId: id('nope') })).status).toBe(200); // same IP, different user
+    expect((await b.post('/api/v1/games/witcher-3/trailer/report').send({ videoId: id('nope') })).status).toBe(200); // same IP, different admin
   });
 });
 
@@ -887,10 +891,13 @@ describe('the trailer list is per user, so it is never cacheable by a shared cac
     const models = createFakeModels();
     const config = testConfig({ YOUTUBE_API_KEY: KEY });
     const authService = createAuthService({ ...models, config, bcryptRounds: 4, reuseGraceMs: 0 });
-    const app = createApp({ config, logger: silentLogger, authService, trailerService: s.service });
+    const adminService = createAdminService({ Game: s.Game, User: models.User, logger: silentLogger });
+    const app = createApp({ config, logger: silentLogger, authService, trailerService: s.service, adminService });
     await s.mk({ videos: [GAMEPLAY.videoId, LAUNCH.videoId] });
     const agent = request.agent(app);
     await agent.post('/api/v1/auth/register').send({ username: 'neo', email: 'neo@example.com', password: 'correct-horse-9' });
+    models.User.docs[0].role = 'admin';
+    await agent.post('/api/v1/auth/login').send({ email: 'neo@example.com', password: 'correct-horse-9' });
     expect((await agent.get('/api/v1/games/witcher-3/trailer')).headers['cache-control']).toBe('private, no-store');
     const report = await agent.post('/api/v1/games/witcher-3/trailer/report').send({ videoId: GAMEPLAY.videoId });
     expect(report.headers['cache-control']).toBe('private, no-store');

@@ -44,6 +44,7 @@ import { MediaCache } from './models/MediaCache.js';
 import { createArtService } from './services/artService.js';
 import { createYoutubeAdapter } from './adapters/content/youtube.js';
 import { createTrailerService } from './services/trailerService.js';
+import { createAdminService } from './services/adminService.js';
 import { createHomeService } from './services/homeService.js';
 import { createNotificationService } from './services/notificationService.js';
 import { createAccountService } from './services/accountService.js';
@@ -82,10 +83,12 @@ export function createApp({
   requirementsService: _reqSvc,
   ratingsService: _ratingsSvc,
   steamMediaService: _steamMediaSvc,
+  adminService: _adminSvc,
   googleAdapter = createGoogleAdapter({ config }),
   eventBus = createEventBus({ logger }),
 }) {
   const emailService = _emailSvc ?? createEmailService({ config, logger });
+  const adminService = _adminSvc ?? createAdminService({ Game, User, Review, logger });
   const emailConfigured = Boolean(emailService?.isConfigured?.());
   const authService = _authSvc ?? createAuthService({ User, RefreshToken, config, emailService, logger });
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
@@ -222,6 +225,7 @@ export function createApp({
       notificationService,
       googleAdapter,
       LibraryEntry,
+      adminService,
       config,
     }));
 

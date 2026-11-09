@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { CalendarPlus, ChevronDown, Gamepad2, MoreHorizontal, Play, Sparkles, Star } from 'lucide-react';
+import { CalendarPlus, ChevronDown, EyeOff, Gamepad2, ImageIcon, MoreHorizontal, Play, Sparkles } from 'lucide-react';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { GameCover, SharedCover } from '@/components/games/GameCard.jsx';
 import { AddToCollection } from '@/components/collections/AddToCollection.jsx';
@@ -13,6 +13,9 @@ import { changeStatus } from '@/services/libraryApi.js';
 import { getErrorInfo } from '@/services/api.js';
 import { STATUS_META } from '@/lib/libraryStatus.js';
 import { toast } from 'sonner';
+import { RatingBadge } from '@/components/ui/RatingBadge.jsx';
+import { HeaderEditor } from '@/components/admin/HeaderEditor.jsx';
+import { useIsAdmin } from '@/hooks/useIsAdmin.js';
 
 const families = [
   { label: 'PC', test: /\b(pc|windows|linux|steam)\b/i },
@@ -30,6 +33,11 @@ export function groupedPlatforms(platforms = []) {
 export function GameHero({ game, entryState, onRecommend, onSchedule }) {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
+  const [headerOpen, setHeaderOpen] = useState(false);
+  // undefined: use the game's own; null or {url,…}: what an administrator just saved, so the header updates at once
+  const [override, setOverride] = useState(undefined);
+  const isAdmin = useIsAdmin();
+  const art = override === undefined ? game : { ...game, heroOverride: override };
   const triggerRef = useRef(null);
   const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
   const developer = game.developer?.[0];
@@ -56,7 +64,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
 
   return (
     <>
-      <BackdropHero art={game} seed={game.title} className="gq-game-hero relative overflow-hidden !border-0 !bg-[#0B0C0F] text-white">
+      <BackdropHero key={art.heroOverride?.url ?? 'auto'} art={art} seed={game.title} className="gq-game-hero relative overflow-hidden !border-0 !bg-[#0B0C0F] text-white">
         {/* fades the art into the light page below, so the header and content read as one page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-b from-transparent to-[var(--bg)]" />
         <div className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pt-4 pb-14 sm:px-8 sm:pt-6 sm:pb-16">
@@ -84,7 +92,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
               )}
               <h1 tabIndex={-1} className="font-heading text-4xl font-bold leading-[0.95] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] focus:outline-none sm:text-5xl lg:text-6xl">{game.title}</h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70">
-                {rating && <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 font-semibold text-white ring-1 ring-white/15 backdrop-blur-sm"><Star className="h-4 w-4 fill-[#F5A04A] text-[#F5A04A]" aria-hidden="true" />{rating}</span>}
+                <RatingBadge value={rating} size="md" />
                 {rating && <span aria-hidden="true">•</span>}
                 {[developer, year].filter(Boolean).map((value, index) => <span key={value}>{index > 0 && <span className="mr-3" aria-hidden="true">•</span>}{value}</span>)}
               </div>
@@ -125,7 +133,14 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
                       <DropdownMenu.Item onSelect={onRecommend} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><Sparkles className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Recommend to a friend</DropdownMenu.Item>
                       <DropdownMenu.Item onSelect={onSchedule} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><CalendarPlus className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Schedule a session</DropdownMenu.Item>
                       {entry && <DropdownMenu.Item onSelect={() => setCollectionOpen(true)} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised">Add to collection</DropdownMenu.Item>}
-                      <DropdownMenu.Item onSelect={() => setTrailerOpen(true)} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised">Wrong trailer?</DropdownMenu.Item>
+                      {isAdmin && (
+                        <>
+                          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                          <DropdownMenu.Label className="px-3 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-widest text-text-muted">Admin</DropdownMenu.Label>
+                          <DropdownMenu.Item onSelect={() => setHeaderOpen(true)} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><ImageIcon className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Edit header</DropdownMenu.Item>
+                          <DropdownMenu.Item onSelect={() => setTrailerOpen(true)} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><EyeOff className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Hide a trailer</DropdownMenu.Item>
+                        </>
+                      )}
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
@@ -135,6 +150,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
           </div>
         </div>
       </BackdropHero>
+      {isAdmin && <HeaderEditor game={game} open={headerOpen} onOpenChange={setHeaderOpen} onSaved={(updated) => setOverride(updated?.heroOverride ?? null)} />}
       <TrailerModal slug={game.slug} title={game.title} isOpen={trailerOpen} onClose={() => setTrailerOpen(false)} triggerRef={triggerRef} />
     </>
   );

@@ -19,6 +19,11 @@ export function toUpsertUpdate(game, at) {
   return { $set, $setOnInsert: { slug } };
 }
 
+export const steamHeroOf = (g) => {
+  if (g.steamHeroCheckedAt) return g.steamHero ?? null;
+  return g.externalIds?.steam ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.externalIds.steam}/library_hero.jpg` : null;
+};
+
 export const toGameDto = (g) => {
   const coverImage = g.coverImage ?? g.cover ?? null;
   const heroImage = g.heroImage ?? g.backdrop ?? g.artworks?.[0] ?? null;
@@ -56,6 +61,13 @@ export const toGameDto = (g) => {
     gameType: g.gameType ?? null,
     ratingAvg: g.ratingAvg ?? 0,
     ratingCount: g.ratingCount ?? 0,
+    // Steam's wide key art, composed for banners; headers try it first. The real URL comes from the Steam store
+    // (catalog:steam-heroes); a game not looked up yet gets the classic CDN path, which the client skips if missing.
+    steamHero: steamHeroOf(g),
+    steamHero2x: g.steamHero2x ?? null,
+    heroOverride: g.heroOverride?.url
+      ? { url: g.heroOverride.url, posX: g.heroOverride.posX ?? 50, posY: g.heroOverride.posY ?? 30, zoom: g.heroOverride.zoom ?? 1 }
+      : null,
   };
 };
 

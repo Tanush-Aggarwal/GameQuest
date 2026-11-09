@@ -15,6 +15,29 @@ const gameSchema = new mongoose.Schema(
       twitch: { type: String, sparse: true, unique: true },
       speedrun: { type: String, sparse: true, unique: true },
     },
+    // Steam's wide key art for banners (library hero), looked up from the Steam store by `catalog:steam-heroes`.
+    // null after a lookup that found none; missing when the game was never looked up.
+    steamHero: { type: String, default: undefined },
+    steamHero2x: { type: String, default: undefined },
+    steamHeroCheckedAt: { type: Date, default: undefined },
+    // Set by an administrator in the header editor: which picture the game's headers use and how it is framed
+    // (focus point in % and zoom). Missing means "pick automatically".
+    heroOverride: {
+      type: new mongoose.Schema(
+        {
+          url: { type: String, required: true },
+          posX: { type: Number, default: 50 },
+          posY: { type: Number, default: 30 },
+          zoom: { type: Number, default: 1 },
+          updatedBy: { type: String, default: null },
+          updatedAt: { type: Date, default: null },
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
+    // Trailers an administrator hid ("Wrong trailer?"): YouTube ids or "steam-<id>". Hidden for everyone until restored.
+    hiddenTrailers: { type: [String], default: undefined },
     timeToBeat: {
       main: { type: Number, default: null }, // hours
       extras: { type: Number, default: null },

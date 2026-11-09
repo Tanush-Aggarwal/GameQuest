@@ -135,6 +135,41 @@ describe('Explore', () => {
   });
 });
 
+describe('Explore endless scrolling', () => {
+  it('loads the next page by itself when the end of the list scrolls into view', async () => {
+    const observers = [];
+    class FakeObserver {
+      constructor(cb) {
+        this.cb = cb;
+        observers.push(this);
+      }
+      observe() {}
+      disconnect() {
+        this.gone = true;
+      }
+    }
+    vi.stubGlobal('IntersectionObserver', FakeObserver);
+    try {
+      mockCatalog({
+        main: async (p) =>
+          p.cursor
+            ? { items: [game('b', 'Beta')], nextCursor: null, warnings: [] }
+            : { items: [game('a', 'Alpha')], nextCursor: 'a', warnings: [] },
+      });
+      renderAt('/explore');
+      expect(await screen.findByRole('link', { name: /Alpha/ })).toBeInTheDocument();
+      // no button while scrolling works
+      expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+      const live = observers.filter((o) => !o.gone).at(-1);
+      act(() => live.cb([{ isIntersecting: true }]));
+      expect(await screen.findByRole('link', { name: /Beta/ })).toBeInTheDocument();
+      expect(mainCalls().at(-1)).toEqual(expect.objectContaining({ cursor: 'a' }));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
 describe('Explore search box follows the URL', () => {
   it('shows the new query when the URL changes from outside, and does not undo it', async () => {
     mockCatalog({ main: { items: [game('a', 'Alpha')], nextCursor: null, warnings: [] } });

@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
+import { Shield } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils.js';
 import { Avatar } from '@/components/ui/Avatar.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { getAccountSummary } from '@/services/accountApi.js';
 import { DESKTOP_NAV_ITEMS } from './navItems.js';
+import { useIsAdmin } from '@/hooks/useIsAdmin.js';
 
 // Desktop sidebar: narrow dark panel matching the reference design.
 // Hidden below md; the bottom tab bar handles mobile navigation.
 export function SideRail() {
   const { user } = useAuth();
+  const isAdmin = useIsAdmin();
   const [summary, setSummary] = useState(null);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function SideRail() {
       {/* Navigation */}
       <nav aria-label="Main" className="flex w-full flex-1 flex-col px-3 mt-2">
         <ul className="flex w-full flex-col gap-0.5">
-          {DESKTOP_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {(isAdmin ? [...DESKTOP_NAV_ITEMS, { to: '/admin', label: 'Admin', icon: Shield }] : DESKTOP_NAV_ITEMS).map(({ to, label, icon: Icon }) => (
             <li key={to} className="w-full">
               <NavLink
                 to={to}

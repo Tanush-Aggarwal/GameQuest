@@ -17,9 +17,7 @@ export async function getTrailers(slug, { signal } = {}) {
   return data.trailers ?? [];
 }
 
-// "Wrong trailer?": hides that video for you (and for everyone once a second person reports it).
-// Resolves to { trailers, changed, dropped }: your next list, whether the report counted, and whether
-// the video is now gone for everyone.
+// Administrators only: hides a wrong video for everyone. Resolves to { trailers, changed, dropped }.
 export async function reportTrailer(slug, videoId) {
   const { data } = await api.post(`/games/${encodeURIComponent(slug)}/trailer/report`, { videoId });
   return { trailers: data.trailers ?? [], changed: Boolean(data.changed), dropped: Boolean(data.dropped) };

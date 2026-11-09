@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Loader2, Search, Star } from 'lucide-react';
+import { ArrowRight, Gamepad2, Loader2, Search } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { searchGames } from '@/services/gamesApi.js';
 import { searchUsers } from '@/services/socialApi.js';
+import { RatingBadge } from '@/components/ui/RatingBadge.jsx';
 
 const DEBOUNCE_MS = 220;
 
@@ -162,12 +163,7 @@ export function SearchBox() {
                           {[o.game.releaseDate ? new Date(o.game.releaseDate).getUTCFullYear() : null, o.game.genres?.[0]].filter(Boolean).join(' · ') || 'Game'}
                         </span>
                       </span>
-                      {o.game.totalRating > 0 && (
-                        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-text-muted">
-                          <Star className="h-3.5 w-3.5 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />
-                          {(o.game.totalRating / 10).toFixed(1)}
-                        </span>
-                      )}
+                      {o.game.totalRating > 0 && <RatingBadge variant="chip" value={(o.game.totalRating / 10).toFixed(1)} />}
                     </button>
                   </li>
                 ) : o.player ? (

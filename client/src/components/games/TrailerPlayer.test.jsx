@@ -5,6 +5,8 @@ import { vi } from 'vitest';
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
 vi.mock('@/services/gamesApi.js', () => ({ getTrailers: vi.fn(), reportTrailer: vi.fn() }));
+const admin = vi.hoisted(() => ({ on: false }));
+vi.mock('@/hooks/useIsAdmin.js', () => ({ useIsAdmin: () => admin.on }));
 
 const { getTrailers, reportTrailer } = await import('@/services/gamesApi.js');
 const { TrailerPlayer } = await import('./TrailerPlayer.jsx');
@@ -16,7 +18,10 @@ const best = { videoId: A, label: 'Gameplay trailer', source: 'igdb' };
 const second = { videoId: B, label: 'Launch trailer', source: 'youtube' };
 const third = { videoId: C, label: 'Trailer', source: 'youtube' };
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  admin.on = false;
+});
 
 describe('TrailerPlayer', () => {
   it('shows a skeleton, then the best trailer as a thumbnail with a play button, and no iframe yet', async () => {
@@ -95,83 +100,61 @@ describe('TrailerPlayer', () => {
   });
 });
 
-describe('"Wrong trailer?"', () => {
-  const askToReport = async () => userEvent.click(await screen.findByRole('button', { name: 'Wrong trailer?' }));
-  const confirm = async () => userEvent.click(await screen.findByRole('button', { name: 'Yes, it is wrong' }));
+describe('Hide this video (administrators only)', () => {
+  const NAME = 'Hide this video (admin)';
+  const askToHide = async () => userEvent.click(await screen.findByRole('button', { name: NAME }));
+  const confirm = async () => userEvent.click(await screen.findByRole('button', { name: 'Yes, hide it' }));
+  beforeEach(() => {
+    admin.on = true;
+  });
+
+  it('is not shown to players', async () => {
+    admin.on = false;
+    getTrailers.mockResolvedValue([best, second]);
+    render(<TrailerPlayer slug="hades" title="Hades" />);
+    await screen.findByRole('button', { name: 'Play trailer for Hades' });
+    expect(screen.queryByRole('button', { name: NAME })).not.toBeInTheDocument();
+  });
 
   it('asks before doing anything, and Cancel leaves everything as it was', async () => {
     getTrailers.mockResolvedValue([best, second]);
     render(<TrailerPlayer slug="hades" title="Hades" />);
-    await askToReport();
-    expect(screen.getByText('Hide this video?')).toBeInTheDocument();
-    expect(reportTrailer).not.toHaveBeenCalled();
+    await askToHide();
+    expect(screen.getByText('Hide this video for everyone?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(reportTrailer).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Wrong trailer?' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: /choose a trailer/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: NAME })).toBeInTheDocument();
   });
 
-  it('hides the shown trailer for you and shows the next candidate', async () => {
+  it('hides the selected trailer for everyone and shows the next one', async () => {
     getTrailers.mockResolvedValue([best, second]);
-    reportTrailer.mockResolvedValue({ trailers: [second], changed: true, dropped: false });
+    reportTrailer.mockResolvedValue({ trailers: [best], changed: true, dropped: true });
     const { container } = render(<TrailerPlayer slug="hades" title="Hades" />);
-    await askToReport();
-    await confirm();
-
-    expect(reportTrailer).toHaveBeenCalledWith('hades', A);
-    await vi.waitFor(() => expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('hid that video for you')));
-    await vi.waitFor(() => expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining(B)));
-    expect(screen.queryByRole('group', { name: /choose a trailer/i })).not.toBeInTheDocument(); // one left: no tabs
-    expect(screen.getByRole('button', { name: 'Wrong trailer?' })).toBeInTheDocument(); // the confirm closed
-  });
-
-  it('says when the video is now removed for everyone', async () => {
-    getTrailers.mockResolvedValue([best, second]);
-    reportTrailer.mockResolvedValue({ trailers: [second], changed: true, dropped: true });
-    render(<TrailerPlayer slug="hades" title="Hades" />);
-    await askToReport();
-    await confirm();
-    await vi.waitFor(() => expect(toast.success).toHaveBeenCalledWith('Thanks, that video was removed for everyone.'));
-  });
-
-  it('does not claim a removal when the report did not count (the video was already gone)', async () => {
-    getTrailers.mockResolvedValue([best, second]);
-    reportTrailer.mockResolvedValue({ trailers: [second], changed: false, dropped: true });
-    render(<TrailerPlayer slug="hades" title="Hades" />);
-    await askToReport();
-    await confirm();
-    await vi.waitFor(() => expect(toast.info).toHaveBeenCalledWith('That video was already removed.'));
-    expect(toast.success).not.toHaveBeenCalled();
-  });
-
-  it('reports the trailer that is currently selected, not always the first', async () => {
-    getTrailers.mockResolvedValue([best, second]);
-    reportTrailer.mockResolvedValue({ trailers: [best], changed: true, dropped: false });
-    render(<TrailerPlayer slug="hades" title="Hades" />);
     await userEvent.click(await screen.findByRole('button', { name: 'Launch trailer' }));
-    await askToReport();
+    await askToHide();
     await confirm();
     expect(reportTrailer).toHaveBeenCalledWith('hades', B);
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('hidden for everyone')));
+    await vi.waitFor(() => expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining(A)));
   });
 
-  it('hides the whole section when the last trailer is hidden', async () => {
-    getTrailers.mockResolvedValue([best]);
-    reportTrailer.mockResolvedValue({ trailers: [], changed: true, dropped: false });
+  it('also works for Steam trailers', async () => {
+    getTrailers.mockResolvedValue([{ videoId: 'steam-123', label: 'Trailer', source: 'steam', poster: 'https://x/p.jpg', mp4: 'https://x/v.mp4' }]);
+    reportTrailer.mockResolvedValue({ trailers: [], changed: true, dropped: true });
     const { container } = render(<TrailerPlayer slug="hades" title="Hades" />);
-    await askToReport();
+    await askToHide();
     await confirm();
+    expect(reportTrailer).toHaveBeenCalledWith('hades', 'steam-123');
     await vi.waitFor(() => expect(container).toBeEmptyDOMElement());
-    expect(toast.success).toHaveBeenCalled();
   });
 
-  it('keeps the list and shows the error when reporting fails (e.g. rate limited)', async () => {
+  it('keeps the list and shows the error when hiding fails', async () => {
     getTrailers.mockResolvedValue([best, second]);
-    reportTrailer.mockRejectedValue({ response: { data: { error: { code: 'RATE_LIMITED', message: 'You have reported a lot of trailers.' } } } });
+    reportTrailer.mockRejectedValue({ response: { data: { error: { code: 'RATE_LIMITED', message: 'Slow down.' } } } });
     render(<TrailerPlayer slug="hades" title="Hades" />);
-    await askToReport();
+    await askToHide();
     await confirm();
-    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith('You have reported a lot of trailers.'));
-    expect(screen.getByRole('group', { name: /choose a trailer/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wrong trailer?' })).toBeEnabled();
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith('Slow down.'));
+    expect(screen.getByRole('button', { name: NAME })).toBeEnabled();
   });
 });

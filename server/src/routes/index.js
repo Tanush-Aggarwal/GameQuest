@@ -15,6 +15,7 @@ import { createSteamRouter } from './steam.js';
 import { createSyncRouter } from './sync.js';
 import { createRequireAuth } from '../middleware/auth.js';
 import { createAccountRouters } from './account.js';
+import { createAdminRouter } from './admin.js';
 
 export function createRoutes({
   authService,
@@ -41,6 +42,7 @@ export function createRoutes({
   notificationService,
   googleAdapter,
   LibraryEntry,
+  adminService,
   config,
 }) {
   const router = Router();
@@ -50,7 +52,8 @@ export function createRoutes({
   router.get('/health', health);
   router.use('/auth', createAuthRouter({ authService, googleAdapter, config }));
   router.use('/public', createPublicRouter({ gameService, homeService }));
-  router.use('/games', createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService, steamMediaService, Game }));
+  router.use('/games', createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService, steamMediaService, Game, adminService }));
+  if (adminService) router.use('/admin', createAdminRouter({ authService, adminService }));
   router.use('/library', createLibraryRouter({ authService, libraryService }));
   router.use('/library', createProgressRouter({ requireAuth, progressService }));
   router.use('/insights', createInsightsRouter({ requireAuth, insightsService, homeService }));

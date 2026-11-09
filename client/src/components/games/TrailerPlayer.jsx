@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Flag, Play } from 'lucide-react';
+import { EyeOff, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { useLayered } from '@/hooks/useLayered.js';
+import { useIsAdmin } from '@/hooks/useIsAdmin.js';
 import { getErrorInfo } from '@/services/api.js';
 import { getTrailers, reportTrailer } from '@/services/gamesApi.js';
 import { isPlayableTrailer, isSteamTrailer, trailerThumb } from '@/lib/trailers.js';
@@ -86,7 +87,8 @@ function SteamPoster({ trailer, title }) {
   );
 }
 
-// Trailer section of the game page: the best trailer, small tabs for the others, and "Wrong trailer?".
+// Trailer section of the game page: the best trailer and small tabs for the others.
+// Administrators also get "Hide this video", which removes a wrong video for everyone (restorable from /admin).
 // Renders nothing when the game has no (more) trailers.
 export function TrailerPlayer({ slug, title }) {
   const load = useCallback((signal) => getTrailers(slug, { signal }), [slug]);
@@ -95,6 +97,7 @@ export function TrailerPlayer({ slug, title }) {
   const [selected, setSelected] = useState(null);
   const [reporting, setReporting] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const isAdmin = useIsAdmin();
 
   async function wrongTrailer(videoId) {
     setReporting(true);
@@ -102,9 +105,7 @@ export function TrailerPlayer({ slug, title }) {
       const result = await reportTrailer(slug, videoId);
       setTrailers(result.trailers);
       setSelected(null);
-      if (!result.changed) toast.info('That video was already removed.');
-      else if (result.dropped) toast.success('Thanks, that video was removed for everyone.');
-      else toast.success(result.trailers.length ? 'Thanks, we hid that video for you. Here is the next one.' : 'Thanks, we hid that video for you.');
+      toast.success(result.changed ? 'Video hidden for everyone. You can restore it from Admin › Trailers.' : 'That video was already hidden.');
     } catch (err) {
       toast.error(getErrorInfo(err).message);
     } finally {
@@ -151,11 +152,11 @@ export function TrailerPlayer({ slug, title }) {
             {labels[list.indexOf(current)]}
             <span className="ml-2 font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>· {isSteamTrailer(current) ? 'Steam' : 'YouTube'}</span>
           </p>
-          {isSteamTrailer(current) ? null : confirming ? (
-            <div role="group" aria-label="Confirm wrong trailer" className="flex flex-wrap items-center gap-2">
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>Hide this video?</span>
+          {!isAdmin ? null : confirming ? (
+            <div role="group" aria-label="Confirm hiding the video" className="flex flex-wrap items-center gap-2">
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>Hide this video for everyone?</span>
               <Button variant="secondary" onClick={() => wrongTrailer(current.videoId)} disabled={reporting}>
-                {reporting ? 'Hiding…' : 'Yes, it is wrong'}
+                {reporting ? 'Hiding…' : 'Yes, hide it'}
               </Button>
               {/* The safe choice takes focus, so the dialog-less confirm doesn't drop keyboard users */}
               <Button variant="ghost" autoFocus onClick={() => setConfirming(false)} disabled={reporting} className="text-white hover:bg-white/10">
@@ -169,8 +170,8 @@ export function TrailerPlayer({ slug, title }) {
               className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-xs transition-colors hover:bg-white/10"
               style={{ color: 'rgba(255,255,255,0.6)' }}
             >
-              <Flag className="h-3.5 w-3.5" aria-hidden="true" />
-              Wrong trailer?
+              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+              Hide this video (admin)
             </button>
           )}
         </div>

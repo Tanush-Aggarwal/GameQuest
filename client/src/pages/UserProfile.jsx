@@ -6,6 +6,7 @@ import {
   Gamepad2,
   Layers,
   Lock,
+  Pencil,
   ShieldBan,
   Sparkles,
   Star,
@@ -23,7 +24,7 @@ import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
 import { CoverImage } from '@/components/games/GameCard.jsx';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { LARGE_TILE } from '@/components/profile/FavouriteTiles.jsx';
-import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { BackdropHero, PROFILE_HERO_CLASS } from '@/components/art/BackdropHero.jsx';
 import { TrophyShelf } from '@/components/profile/TrophyShelf.jsx';
 import { LevelGuide } from '@/components/profile/LevelGuide.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -100,8 +101,15 @@ function RelationActions({ profile, setProfile }) {
 
   if (relation === 'self') {
     return (
-      <Link to="/profile" className={buttonVariants({ variant: 'secondary', className: 'border-transparent bg-white text-[#14161a] hover:bg-white/90' })}>
-        Edit my profile
+      // Your own public profile: a lime call to action that matches the rest of the hero buttons. Colours are inline so
+      // the hero's "text is white" rule can't wash it out (that is what made the old white button look empty).
+      <Link
+        to="/profile"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-bold shadow-lg ring-1 ring-black/10 transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
+      >
+        <Pencil className="h-4 w-4" aria-hidden="true" style={{ color: 'var(--accent-fg)' }} />
+        Edit profile
       </Link>
     );
   }
@@ -264,7 +272,7 @@ export default function UserProfile() {
         <>
           {/* User Hero Banner */}
           {/* Banner: the art of their first favourite game (a gradient when they have none, or the profile is private) */}
-          <BackdropHero as="header" art={profile.restricted ? null : profile.user.favouriteGames?.[0]} seed={profile.user.username} className="min-h-[220px] px-5 py-8 sm:px-10 sm:py-12">
+          <BackdropHero as="header" art={profile.restricted ? null : profile.user.favouriteGames?.[0]} seed={profile.user.username} className={`${PROFILE_HERO_CLASS} shadow-xl`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-5 sm:gap-6">
                 <UserAvatar user={profile.user} size="lg" />
@@ -286,8 +294,9 @@ export default function UserProfile() {
                   )}
                 </div>
               </div>
-              {/* a solid backing: these buttons sit at the open end of the banner, over whatever the art is */}
-              <div className="flex-shrink-0 self-start rounded-card bg-bg/80 p-1 sm:self-center">
+              {/* Friend actions get a solid backing because they sit over whatever the art is; your own "Edit profile"
+                  button is a solid pill already and needs none. */}
+              <div className={`flex-shrink-0 self-start sm:self-center ${profile.relation === 'self' ? '' : 'rounded-card bg-bg/80 p-1'}`}>
                 <RelationActions profile={profile} setProfile={setProfile} />
               </div>
             </div>

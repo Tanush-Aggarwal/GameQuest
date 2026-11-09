@@ -121,6 +121,10 @@ export function createFakeCollection({ unique = [], defaults = {} } = {}) {
       if (!list.some((x) => sameValue(x, v))) list.push(v);
       setPath(doc, k, list);
     }
+    for (const [k, v] of Object.entries(update.$pull ?? {})) {
+      const current = getPath(doc, k);
+      if (Array.isArray(current)) setPath(doc, k, current.filter((x) => !sameValue(x, v)));
+    }
     for (const [k, v] of Object.entries(update.$inc ?? {})) setPath(doc, k, (getPath(doc, k) ?? 0) + v);
     for (const [k, v] of Object.entries(update.$max ?? {})) {
       const cur = getPath(doc, k);

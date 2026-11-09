@@ -12,6 +12,7 @@ import { HeroCarousel } from '@/components/explore/HeroCarousel.jsx';
 import { ArtHeader } from '@/components/art/ArtPanel.jsx';
 import { getErrorInfo } from '@/services/api.js';
 import { searchGames } from '@/services/gamesApi.js';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll.js';
 
 const PAGE_SIZE = 24;
 const DEBOUNCE_MS = 300;
@@ -94,6 +95,8 @@ export default function Explore() {
     error: null,
   });
   const [loadingMore, setLoadingMore] = useState(false);
+  // After a failed page the automatic loading stops and a "Try again" button takes over.
+  const [moreFailed, setMoreFailed] = useState(false);
   const requestId = useRef(0);
 
   // Sync debounced search input to URL
@@ -113,6 +116,7 @@ export default function Explore() {
   const load = useCallback(async () => {
     const id = (requestId.current += 1);
     setState((s) => ({ ...s, status: 'loading', error: null }));
+    setMoreFailed(false);
     try {
       const data = await searchGames({ ...listParams(new URLSearchParams(query)), limit: PAGE_SIZE });
       if (id === requestId.current) setState({ status: 'success', ...data, error: null });
@@ -128,20 +132,36 @@ export default function Explore() {
     };
   }, [load]);
 
+  const loadingMoreRef = useRef(false);
   async function loadMore() {
+    if (loadingMoreRef.current || !state.nextCursor) return;
+    loadingMoreRef.current = true;
     const id = requestId.current;
     setLoadingMore(true);
+    setMoreFailed(false);
     try {
       const data = await searchGames({ ...listParams(params), limit: PAGE_SIZE, cursor: state.nextCursor });
       if (id === requestId.current) {
-        setState((s) => ({ ...s, items: [...s.items, ...data.items], nextCursor: data.nextCursor }));
+        // A game can move between pages while the catalog updates; never show it twice.
+        setState((s) => {
+          const seen = new Set(s.items.map((g) => g.id));
+          return { ...s, items: [...s.items, ...data.items.filter((g) => !seen.has(g.id))], nextCursor: data.nextCursor };
+        });
       }
     } catch (err) {
-      if (id === requestId.current) toast.error(getErrorInfo(err).message);
+      if (id === requestId.current) {
+        setMoreFailed(true);
+        toast.error(getErrorInfo(err).message);
+      }
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
   }
+  // Steam-style endless list: the next page starts loading well before the last row reaches the screen.
+  const infinite = useInfiniteScroll(loadMore, {
+    enabled: state.status === 'success' && Boolean(state.nextCursor) && !loadingMore && !moreFailed,
+  });
 
   function setFilter(name, value) {
     const next = new URLSearchParams(params);
@@ -294,11 +314,25 @@ export default function Explore() {
                 </ul>
               </div>
 
-              {state.nextCursor && (
+              {loadingMore && (
+                <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5" aria-hidden="true">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <li key={i}>
+                      <GameCardSkeleton />
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {state.nextCursor && <div ref={infinite.ref} aria-hidden="true" className="h-px" />}
+              {state.nextCursor && (!infinite.supported || moreFailed) && (
                 <Button variant="secondary" className="self-center" onClick={loadMore} disabled={loadingMore}>
-                  {loadingMore ? 'Loading…' : 'Load more'}
+                  {loadingMore ? 'Loading…' : moreFailed ? 'Try again' : 'Load more'}
                 </Button>
               )}
+              {!state.nextCursor && state.items.length > PAGE_SIZE && (
+                <p className="self-center text-xs text-text-muted">You&apos;ve reached the end · {state.items.length.toLocaleString()} games</p>
+              )}
+              <span role="status" className="sr-only">{loadingMore ? 'Loading more games' : ''}</span>
             </div>
           )}
         </>

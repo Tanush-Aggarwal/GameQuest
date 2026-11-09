@@ -222,3 +222,33 @@
 [data-hero] svg:not(button svg, .bg-surface svg, .bg-bg svg, [class*='text-[#'] ) {
   color: inherit;
 }
+
+/* ── Home hero carousel ─────────────────────────────────────────────────────────────────────────
+   Slides cross-fade slowly while the visible one drifts from a slight zoom to rest (a gentle
+   "Ken Burns" move). The caption fades up with each slide and the active dot fills over the slide's time. */
+.gq-hero-slide {
+  opacity: 0;
+  transform: scale(1.08);
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 8s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: opacity, transform;
+}
+.gq-hero-slide[data-active='true'] {
+  opacity: 1;
+  transform: scale(1);
+}
+.gq-hero-caption { animation: gq-hero-caption-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes gq-hero-caption-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.gq-hero-dot-fill { width: 0; animation-name: gq-hero-dot; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes gq-hero-dot { to { width: 100%; } }
+.gq-hero-arrow { opacity: 0; transition: opacity 0.25s ease, background-color 0.2s ease; }
+.relative:hover > .gq-hero-arrow, .gq-hero-arrow:focus-visible { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gq-hero-slide { transform: none; transition: opacity 0.3s linear; }
+  .gq-hero-caption, .gq-hero-dot-fill { animation: none; }
+  .gq-hero-dot-fill { width: 100%; }
+}
+

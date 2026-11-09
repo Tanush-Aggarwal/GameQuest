@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Gamepad2, Layers, Star } from 'lucide-react';
+import { Gamepad2, Layers } from 'lucide-react';
 import { useMotionOk } from '@/lib/motion.js';
+import { RatingBadge } from '@/components/ui/RatingBadge.jsx';
 
 /**
  * Normalises cover URLs so that IGDB images render in high resolution (2x retina / 1080p).
@@ -134,12 +135,7 @@ export function GameCard({ game, shared = true }) {
               <Gamepad2 className="h-3 w-3" aria-hidden="true" />
               <Layers className="h-3 w-3" aria-hidden="true" />
             </div>
-            {rating && (
-              <span className="flex items-center gap-1 font-bold text-[#E58A2B]">
-                <Star className="h-3 w-3 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />
-                {rating}
-              </span>
-            )}
+            <RatingBadge value={rating} />
           </div>
         </div>
       </div>

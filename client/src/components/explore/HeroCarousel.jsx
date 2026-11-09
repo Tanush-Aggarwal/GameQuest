@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
 import { ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { cn } from '@/lib/utils.js';
@@ -22,6 +22,16 @@ function shuffle(list) {
   return out;
 }
 export const ADVANCE_MS = 7000;
+
+// The slide that is fading out stays visible for a moment but is hidden from screen readers and keyboard focus.
+function Leaving({ children }) {
+  const present = useIsPresent();
+  return (
+    <div aria-hidden={present ? undefined : true} inert={present ? undefined : true} className="h-full">
+      {children}
+    </div>
+  );
+}
 const ICON_BUTTON =
   'flex h-11 w-11 items-center justify-center rounded-full border border-border bg-bg/80 text-text hover:border-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text';
 
@@ -62,7 +72,14 @@ export function HeroCarousel() {
 
   const game = slides[Math.min(index, count - 1)];
   const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
-  const fade = motionOk ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.4 } } : {};
+  // The outgoing slide stays underneath while the new one fades in (both share one grid cell), so the switch is a
+  // smooth cross-fade instead of a cut to black. The text rises in a moment later.
+  const crossFade = motionOk
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.9, ease: [0.4, 0, 0.2, 1] } }
+    : {};
+  const fade = motionOk
+    ? { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] } }
+    : {};
 
   return (
     <section
@@ -77,8 +94,11 @@ export function HeroCarousel() {
       className="flex flex-col gap-3"
     >
       {/* The live region is this stable wrapper; keyed BackdropHero renders full strength backdrop art with dark scrim */}
-      <div aria-live={auto ? 'off' : 'polite'}>
-        <BackdropHero key={game.id} as="div" art={game} seed={game.title} className="gq-home-hero min-h-72 px-5 py-8 sm:px-8 sm:py-10">
+      <div aria-live={auto ? 'off' : 'polite'} className="grid overflow-hidden rounded-card">
+        <AnimatePresence initial={false}>
+        <motion.div key={game.id} {...crossFade} style={{ gridArea: '1 / 1' }}>
+        <Leaving>
+        <BackdropHero as="div" art={game} seed={game.title} className="gq-home-hero min-h-72 px-5 py-8 sm:px-8 sm:py-10">
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <motion.div {...fade} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${count}`} className="flex max-w-xl flex-col gap-3">
               <p className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--accent)]">
@@ -95,6 +115,9 @@ export function HeroCarousel() {
             </motion.div>
           </div>
         </BackdropHero>
+        </Leaving>
+        </motion.div>
+        </AnimatePresence>
       </div>
 
       {count > 1 && (
@@ -110,8 +133,16 @@ export function HeroCarousel() {
                 aria-label={`Slide ${i + 1}: ${s.title}`}
                 aria-pressed={i === index}
                 onClick={() => go(i)}
-                className={`h-2.5 rounded-full transition-all ${i === index ? 'w-8 bg-text' : 'w-2.5 bg-border hover:bg-text-muted'}`}
-              />
+                className={`relative h-2.5 overflow-hidden rounded-full transition-[width,background-color] duration-500 ${i === index ? 'w-8 bg-border' : 'w-2.5 bg-border hover:bg-text-muted'}`}
+              >
+                {i === index && (
+                  <span
+                    key={index}
+                    className="gq-hero-dot-fill absolute inset-y-0 left-0 rounded-full bg-text"
+                    style={{ animationDuration: `${ADVANCE_MS}ms`, animationPlayState: auto ? 'running' : 'paused' }}
+                  />
+                )}
+              </button>
             ))}
           </div>
           <button type="button" aria-label="Next slide" onClick={() => go((i) => i + 1)} className={ICON_BUTTON}>

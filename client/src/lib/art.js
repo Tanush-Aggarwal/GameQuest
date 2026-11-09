@@ -11,15 +11,25 @@ export function artImageUrl(url, kind = 'backdrop') {
   return url.replace('/t_cover_big_2x/', '/t_cover_big/');
 }
 
-// Responsive srcSet for hero images: mobile phones load the 889px screenshot (or regular cover)
-// instead of 1080p, reducing mobile LCP by a factor of 4x.
+// Responsive srcSet for hero images. Phones get IGDB's 889px screenshot size, normal screens the 1080p one, and
+// large or high-DPI screens (a 1440p monitor, Windows at 125-150% scaling, Retina) the original upload, so a
+// full-width banner stays sharp instead of being stretched from 1920px. Heroes span the page minus the sidebar.
+export const HERO_SIZES = '(max-width: 640px) 100vw, calc(100vw - 160px)';
 export function artImageSrcSet(url, _kind = 'hero') {
   if (typeof url !== 'string' || !url) return null;
   if (url.includes('/t_1080p/')) {
     const mobile = url.replace('/t_1080p/', '/t_screenshot_big/');
+    const original = url.replace('/t_1080p/', '/t_original/');
     return {
-      srcSet: `${mobile} 889w, ${url} 1920w`,
-      sizes: '(max-width: 640px) 100vw, 1920px',
+      srcSet: `${mobile} 889w, ${url} 1920w, ${original} 3840w`,
+      sizes: HERO_SIZES,
+    };
+  }
+  // Steam's banner art from the store (hashed folder): its 2x version sits next to it, 3840 wide.
+  if (url.includes('store_item_assets') && url.includes('/library_hero.jpg')) {
+    return {
+      srcSet: `${url} 1920w, ${url.replace('/library_hero.jpg', '/library_hero_2x.jpg')} 3840w`,
+      sizes: HERO_SIZES,
     };
   }
   if (url.includes('/t_cover_big/') || url.includes('/t_cover_big_2x/')) {

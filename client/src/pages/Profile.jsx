@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import {
   ExternalLink,
   Save,
+  Shield,
   ShieldOff,
   Sparkles,
   User,
@@ -19,7 +20,7 @@ import { FavouriteTiles, SLOT_COUNT } from '@/components/profile/FavouriteTiles.
 import { FavouritePicker } from '@/components/profile/FavouritePicker.jsx';
 import { SteamLinkCard } from '@/components/steam/SteamLinkCard.jsx';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
-import { BackdropHero } from '@/components/art/BackdropHero.jsx';
+import { BackdropHero, PROFILE_HERO_CLASS } from '@/components/art/BackdropHero.jsx';
 import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -481,14 +482,8 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
       as="header"
       art={banner}
       seed="profile"
-      className="relative isolate overflow-hidden rounded-[14px] border border-white/10 bg-[#111311] p-6 text-white shadow-xl sm:p-8"
+      className={`${PROFILE_HERO_CLASS} shadow-xl`}
     >
-      {/* Dark left scrim for maximum text contrast */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-black/90 via-black/75 via-60% to-transparent"
-      />
-
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -500,12 +495,23 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
             </p>
           </div>
           {user && (
-            <Link
-              to={`/u/${user.username}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/25 hover:border-white/30"
-            >
-              View my public profile <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              {user.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition hover:brightness-110"
+                  style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
+                >
+                  <Shield className="h-3.5 w-3.5" aria-hidden="true" /> Admin console
+                </Link>
+              )}
+              <Link
+                to={`/u/${user.username}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/25 hover:border-white/30"
+              >
+                View my public profile <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </div>
           )}
         </div>
 

@@ -291,7 +291,7 @@ describe('UserProfile', () => {
   it('links to the editor for your own profile', async () => {
     api.getProfile.mockResolvedValue(profile({ relation: 'self', user: { id: 'me1', username: 'demo', memberSince: '2026-01-01T00:00:00Z' } }));
     renderAt('/u/demo');
-    expect(await screen.findByRole('link', { name: 'Edit my profile' })).toHaveAttribute('href', '/profile');
+    expect(await screen.findByRole('link', { name: 'Edit profile' })).toHaveAttribute('href', '/profile');
   });
 
   it('renders favourite games showcase and trophy milestones for a user', async () => {

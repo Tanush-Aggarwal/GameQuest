@@ -23,7 +23,9 @@ export function createSteamMediaService({ MediaCache, steam, logger, now = () =>
       if (media && steam.probeArt) {
         // library_hero is Steam's wide key art without the logo baked in; header.jpg is the fallback.
         const art = await steam.probeArt(appid).catch(() => null);
-        media.hero = art?.backdrop ?? media.background ?? null;
+        // header.jpg is a 460x215 logo strip: when that is all the CDN has, the store page background is better.
+        const backdrop = art?.backdrop && !/\/header\.jpg$/.test(art.backdrop) ? art.backdrop : null;
+        media.hero = backdrop ?? media.background ?? art?.backdrop ?? null;
       }
       if (!media) ttl = MISS_TTL_MS;
     } catch (err) {

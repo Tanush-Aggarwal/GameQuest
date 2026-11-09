@@ -8,7 +8,6 @@ import {
   Trophy,
   Clock,
   ChevronRight,
-  Star,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth.js';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -22,6 +21,7 @@ import { UpcomingSessions } from '@/components/sessions/UpcomingSessions.jsx';
 import { PlayNextSection } from '@/components/home/PlayNextRail.jsx';
 import { HomeHero } from '@/components/home/HomeHero.jsx';
 import { CoverImage, GameCardSkeleton } from '@/components/games/GameCard.jsx';
+import { RatingBadge } from '@/components/ui/RatingBadge.jsx';
 
 export default function Home() {
   const { user } = useAuth();
@@ -213,12 +213,7 @@ function TrendingCard({ game }) {
             <span className="truncate rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">
               {game.genres?.[0] ?? 'Game'}
             </span>
-            {ratingValue && (
-              <span className="flex items-center gap-1 font-bold text-[#F5A04A]">
-                <Star className="h-3.5 w-3.5 fill-[#E58A2B] text-[#E58A2B]" aria-hidden="true" />
-                {ratingValue}
-              </span>
-            )}
+            <RatingBadge value={ratingValue} />
           </div>
         </div>
       </div>

@@ -244,6 +244,42 @@ export function createSteamAdapter({ config, fetchImpl = fetch, retryDelayMs = 7
     // Store media from the public store API (no key): trailers, full-size screenshots and wide art.
     // null when the app is unknown. Movies carry whichever formats Steam sends (older apps: mp4/webm,
     // newer ones: HLS/DASH manifests).
+    // Store asset file names for up to 50 apps in one call (no key needed): Map(appid -> { libraryHero, libraryHero2x,
+    // pageBackground, parentAppid }). Newer games keep their art under a hashed folder, so the URL can't be guessed;
+    // this asks Steam for it. Missing apps are absent from the map; a network failure throws.
+    async getStoreAssets(appids) {
+      const ids = [...new Set(appids.map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 50);
+      if (!ids.length) return new Map();
+      const input = { ids: ids.map((appid) => ({ appid })), context: { language: 'english', country_code: 'US' }, data_request: { include_assets: true } };
+      let res;
+      try {
+        res = await fetchImpl(`${API}/IStoreBrowseService/GetItems/v1/?${new URLSearchParams({ input_json: JSON.stringify(input) })}`, {
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+      } catch {
+        throw new UpstreamError('Could not reach the Steam store.');
+      }
+      if (res.status === 429) throw new UpstreamError('The Steam store is rate limiting requests. Try again later.');
+      if (!res.ok) throw new UpstreamError(`The Steam store is unavailable right now (HTTP ${res.status}).`);
+      const items = (await res.json().catch(() => null))?.response?.store_items ?? [];
+      const out = new Map();
+      for (const item of items) {
+        if (!item?.appid || item.success !== 1) continue;
+        const a = item.assets ?? {};
+        const url = (file) =>
+          file && typeof a.asset_url_format === 'string'
+            ? `https://shared.akamai.steamstatic.com/store_item_assets/${a.asset_url_format.replace('${FILENAME}', file)}`
+            : null;
+        out.set(String(item.appid), {
+          libraryHero: url(a.library_hero),
+          libraryHero2x: url(a.library_hero_2x),
+          pageBackground: url(a.raw_page_background),
+          parentAppid: item.related_items?.parent_appid ? String(item.related_items.parent_appid) : null,
+        });
+      }
+      return out;
+    },
+
     async getStoreMedia(appid) {
       let res;
       try {

@@ -16,13 +16,26 @@ describe('BackdropHero', () => {
     const img = imgOf(container);
     expect(img).toHaveAttribute('src', BACKDROP);
     expect(img).toHaveAttribute('srcset', expect.stringContaining('/t_screenshot_big/bd.jpg 889w'));
-    expect(img).toHaveAttribute('sizes', '(max-width: 640px) 100vw, 1920px');
+    // large and high-DPI screens get IGDB's original upload so the banner stays sharp
+    expect(img).toHaveAttribute('srcset', expect.stringContaining('/t_original/bd.jpg 3840w'));
+    expect(img).toHaveAttribute('sizes', '(max-width: 640px) 100vw, calc(100vw - 160px)');
     expect(img).toHaveAttribute('fetchpriority', 'high');
     expect(img.className).toMatch(/opacity-0/);
     sized(img, 1920, 1080);
     fireEvent.load(img);
     expect(imgOf(container).className).toMatch(/opacity-100/);
     expect(imgOf(container).className).not.toMatch(/blur/);
+  });
+
+  it('tries Steam\'s wide library hero before the backdrop, and falls back when Steam has none', () => {
+    const HERO = 'https://cdn.cloudflare.steamstatic.com/steam/apps/42/library_hero.jpg';
+    const { container } = render(<BackdropHero art={{ steamHero: HERO, backdrop: BACKDROP, cover: COVER }}>content</BackdropHero>);
+    expect(imgOf(container)).toHaveAttribute('src', HERO);
+    sized(imgOf(container), 3840, 1240); // 3.1:1 is wide key art, not a logo strip
+    fireEvent.load(imgOf(container));
+    expect(imgOf(container)).toHaveAttribute('src', HERO);
+    fireEvent.error(imgOf(container));
+    expect(imgOf(container)).toHaveAttribute('src', BACKDROP);
   });
 
   it('skips a banner or logo strip (far wider than a backdrop) and uses the cover, blurred, instead', () => {

@@ -2,13 +2,13 @@ import { Router } from 'express';
 import { featuredQuerySchema, gameSearchQuerySchema, gameSlugParamsSchema, trailerReportSchema } from '@gamequest/shared';
 import { createHomeController } from '../controllers/homeController.js';
 import { validate } from '../middleware/validate.js';
-import { createRequireAuth } from '../middleware/auth.js';
+import { createRequireAuth, requireRole } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
 import { createGameController } from '../controllers/gameController.js';
 
-export function createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService, steamMediaService, Game }) {
+export function createGamesRouter({ authService, gameService, trailerService, homeService, requirementsService, ratingsService, steamMediaService, Game, adminService }) {
   const router = Router();
-  const controller = createGameController({ gameService, trailerService, steamMediaService, Game });
+  const controller = createGameController({ gameService, trailerService, steamMediaService, Game, adminService });
   const home = createHomeController({ homeService, requirementsService, ratingsService });
 
   // Search and stale-game refreshes can fan out to IGDB, so they share their own bucket (client debounces typing).
@@ -17,7 +17,7 @@ export function createGamesRouter({ authService, gameService, trailerService, ho
   // visit makes about a dozen such reads, so it has a roomier bucket of its own, per account.
   const browseLimiter = createRateLimiter({ max: 1500, keyGenerator: (req) => `games-browse:${req.auth.userId}` });
   const listLimiter = (req, res, next) => (req.query.q ? searchLimiter : browseLimiter)(req, res, next);
-  // "Wrong trailer?" drops a video for everyone, so each account only gets a few an hour.
+  // Hiding a trailer affects everyone, so even an administrator is kept to a sensible pace.
   const reportLimiter = createRateLimiter({
     max: 20,
     windowMs: 60 * 60 * 1000,
@@ -31,8 +31,10 @@ export function createGamesRouter({ authService, gameService, trailerService, ho
   if (homeService) router.get('/featured', browseLimiter, validate(featuredQuerySchema, 'query'), home.featured);
   router.get('/:slug', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.get);
   router.get('/:slug/trailer', searchLimiter, validate(gameSlugParamsSchema, 'params'), controller.getTrailers);
+  // "Wrong trailer?" is for administrators: it hides the video for everyone at once.
   router.post(
     '/:slug/trailer/report',
+    requireRole('admin'),
     reportLimiter,
     validate(gameSlugParamsSchema, 'params'),
     validate(trailerReportSchema),

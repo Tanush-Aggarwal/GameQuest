@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react';
-import { artImageUrl } from '@/lib/art.js';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { RatingBadge } from '@/components/ui/RatingBadge.jsx';
+import { artImageSrcSet, artImageUrl } from '@/lib/art.js';
+import { heroCandidates, useBestArt } from '@/lib/artPicker.js';
+import { heroFrameStyle } from '@/lib/heroFrame.js';
 import { Link } from 'react-router-dom';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -43,33 +47,32 @@ const hours = (minutes) => {
   return `${h} ${h === 1 ? 'hour' : 'hours'}`;
 };
 
-// Picks wide art that actually fits a wide banner: the backdrop first, then sharp screenshots. An image that is
-// far from banner-shaped (a square logo, a thin strip) or too small would look stretched or zoomed in, so it is
-// skipped for the next candidate once its real size is known.
-const fitsBanner = (img) => {
-  const ratio = img.naturalWidth / img.naturalHeight;
-  return ratio >= 1.5 && ratio <= 2.6 && img.naturalWidth >= 1000;
-};
-function WideArt({ game, visible, eager }) {
-  const candidates = [
-    game.backdrop,
-    ...(game.screenshots ?? []).slice(0, 3),
-  ]
-    .filter(Boolean)
-    .map((u) => artImageUrl(u, 'hero'));
-  const [i, setI] = useState(0);
-  const src = candidates[Math.min(i, candidates.length - 1)];
-  const last = i >= candidates.length - 1;
+// One slide's wide art: the best banner picture among the game's candidates (see lib/artPicker.js), reported as ready
+// once it has loaded so the carousel never fades to an image that is still loading.
+function WideArt({ game, visible, onReady }) {
+  const override = game.heroOverride?.url ? game.heroOverride : null;
+  const candidates = (override ? [override.url] : heroCandidates(game)).map((u) => artImageUrl(u, 'hero'));
+  const [failed, setFailed] = useState(() => new Set());
+  const best = useBestArt(candidates, failed);
+  const src = best.url;
+  useEffect(() => {
+    if (best.settled && !src) onReady?.(); // nothing usable: don't hold the carousel up
+  }, [best.settled, src, onReady]);
+  if (!src) return null;
+  const responsive = artImageSrcSet(src);
   return (
     <img
       src={src}
+      srcSet={responsive?.srcSet}
+      sizes={responsive?.sizes}
       alt=""
-      onLoad={(e) => {
-        if (!last && !fitsBanner(e.currentTarget)) setI((n) => n + 1);
-      }}
-      onError={() => !last && setI((n) => n + 1)}
-      className={`absolute inset-0 h-full w-full object-cover object-[center_30%] transition-opacity duration-700 motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
-      loading={eager ? 'eager' : 'lazy'}
+      onLoad={() => onReady?.()}
+      onError={() => setFailed((f) => new Set(f).add(src))}
+      data-active={visible}
+      style={override ? { objectPosition: heroFrameStyle(override).objectPosition } : undefined}
+      className="gq-hero-slide absolute inset-0 h-full w-full object-cover object-[center_30%]"
+      loading="eager"
+      decoding="async"
     />
   );
 }
@@ -89,6 +92,9 @@ function HeroBody({ dashboard, playNext }) {
   const [slides, setSlides] = useState([]);
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [ready, setReady] = useState(() => new Set());
+  const markReady = (id) => setReady((r) => (r.has(id) ? r : new Set(r).add(id)));
+  const touchX = useRef(null);
   const resume = dashboard.data?.resumeCard ?? null;
   const first = playNext.data?.items?.[0] ?? null;
   const base = resume ?? first;
@@ -123,11 +129,15 @@ function HeroBody({ dashboard, playNext }) {
     };
   }, []);
 
+  // Auto-advance, one slide per SLIDE_MS. It waits on a slide whose picture hasn't loaded yet (no fade to a
+  // blank frame) and stops while hovered, focused or when the viewer prefers reduced motion.
+  const nextReady = slides.length > 1 && ready.has(slides[(slide + 1) % slides.length]?.id);
   useEffect(() => {
-    if (slides.length < 2 || paused || prefersReducedMotion()) return undefined;
-    const id = setInterval(() => setSlide((i) => (i + 1) % slides.length), SLIDE_MS);
-    return () => clearInterval(id);
-  }, [slides.length, paused]);
+    if (slides.length < 2 || paused || !nextReady || prefersReducedMotion()) return undefined;
+    const id = setTimeout(() => setSlide((i) => (i + 1) % slides.length), SLIDE_MS);
+    return () => clearTimeout(id);
+  }, [slides.length, paused, nextReady, slide]);
+  const go = (step) => setSlide((i) => (i + step + slides.length) % slides.length);
 
   const loading = dashboard.status === 'loading' || (!resume && playNext.status === 'loading');
   if (loading) {
@@ -154,12 +164,20 @@ function HeroBody({ dashboard, playNext }) {
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
+      onTouchStart={(e) => {
+        touchX.current = e.touches[0].clientX;
+      }}
+      onTouchEnd={(e) => {
+        const dx = e.changedTouches[0].clientX - (touchX.current ?? e.changedTouches[0].clientX);
+        if (slides.length > 1 && Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+        touchX.current = null;
+      }}
     >
       {/* Background artwork at full strength with dark left-side scrim */}
       <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
         {slides.length > 0
           ? slides.map((g, i) => (
-              <WideArt key={g.id} game={g} visible={i === slide} eager={i === 0} />
+              <WideArt key={g.id} game={g} visible={i === slide} onReady={() => markReady(g.id)} />
             ))
           : <img src={game?.backdrop || '/assets/hero-fantasy.jpg'} alt="" className="absolute inset-0 h-full w-full object-cover object-center" loading="eager" />}
         {/* On mobile: protective dark overlay for bright artwork; on desktop: transparent right-side */}
@@ -265,29 +283,54 @@ function HeroBody({ dashboard, playNext }) {
         )}
       </div>
 
-      {/* Featured game label + working carousel dots */}
+      {/* Featured game label (fades in with each slide), arrows and progress dots */}
       {slides[slide] && (
         <Link
+          key={slides[slide].id}
           to={`/games/${slides[slide].slug}`}
-          className="absolute bottom-5 right-6 z-10 hidden max-w-[40%] truncate rounded-full bg-black/55 px-4 py-1.5 text-xs font-semibold text-white hover:bg-black/75 sm:block"
+          className="gq-hero-caption absolute bottom-5 right-6 z-10 hidden max-w-[40%] items-center gap-2 rounded-full bg-black/55 py-1.5 pl-4 pr-1.5 text-xs font-semibold text-white ring-1 ring-white/10 backdrop-blur-sm hover:bg-black/75 sm:inline-flex"
         >
-          Featured: {slides[slide].title}
-          {slides[slide].rating != null && <span className="ml-2 text-[#F5A524]">★ {slides[slide].rating.toFixed(1)}</span>}
+          <span className="truncate">Featured: {slides[slide].title}</span>
+          {slides[slide].rating != null && <RatingBadge value={slides[slide].rating.toFixed(1)} />}
         </Link>
       )}
       {slides.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
-          {slides.map((g, i) => (
+        <>
+          {[
+            { step: -1, label: 'Previous featured game', Icon: ChevronLeft, side: 'left-3' },
+            { step: 1, label: 'Next featured game', Icon: ChevronRight, side: 'right-3' },
+          ].map(({ step, label, Icon, side }) => (
             <button
-              key={g.id}
+              key={label}
               type="button"
-              aria-label={`Show ${g.title}`}
-              aria-current={i === slide}
-              onClick={() => setSlide(i)}
-              className={`h-1.5 rounded-full transition-all ${i === slide ? 'w-6 bg-white/90' : 'w-1.5 bg-white/40 hover:bg-white/70'}`}
-            />
+              aria-label={label}
+              onClick={() => go(step)}
+              className={`gq-hero-arrow absolute ${side} top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white ring-1 ring-white/15 backdrop-blur-sm hover:bg-black/70 sm:flex`}
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </button>
           ))}
-        </div>
+          <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
+            {slides.map((g, i) => (
+              <button
+                key={g.id}
+                type="button"
+                aria-label={`Show ${g.title}`}
+                aria-current={i === slide}
+                onClick={() => setSlide(i)}
+                className={`relative h-1.5 overflow-hidden rounded-full transition-[width,background-color] duration-500 ${i === slide ? 'w-8 bg-white/30' : 'w-1.5 bg-white/40 hover:bg-white/70'}`}
+              >
+                {i === slide && (
+                  <span
+                    key={slide}
+                    className="gq-hero-dot-fill absolute inset-y-0 left-0 rounded-full bg-[var(--accent)]"
+                    style={{ animationDuration: `${SLIDE_MS}ms`, animationPlayState: paused || !nextReady ? 'paused' : 'running' }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,4 +1,17 @@
-export function createGameController({ gameService, trailerService, steamMediaService, Game }) {
+export function createGameController({ gameService, trailerService, steamMediaService, Game, adminService }) {
+  // Validated IGDB/YouTube picks first, then official Steam trailers; anything an administrator hid is left out.
+  async function listTrailers(req) {
+    const trailers = await trailerService.getTrailers(req.params.slug, req.auth.userId);
+    let steam = [];
+    // (a model with no live connection, e.g. a test app without a database, would wait forever: skip it)
+    if (steamMediaService && Game && (!Game.db || Game.db.readyState === 1)) {
+      const game = await Game.findOne({ slug: req.params.slug }).select('_id externalIds').lean();
+      if (game) steam = await steamMediaService.trailers(game);
+    }
+    const hidden = adminService ? await adminService.hiddenTrailersFor(req.params.slug) : new Set();
+    return [...trailers, ...steam].filter((t) => !hidden.has(t.videoId)).slice(0, 6);
+  }
+
   return {
     async search(req, res) {
       res.json(await gameService.search(req.query));
@@ -19,19 +32,15 @@ export function createGameController({ gameService, trailerService, steamMediaSe
     // The list depends on who asks (a reporter's hidden videos), so no shared cache may keep it.
     async getTrailers(req, res) {
       res.set('Cache-Control', 'private, no-store');
-      const trailers = await trailerService.getTrailers(req.params.slug, req.auth.userId);
-      // Official Steam trailers come after the validated IGDB/YouTube picks (or alone when there are none).
-      let steam = [];
-      if (steamMediaService && Game) {
-        const game = await Game.findOne({ slug: req.params.slug }).select('_id externalIds').lean();
-        if (game) steam = await steamMediaService.trailers(game);
-      }
-      res.json({ trailers: [...trailers, ...steam].slice(0, 6) });
+      res.json({ trailers: await listTrailers(req) });
     },
 
+    // Administrators only (the route checks the role): hides the trailer for everyone, then answers with the new list.
     async reportTrailer(req, res) {
       res.set('Cache-Control', 'private, no-store');
-      res.json(await trailerService.reportTrailer(req.auth.userId, req.params.slug, req.body.videoId));
+      if (adminService) await adminService.hideTrailer(req.auth.userId, req.params.slug, req.body.videoId);
+      else await trailerService.reportTrailer(req.auth.userId, req.params.slug, req.body.videoId);
+      res.json({ trailers: await listTrailers(req), changed: true, dropped: true });
     },
 
     async getFriends(req, res) {

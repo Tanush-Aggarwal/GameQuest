@@ -1,3 +1,4 @@
+import { steamHeroOf } from './gameService.js';
 import { ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { effectiveMinutes } from './insightsService.js';
 import { XP, levelForXp, xpForLevel } from './accountService.js';
@@ -23,7 +24,7 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
 
   async function populateFavourites(gameIds) {
     if (!gameIds?.length || !Game) return [];
-    const found = await Game.find({ _id: { $in: gameIds } }).select('title slug cover backdrop ratingAvg releaseDate genres').lean();
+    const found = await Game.find({ _id: { $in: gameIds } }).select('title slug cover backdrop artworks screenshots externalIds steamHero steamHero2x steamHeroCheckedAt ratingAvg releaseDate genres').lean();
     const byId = new Map(found.map((g) => [String(g._id), g]));
     return gameIds
       .map((id) => byId.get(String(id)))
@@ -34,6 +35,12 @@ export function createProfileService({ User, LibraryEntry, Review, friendService
         slug: g.slug,
         cover: g.cover,
         backdrop: g.backdrop ?? null,
+        // Steam's library hero is wide key art made for exactly this banner shape (3840x1240, no logo), so a Steam
+        // game's banner tries it first; the client falls back to the backdrop if Steam has none.
+        steamHero: steamHeroOf(g),
+        // fallbacks for the profile banner when the backdrop is missing or not wide enough
+        artworks: (g.artworks ?? []).slice(0, 3),
+        screenshots: (g.screenshots ?? []).slice(0, 3),
         ratingAvg: g.ratingAvg,
         releaseDate: g.releaseDate,
         genres: g.genres ?? [],

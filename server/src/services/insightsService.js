@@ -84,7 +84,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     if (lastLogDoc) {
       const playingEntry = all.find((e) => String(e.gameId) === String(lastLogDoc.gameId));
       if (playingEntry) {
-        const game = await Game.findOne({ _id: lastLogDoc.gameId }).select('title slug cover backdrop heroImage bannerImage coverImage cardImage').lean();
+        const game = await Game.findOne({ _id: lastLogDoc.gameId }).select('title slug cover backdrop heroImage bannerImage coverImage cardImage artworks screenshots externalIds steamHero steamHero2x steamHeroCheckedAt').lean();
         resumeCard = {
           entryId: String(playingEntry._id),
           gameId: String(playingEntry.gameId),
@@ -131,7 +131,7 @@ export function createInsightsService({ LibraryEntry, PlayLog, StatusHistory, Ga
     for (const g of doneGames) for (const genre of g.genres ?? []) preferredGenres[genre] = (preferredGenres[genre] ?? 0) + 1;
 
     const candidateIds = allEntries.map((e) => e.gameId);
-    const games = await Game.find({ _id: { $in: candidateIds } }).select('title slug cover backdrop heroImage bannerImage coverImage cardImage genres themes gameModes timeToBeat').lean();
+    const games = await Game.find({ _id: { $in: candidateIds } }).select('title slug cover backdrop heroImage bannerImage coverImage cardImage artworks screenshots externalIds steamHero steamHero2x steamHeroCheckedAt genres themes gameModes timeToBeat').lean();
     const gameById = Object.fromEntries(games.map((g) => [String(g._id), g]));
 
     const now = Date.now();

@@ -209,7 +209,7 @@ describe('friends rows', () => {
 describe('collections', () => {
   const summary = (over = {}) => ({ id: 'c1', name: 'Faves', type: 'manual', visibility: 'public', itemCount: 3, covers: [], ...over });
 
-  it('a collection card is its covers, with the name and size on a fade over them', () => {
+  it('a collection card is its covers (2×2 by default), with the name and size on a fade over them', () => {
     render(
       <MemoryRouter>
         <ul>
@@ -220,7 +220,7 @@ describe('collections', () => {
     const link = screen.getByRole('link', { name: /Faves/ });
     expect(link).toHaveAttribute('href', '/collections/c1');
     expect(within(link).getByRole('heading', { level: 3, name: 'Faves' })).toBeInTheDocument(); // h3 by default, under a section heading
-    expect(link.querySelectorAll('img')).toHaveLength(2);
+    expect(link.querySelectorAll('img')).toHaveLength(2); // the two covers; the empty slots stay plain
     const overlay = within(link).getByRole('heading', { name: 'Faves' }).parentElement;
     expect(overlay.className).toMatch(/absolute/);
     expect(overlay.className).toMatch(/from-bg\b/); // solid at the bottom, so the text keeps its contrast over any cover

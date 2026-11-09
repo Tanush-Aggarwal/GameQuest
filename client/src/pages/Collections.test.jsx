@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
+vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn() }));
 vi.mock('@/services/collectionsApi.js', () => ({
   listCollections: vi.fn(),
   createCollection: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock('@/services/collectionsApi.js', () => ({
 }));
 
 const api = await import('@/services/collectionsApi.js');
+const libraryApi = await import('@/services/libraryApi.js');
 const { default: Collections } = await import('./Collections.jsx');
 const { default: Collection } = await import('./Collection.jsx');
 const { AddToCollection } = await import('@/components/collections/AddToCollection.jsx');
@@ -68,6 +70,23 @@ describe('Collections page', () => {
     expect(within(link).getByText('Smart')).toBeInTheDocument();
     expect(within(link).getByText('Public')).toBeInTheDocument();
     expect(within(link).getByText('2 games')).toBeInTheDocument();
+  });
+
+  it('switches the card style between the 2×2 mosaic and one big cover, and remembers it', async () => {
+    localStorage.removeItem('gq.collections.art');
+    api.listCollections.mockResolvedValue({ items: [summary({ covers: ['https://img/a.jpg', 'https://img/b.jpg'] })], nextCursor: null });
+    const { unmount } = renderAt('/collections');
+    await screen.findByRole('link', { name: /Favourites/ });
+    expect(screen.getByRole('radio', { name: '2×2 covers' })).toHaveAttribute('aria-checked', 'true');
+    const mosaic = screen.getByRole('link', { name: /Favourites/ }).firstElementChild.className;
+    expect(mosaic).toMatch(/grid-cols-2/);
+    await userEvent.click(screen.getByRole('radio', { name: 'One big cover' }));
+    expect(screen.getByRole('link', { name: /Favourites/ }).firstElementChild.className).toMatch(/grid-cols-\[2fr_1fr\]/);
+    unmount();
+    renderAt('/collections');
+    await screen.findByRole('link', { name: /Favourites/ });
+    expect(screen.getByRole('radio', { name: 'One big cover' })).toHaveAttribute('aria-checked', 'true');
+    localStorage.removeItem('gq.collections.art');
   });
 
   it('shows an empty state with one action', async () => {
@@ -276,6 +295,54 @@ describe('Collection detail', () => {
     await userEvent.click(within(screen.getByRole('group', { name: 'Confirm deleting collection' })).getByRole('button', { name: 'Delete' }));
     expect(api.deleteCollection).toHaveBeenCalledWith('c1');
     expect(await screen.findByText('No collections yet')).toBeInTheDocument();
+  });
+});
+
+describe('Collection detail extras', () => {
+  const three = () => [item('i1', 'Alpha'), item('i2', 'Beta', { entry: { id: 'e-i2', status: 'completed', ownerships: [{ platform: 'steam', playtimeMin: 600 }], game: game('Beta') } }), item('i3', 'Gamma')];
+
+  it('sums up the collection in the header: games, completed and hours played', async () => {
+    api.getCollection.mockResolvedValue(detail(three()));
+    renderAt('/collections/c1');
+    await screen.findByRole('heading', { name: 'Favourites' });
+    const header = screen.getByRole('banner');
+    expect(within(header).getByText('1 of 3')).toBeInTheDocument();
+    expect(within(header).getByText('10h')).toBeInTheDocument();
+  });
+
+  it('switches between grid and list and keeps the order in both', async () => {
+    api.getCollection.mockResolvedValue(detail(three()));
+    renderAt('/collections/c1');
+    await screen.findByRole('heading', { name: 'Favourites' });
+    expect(screen.getByRole('radio', { name: 'Grid' })).toHaveAttribute('aria-checked', 'true');
+    await userEvent.click(screen.getByRole('radio', { name: 'List' }));
+    expect(screen.getByRole('radio', { name: 'List' })).toHaveAttribute('aria-checked', 'true');
+    expect(order()).toEqual(['Alpha', 'Beta', 'Gamma']);
+    expect(screen.getByText('10h played')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Grid' }));
+  });
+
+  it('adds games from your library, without the ones already in it', async () => {
+    api.getCollection.mockResolvedValue(detail(three()));
+    api.addCollectionItem.mockResolvedValue({});
+    libraryApi.listLibrary.mockResolvedValue({ items: [{ id: 'e-i1', game: game('Alpha') }, { id: 'e-new', game: game('Delta') }] });
+    renderAt('/collections/c1');
+    await screen.findByRole('heading', { name: 'Favourites' });
+    await userEvent.click(screen.getByRole('button', { name: 'Add games' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add games to Favourites' });
+    expect(within(dialog).queryByRole('button', { name: 'Alpha' })).not.toBeInTheDocument();
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Delta' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Add 1 game' }));
+    expect(api.addCollectionItem).toHaveBeenCalledWith('c1', { entryId: 'e-new' });
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Added 1 game to Favourites'));
+    expect(api.getCollection).toHaveBeenCalledTimes(2); // reloaded with the new games
+  });
+
+  it('offers no Add games for a smart collection', async () => {
+    api.getCollection.mockResolvedValue(detail(three(), { type: 'smart', rules: [{ field: 'status', op: 'eq', value: 'backlog' }] }));
+    renderAt('/collections/c1');
+    await screen.findByRole('heading', { name: 'Favourites' });
+    expect(screen.queryByRole('button', { name: 'Add games' })).not.toBeInTheDocument();
   });
 });
 

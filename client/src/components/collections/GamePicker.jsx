@@ -5,8 +5,9 @@ import { useAsync } from '@/hooks/useAsync.js';
 import { listLibrary } from '@/services/libraryApi.js';
 
 // Pick games from your library while creating a manual collection, so it starts full instead of empty.
-// `selected` is a Set of library entry ids; `onChange` gets the next Set.
-export function GamePicker({ selected, onChange }) {
+// `selected` is a Set of library entry ids; `onChange` gets the next Set. `exclude` (a Set of entry ids) hides games
+// already in the collection.
+export function GamePicker({ selected, onChange, exclude, legend = 'Add games now', optional = true }) {
   const load = useCallback(async (signal) => {
     try {
       const data = await listLibrary({ limit: 100 }, { signal });
@@ -19,8 +20,8 @@ export function GamePicker({ selected, onChange }) {
   const [filter, setFilter] = useState('');
   const entries = useMemo(() => {
     const f = filter.trim().toLowerCase();
-    return (data ?? []).filter((e) => e.game && (!f || e.game.title.toLowerCase().includes(f)));
-  }, [data, filter]);
+    return (data ?? []).filter((e) => e.game && !exclude?.has(e.id) && (!f || e.game.title.toLowerCase().includes(f)));
+  }, [data, filter, exclude]);
 
   function toggle(id) {
     const next = new Set(selected);
@@ -34,7 +35,10 @@ export function GamePicker({ selected, onChange }) {
   return (
     <fieldset className="flex flex-col gap-3 rounded-card border border-border bg-bg p-3">
       <legend className="px-1 text-sm font-medium">
-        Add games now <span className="text-text-muted">(optional{selected.size ? ` · ${selected.size} selected` : ''})</span>
+        {legend}{' '}
+        <span className="text-text-muted">
+          {optional ? `(optional${selected.size ? ` · ${selected.size} selected` : ''})` : selected.size ? `(${selected.size} selected)` : ''}
+        </span>
       </legend>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />

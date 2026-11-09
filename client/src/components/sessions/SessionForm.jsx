@@ -6,6 +6,7 @@ import { SESSION_DURATIONS, createSessionSchema, updateSessionSchema } from '@ga
 import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import { DatePicker } from '@/components/ui/DatePicker.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -97,7 +98,7 @@ export function SessionForm({ gameId, initial, submitLabel, onSubmit, onCancel }
       <Section icon={Clock} title="When" subtitle={`Times are in your timezone (${viewerTimeZone()}).`}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id={`${id}-start`} label="Starts" error={errors.startsAt}>
-            <Input id={`${id}-start`} type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={Boolean(errors.startsAt)} />
+            <DatePicker id={`${id}-start`} name="startsAt" withTime value={start} onChange={setStart} min={editing ? undefined : new Date()} invalid={Boolean(errors.startsAt)} />
           </Field>
           <Field id={`${id}-dur`} label="Length" error={errors.durationMin}>
             <FancySelect id={`${id}-dur`} className={selectClass} value={durationMin} onChange={(e) => setDurationMin(e.target.value)}>

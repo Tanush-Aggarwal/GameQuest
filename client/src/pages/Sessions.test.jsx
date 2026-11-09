@@ -152,7 +152,7 @@ describe('Sessions page', () => {
 });
 
 describe('Schedule a session', () => {
-  const setStart = (value) => fireEvent.change(screen.getByLabelText('Starts'), { target: { value } });
+  const setStart = (value) => fireEvent.change(document.querySelector('input[name="startsAt"]'), { target: { value } });
 
   async function openFormFor(slug = 'hades') {
     games.getGame.mockResolvedValue(game);

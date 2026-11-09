@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { DatePicker } from '@/components/ui/DatePicker.jsx';
 import { progressLevel } from '@/components/ui/ProgressBar.jsx';
 import { toast } from 'sonner';
 import * as Tabs from '@radix-ui/react-tabs';
@@ -193,9 +194,8 @@ function LogSessionForm({ entryId, onDone }) {
     <form onSubmit={submit} className="flex flex-col gap-3 p-3 rounded-lg bg-[var(--surface-raised)]">
       <div className="flex gap-2">
         <div className="flex-1">
-          <label className="text-xs text-[var(--text-muted)] block mb-1">Date</label>
-          <input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm focus:outline-none focus:border-[var(--accent)]" />
+          <label htmlFor="log-date" className="text-xs text-[var(--text-muted)] block mb-1">Date</label>
+          <DatePicker id="log-date" name="date" value={date} max={today} onChange={setDate} />
         </div>
         <div className="w-28">
           <label className="text-xs text-[var(--text-muted)] block mb-1">Minutes</label>

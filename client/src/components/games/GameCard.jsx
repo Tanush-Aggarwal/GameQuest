@@ -7,7 +7,7 @@ import { useMotionOk } from '@/lib/motion.js';
 /**
  * Normalises cover URLs so that IGDB images render in high resolution (2x retina / 1080p).
  */
-export function getHighResCover(url) {
+function getHighResCover(url) {
   if (!url || typeof url !== 'string') return url;
   if (url.includes('images.igdb.com/igdb/image/upload/t_cover_big/')) {
     return url.replace('/t_cover_big/', '/t_cover_big_2x/');
@@ -91,7 +91,7 @@ export function SharedCover({ slug, className = '', children }) {
  * Resolves the appropriate card artwork from the game model.
  * Prioritizes cardImage -> coverImage -> cover -> backdrop.
  */
-export function getGameArtwork(game) {
+function getGameArtwork(game) {
   if (!game) return null;
   return game.cardImage || game.coverImage || game.cover || game.backdrop || null;
 }

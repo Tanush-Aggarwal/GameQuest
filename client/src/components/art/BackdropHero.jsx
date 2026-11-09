@@ -4,8 +4,8 @@ import { artImageUrl, artImageSrcSet, fallbackGradient } from '@/lib/art.js';
 
 // Text sits on the left over a dark gradient scrim (black 85% to transparent over the left 55%),
 // ensuring the artwork retains full vividness without being washed out by any cream/ivory overlay.
-export const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-black/85 via-black/60 via-55% to-transparent';
-export const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-black/80 via-black/20 to-transparent';
+const HERO_SCRIM_SIDE = 'bg-gradient-to-r from-black/85 via-black/60 via-55% to-transparent';
+const HERO_SCRIM_BOTTOM = 'bg-gradient-to-t from-black/80 via-black/20 to-transparent';
 
 // Art wider than this (IGDB sometimes stores a logo strip or a banner, e.g. 1920x295) is no backdrop: it would be a black
 // band with nothing in it, so the hero moves on to the next candidate.

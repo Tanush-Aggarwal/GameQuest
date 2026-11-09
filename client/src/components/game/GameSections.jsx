@@ -1,46 +1,13 @@
 import { useCallback } from 'react';
 import { Avatar } from '@/components/ui/Avatar.jsx';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Clock, MessageSquare, Star, Users } from 'lucide-react';
+import { CheckCircle2, MessageSquare, Star, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ErrorState } from '@/components/ui/states.jsx';
 import { StatusBadge } from '@/components/library/StatusBadge.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { getGameFriends } from '@/services/gamesApi.js';
 import { listReviewsForGame } from '@/services/reviewApi.js';
-
-export function TimeToBeatCard({ timeToBeat }) {
-  const tiers = [
-    { label: 'Main Story', hours: timeToBeat?.main, desc: 'Straightforward campaign' },
-    { label: 'Main + Extras', hours: timeToBeat?.extras, desc: 'Side quests & exploration' },
-    { label: 'Completionist', hours: timeToBeat?.full, desc: '100% all trophies & secrets' },
-  ];
-
-  return (
-    <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
-      <div className="flex items-center gap-2">
-        <Clock className="h-4 w-4 text-accent" aria-hidden="true" />
-        <h2 className="font-heading text-sm font-semibold tracking-wide uppercase text-text-muted">
-          Time to Beat
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {tiers.map((t) => (
-          <div
-            key={t.label}
-            className="flex flex-col rounded-control border border-border/60 bg-surface-raised/40 p-3"
-          >
-            <span className="text-xs text-text-muted">{t.label}</span>
-            <span className="mt-1 text-xl font-bold tabular-nums text-text">
-              {t.hours != null ? `${t.hours} h` : '—'}
-            </span>
-            <span className="text-xs text-text-muted">{t.desc}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function StarRating({ rating }) {
   return (

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { ForbiddenError, NotFoundError } from '../utils/errors.js';
 
 // DTOs
-export const toReviewDto = (r, user) => ({
+const toReviewDto = (r, user) => ({
   id: String(r._id),
   userId: String(r.userId),
   gameId: String(r.gameId),

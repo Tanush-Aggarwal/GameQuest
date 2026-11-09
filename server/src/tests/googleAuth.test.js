@@ -55,12 +55,37 @@ describe('authService.loginWithGoogle', () => {
     expect(out.user.username).toMatch(/^[a-zA-Z0-9_]{3,24}$/);
   });
 
-  it('refuses an email that already belongs to a password account instead of linking it', async () => {
+  it('links Google to a verified password account with the same email and keeps the password', async () => {
     const { authService, models } = setup();
     await authService.register({ username: 'Existing', email: 'gamer@example.com', password: 'correct-horse-9', acceptTerms: true });
-    await expect(authService.loginWithGoogle(profile)).rejects.toBeInstanceOf(ConflictError);
+    const out = await authService.loginWithGoogle(profile);
     expect(models.User.docs).toHaveLength(1);
-    expect(models.User.docs[0].googleId).toBeUndefined();
+    expect(out.user.username).toBe('Existing');
+    expect(models.User.docs[0].googleId).toBe('g-1');
+    expect(models.User.docs[0].passwordHash).toBeTruthy();
+    const again = await authService.login({ email: 'gamer@example.com', password: 'correct-horse-9' });
+    expect(again.user.id).toBe(out.user.id);
+  });
+
+  it('claims an unverified password account: removes its password and ends its sessions', async () => {
+    const { authService, models } = setup();
+    models.User.docs.push({
+      _id: 'u-squat', username: 'Squatter', usernameLower: 'squatter', email: 'gamer@example.com',
+      passwordHash: 'x', emailVerified: false, emailVerifiedAt: null, role: 'user',
+    });
+    models.RefreshToken.docs.push({ jti: 'old', familyId: 'f', userId: 'u-squat', expiresAt: new Date(Date.now() + 1e6) });
+    const out = await authService.loginWithGoogle(profile);
+    const doc = models.User.docs.find((d) => d._id === 'u-squat');
+    expect(out.user.id).toBe('u-squat');
+    expect(out.user.emailVerified).toBe(true);
+    expect(doc.passwordHash).toBeUndefined();
+    expect(models.RefreshToken.docs.find((t) => t.jti === 'old')).toBeUndefined();
+  });
+
+  it('refuses an email already linked to a different Google account', async () => {
+    const { authService } = setup();
+    await authService.loginWithGoogle(profile);
+    await expect(authService.loginWithGoogle({ ...profile, sub: 'g-2' })).rejects.toBeInstanceOf(ConflictError);
   });
 
   it('refuses a profile whose email Google has not verified', async () => {
@@ -169,10 +194,10 @@ describe('google routes', () => {
     expect(models.User.docs).toHaveLength(1);
   });
 
-  it('maps an existing password account to a readable error code', async () => {
+  it('maps an email linked to another Google account to a readable error code', async () => {
     const adapter = { isConfigured: () => true, buildAuthUrl: jest.fn(), exchangeCode: jest.fn().mockResolvedValue(profile) };
     const { app, authService } = setup({ adapter });
-    await authService.register({ username: 'Existing', email: 'gamer@example.com', password: 'correct-horse-9', acceptTerms: true });
+    await authService.loginWithGoogle({ ...profile, sub: 'g-other' });
     const res = await request(app).get('/api/v1/auth/google/callback?code=good&state=s1').set('Cookie', 'gq_oauth_state=s1');
     expect(res.headers.location).toContain('error=google_email_exists');
   });

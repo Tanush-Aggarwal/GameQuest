@@ -84,7 +84,7 @@ describe('Continue with Google', () => {
 
   it('shows why Google sign-in failed when the API sends people back with an error code', () => {
     renderPage(Login, {}, '/login?error=google_email_exists');
-    expect(screen.getByRole('alert')).toHaveTextContent(/account with that email already exists/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/already linked to a different Google account/i);
   });
 
   it('shows nothing for an unknown error code', () => {
@@ -94,6 +94,26 @@ describe('Continue with Google', () => {
 });
 
 describe('Register form', () => {
+  it('blocks sign-up when the two passwords differ', async () => {
+    const value = renderPage(Register);
+    await userEvent.type(screen.getByLabelText('Username'), 'neo_1');
+    await userEvent.type(screen.getByLabelText('Email'), 'neo@example.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'valid-password-1');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'valid-password-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(await screen.findByText("Passwords don't match")).toBeInTheDocument();
+    expect(value.register).not.toHaveBeenCalled();
+  });
+
+  it('shows the password while "Show password" is ticked', async () => {
+    renderPage(Register);
+    await userEvent.type(screen.getByLabelText('Password'), 'valid-password-1');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+    await userEvent.click(screen.getByRole('checkbox', { name: /show password/i }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
+    expect(screen.getByText(/strength:/i)).toBeInTheDocument();
+  });
+
   it('maps a 409 conflict onto the offending field', async () => {
     const register = vi
       .fn()
@@ -102,6 +122,7 @@ describe('Register form', () => {
     await userEvent.type(screen.getByLabelText('Username'), 'neo_1');
     await userEvent.type(screen.getByLabelText('Email'), 'neo@example.com');
     await userEvent.type(screen.getByLabelText('Password'), 'long-enough-1');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'long-enough-1');
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
     expect(await screen.findByText('That email is already taken')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
@@ -122,6 +143,7 @@ describe('Register form', () => {
     await userEvent.type(screen.getByLabelText('Username'), 'neo_1');
     await userEvent.type(screen.getByLabelText('Email'), 'neo@example.com');
     await userEvent.type(screen.getByLabelText('Password'), 'valid-password-1');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'valid-password-1');
     await userEvent.click(screen.getByRole('checkbox', { name: /terms/i }));
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
     await waitFor(() =>

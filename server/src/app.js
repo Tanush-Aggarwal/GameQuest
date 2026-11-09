@@ -86,6 +86,7 @@ export function createApp({
   eventBus = createEventBus({ logger }),
 }) {
   const emailService = _emailSvc ?? createEmailService({ config, logger });
+  const emailConfigured = Boolean(emailService?.isConfigured?.());
   const authService = _authSvc ?? createAuthService({ User, RefreshToken, config, emailService, logger });
   const libraryService = _libSvc ?? createLibraryService({ LibraryEntry, StatusHistory, Game, eventBus, logger });
   const progressService = _progressSvc ?? createProgressService({ LibraryEntry, PlayLog, JournalEntry, libraryService, eventBus, logger });
@@ -168,6 +169,7 @@ export function createApp({
   registerSubscribers({ eventBus, collectionService, activityService, recommendationService });
 
   const app = express();
+  app.locals.emailConfigured = emailConfigured;
 
   // Proxies in front (Render, plus the Vercel rewrite in production); needed for correct client IPs.
   app.set('trust proxy', config.trustProxy ?? 1);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, KeyRound, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import { registerSchema } from '@gamequest/shared';
+import { registerFormSchema } from '@gamequest/shared';
 import { useAuth } from '@/hooks/useAuth.js';
 import { resendVerification } from '@/services/authApi.js';
 import { getErrorInfo } from '@/services/api.js';
@@ -20,7 +20,8 @@ import {
 const FIELDS = [
   { name: 'username', label: 'Username', autoComplete: 'username', hint: '3–24 letters, numbers or underscores' },
   { name: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
-  { name: 'password', label: 'Password', type: 'password', autoComplete: 'new-password', hint: 'At least 8 characters' },
+  { name: 'password', label: 'Password', type: 'password', autoComplete: 'new-password', hint: 'At least 8 characters, with a letter and a number', strength: true },
+  { name: 'confirmPassword', label: 'Confirm password', type: 'password', autoComplete: 'new-password' },
 ];
 
 export default function Register() {
@@ -39,14 +40,17 @@ export default function Register() {
     return () => clearInterval(timer);
   }, [verificationPending, resendCooldown]);
 
-  async function handleRegister(data) {
+  async function handleRegister({ confirmPassword: _confirm, ...data }) {
     const res = await register(data);
     if (res?.emailVerificationPending) {
       setRegisteredEmail(data.email);
       setVerificationPending(true);
       setResendCooldown(60);
       // Seamlessly navigate to the 6-digit verification code entry page
-      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      const q = new URLSearchParams({ email: data.email });
+      if (res.signedIn) q.set('signedIn', '1');
+      if (res.emailSent === false) q.set('sent', '0');
+      navigate(`/verify-email?${q}`);
     }
     return res;
   }
@@ -167,7 +171,7 @@ export default function Register() {
       oauth={<GoogleButton />}
       submitLabel="Create account"
       fields={FIELDS}
-      schema={registerSchema}
+      schema={registerFormSchema}
       termsCheckbox={true}
       onSubmit={handleRegister}
       footer={

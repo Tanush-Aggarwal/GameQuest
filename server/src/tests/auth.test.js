@@ -146,7 +146,7 @@ describe('auth routes', () => {
       .send({ username: 'x', email: 'not-an-email', password: 'short' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
-    expect(res.body.error.details.map((d) => d.path).sort()).toEqual(['email', 'password', 'username']);
+    expect([...new Set(res.body.error.details.map((d) => d.path))].sort()).toEqual(['email', 'password', 'username']);
   });
 
   it('rejects passwords over 72 bytes (bcrypt truncation)', async () => {

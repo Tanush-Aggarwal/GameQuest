@@ -2,8 +2,8 @@
 // in `videos.list` details and gets back accepted candidates ranked best first, or a reason for each
 // rejection. Everything here is deliberately strict: a missing trailer is better than a wrong one.
 
-export const MIN_SECONDS = 30;
-export const MAX_SECONDS = 8 * 60;
+const MIN_SECONDS = 30;
+const MAX_SECONDS = 8 * 60;
 // A viewer in either of these regions must be able to watch it.
 const REGIONS = ['IN', 'US'];
 

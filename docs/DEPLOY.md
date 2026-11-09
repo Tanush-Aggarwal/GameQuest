@@ -52,7 +52,6 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
    | `MONGODB_URI` | your Atlas connection string |
    | `JWT_ACCESS_SECRET` | 64+ random characters (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`) |
    | `JWT_REFRESH_SECRET` | a *different* random string |
-   | `TOKEN_ENCRYPTION_KEY` | `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
    | `TRUST_PROXY` | `2` |
    | `COOKIE_SAMESITE` | `lax` |
    | `AUTH_RATE_LIMIT_MAX` | `100` |
@@ -61,7 +60,6 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
    | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | from dev.twitch.tv (game search) |
    | `STEAM_API_KEY` | optional (Steam sync) |
    | `YOUTUBE_API_KEY` | needed for trailers (without it no trailer is shown: videos are validated through the YouTube API). 10,000 free units a day; see README "Trailer quota". After deploying run `npm run trailers:refresh` once |
-   | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | optional (Discord link) |
    | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional (Continue with Google). Add `https://<your-vercel-domain>/api/v1/auth/google/callback` as an authorised redirect URI |
 
 4. **Create Web Service.** When the deploy is live, open `https://<your-service>.onrender.com/api/v1/health`.
@@ -113,4 +111,15 @@ Do the steps in this order: Atlas → Render → Vercel → back to Render for t
 - `vercel.json` rewrites `/api/*` to the Render URL above. If the Render service is recreated with another name, update that line and push.
 - Render's free plan sleeps after ~15 minutes without traffic; the first request then takes up to a minute. The client shows a "Waking up the server" page that retries on its own. Before a demo, open the health URL once, or add a free UptimeRobot monitor that pings it every 5 minutes.
 - Atlas DNS: if `querySrv ETIMEOUT` appears locally, switch the network's DNS to 8.8.8.8 / 1.1.1.1 (scripts like `steam:debug` already force public resolvers).
+
+## Email (verification codes and password reset)
+
+Render's free plan blocks outgoing SMTP (ports 25, 465 and 587), so the API sends email over HTTPS through a small Google Apps Script web app that sends from your Gmail.
+
+1. Create the script from [`docs/mail-relay.gs`](mail-relay.gs) and follow the steps at the top of that file. The deployment must use **Execute as: Me** and **Who has access: Anyone**.
+2. On Render, set `MAIL_RELAY_URL` (the `/exec` URL) and `MAIL_RELAY_SECRET` (the same value as the script's `RELAY_SECRET`), then redeploy.
+3. Check it: open `https://<your-api>.onrender.com/api/v1/health`. It should show `"email":"configured"`. Opening the `/exec` URL in a browser should show `{"ok":true,...}`.
+4. Send a real test from your laptop with the same two values in `server/.env`: `npm run mail:test -w server -- you@example.com`.
+
+Email/password accounts must enter the 6-digit code before they can log in. If email delivery ever breaks, set `BLOCK_UNVERIFIED_LOGIN=false` on Render as an emergency switch: unverified accounts can then log in and see a "verify your email" banner.
 

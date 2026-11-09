@@ -65,34 +65,3 @@ export const CATALOG_GAME_TYPES = [
   IGDB_GAME_TYPE.standaloneExpansion,
 ];
 
-// What the API returns for a game (server `toGameDto`).
-export const gameDtoSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  slug: z.string(),
-  summary: z.string(),
-  cover: z.string().nullable(),
-  backdrop: z.string().nullable(),
-  artworks: z.array(z.string()),
-  screenshots: z.array(z.string()),
-  videos: z.array(z.string()),
-  developer: z.array(z.string()),
-  publisher: z.array(z.string()),
-  genres: z.array(z.string()),
-  themes: z.array(z.string()),
-  gameModes: z.array(z.string()),
-  platforms: z.array(z.string()),
-  storyline: z.string(),
-  releaseDate: z.coerce.date().nullable(),
-  timeToBeat: z.object({
-    main: z.number().nullable(),
-    extras: z.number().nullable(),
-    full: z.number().nullable(),
-  }),
-  totalRating: z.number().nullable(),
-  totalRatingCount: z.number(),
-  popularity: z.number(),
-  gameType: z.number().nullable(),
-  ratingAvg: z.number(),
-  ratingCount: z.number(),
-});

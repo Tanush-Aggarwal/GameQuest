@@ -6,7 +6,7 @@ const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const PROGRESS_TTL_MS = 5 * YEAR_MS;
 
 // Step sizes from the catalog brief: ~1,500 PC + ~1,000 console + ~500 current/upcoming.
-export const DEFAULT_TARGETS = { pc: 1500, consolePerPlatform: 200, recent: 500 };
+const DEFAULT_TARGETS = { pc: 1500, consolePerPlatform: 200, recent: 500 };
 const CONSOLES = [
   { key: 'ps5', id: PLATFORM.ps5 },
   { key: 'ps4', id: PLATFORM.ps4 },

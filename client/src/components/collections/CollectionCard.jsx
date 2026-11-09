@@ -4,7 +4,7 @@ import { TypeBadge, VisibilityBadge } from './badges.jsx';
 import { CoverImage } from '../games/GameCard.jsx';
 
 // 2×2 mosaic of the first covers; a placeholder icon when there are none.
-export function CoverMosaic({ covers }) {
+function CoverMosaic({ covers }) {
   if (!covers.length) {
     return (
       <div className="flex aspect-square w-full items-center justify-center bg-surface-raised">

@@ -11,7 +11,7 @@ import { useAsync } from '@/hooks/useAsync.js';
 import { useMotionOk } from '@/lib/motion.js';
 import { searchGames } from '@/services/gamesApi.js';
 
-export const SLIDES = 5;
+const SLIDES = 5;
 
 function shuffle(list) {
   const out = [...list];

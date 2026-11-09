@@ -531,7 +531,9 @@ describe('Game page', () => {
     getGame.mockResolvedValue(game('hades', 'Hades'));
     renderAt('/games/hades');
     expect(await screen.findByRole('heading', { name: 'Hades' })).toBeInTheDocument();
-    expect(screen.getByText('20h')).toBeInTheDocument();
+    // the time-to-beat card shows the hours big with a small "h" unit
+    expect(screen.getByRole('heading', { name: 'Time to beat' })).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.tagName === 'P' && el.textContent === '20h')).toBeInTheDocument();
   });
 
   it('shows a not-found empty state for a 404', async () => {

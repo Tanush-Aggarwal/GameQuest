@@ -20,10 +20,24 @@ export function createAuthRouter({ authService, googleAdapter, config }) {
 
   const credentialsLimiter = createRateLimiter({ max: config.auth.rateLimitMax });
   const refreshLimiter = createRateLimiter({ max: config.auth.rateLimitMax * 3 });
+  // Per-account limits on top of the per-IP one, so spreading guesses over many IPs does not help:
+  // 10 failed password attempts or 10 code attempts per email per 15 minutes. Successful logins don't count.
+  const emailKey = (prefix) => (req) => `${prefix}:${String(req.body?.email ?? '').trim().toLowerCase()}`;
+  const accountLoginLimiter = createRateLimiter({
+    max: 10,
+    keyGenerator: emailKey('login'),
+    skipSuccessfulRequests: true,
+    message: 'Too many failed attempts for this account. Wait 15 minutes or reset your password.',
+  });
+  const accountCodeLimiter = createRateLimiter({
+    max: 10,
+    keyGenerator: emailKey('verify'),
+    message: 'Too many verification attempts for this email. Wait 15 minutes and request a new code.',
+  });
 
   router.post('/register', credentialsLimiter, validate(registerSchema), controller.register);
-  router.post('/login', credentialsLimiter, validate(loginSchema), controller.login);
-  router.post('/verify-email', credentialsLimiter, validate(verifyEmailSchema), controller.verifyEmail);
+  router.post('/login', credentialsLimiter, validate(loginSchema), accountLoginLimiter, controller.login);
+  router.post('/verify-email', credentialsLimiter, validate(verifyEmailSchema), accountCodeLimiter, controller.verifyEmail);
   router.post('/resend-verification', credentialsLimiter, validate(resendVerificationSchema), controller.resendVerification);
   router.get('/providers', controller.providers);
   router.get('/google', credentialsLimiter, controller.googleStart);

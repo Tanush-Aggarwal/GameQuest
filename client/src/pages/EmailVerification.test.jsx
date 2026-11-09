@@ -174,6 +174,7 @@ describe('Email Verification Client Flow', () => {
       await userEvent.type(screen.getByLabelText(/Username/i), 'NewPlayer');
       await userEvent.type(screen.getByLabelText(/^Email/i), 'newplayer@example.com');
       await userEvent.type(screen.getByLabelText(/^Password/i), 'ValidPassword123!');
+      await userEvent.type(screen.getByLabelText(/^Confirm password/i), 'ValidPassword123!');
 
       await userEvent.click(screen.getByRole('button', { name: /Create account/i }));
 
@@ -232,6 +233,25 @@ describe('Email Verification Client Flow', () => {
       await waitFor(() => {
         expect(authApi.resendVerification).toHaveBeenCalledWith({ email: 'unverified@example.com' });
       });
+    });
+  });
+
+  describe('Soft verification (account already signed in)', () => {
+    it('says when the email could not be sent and lets a signed-in player skip', async () => {
+      const retry = vi.fn().mockResolvedValue(undefined);
+      render(
+        <MemoryRouter initialEntries={['/verify-email?email=new%40gamequest.dev&signedIn=1&sent=0']}>
+          <AuthContext.Provider value={{ status: 'authenticated', retry }}>
+            <Routes>
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/" element={<div>Home page</div>} />
+            </Routes>
+          </AuthContext.Provider>
+        </MemoryRouter>,
+      );
+      expect(screen.getByText(/couldn.t send the email just now/i)).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+      expect(await screen.findByText('Home page')).toBeInTheDocument();
     });
   });
 });

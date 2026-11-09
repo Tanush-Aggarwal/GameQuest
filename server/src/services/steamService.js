@@ -1,7 +1,7 @@
 import { parseSteamInput } from '@gamequest/shared';
 import { ConflictError, NotFoundError, ValidationError } from '../utils/errors.js';
 
-export const toSteamDto = (steam) =>
+const toSteamDto = (steam) =>
   steam?.steamId
     ? {
         linked: true,

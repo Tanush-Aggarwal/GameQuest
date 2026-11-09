@@ -30,7 +30,3 @@ export async function getLibraryEntry(entryId, { signal } = {}) {
   return data.entry;
 }
 
-export async function getStatusHistory(entryId, { signal } = {}) {
-  const { data } = await api.get(`/library/${entryId}/history`, { signal });
-  return data.history;
-}

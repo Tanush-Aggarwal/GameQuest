@@ -7,7 +7,7 @@ export const XP_RULES = [
 ];
 
 export const xpForLevel = (level) => 100 * (level - 1) ** 2;
-export const levelForXp = (xp) => Math.floor(Math.sqrt(Math.max(0, xp) / 100)) + 1;
+const levelForXp = (xp) => Math.floor(Math.sqrt(Math.max(0, xp) / 100)) + 1;
 
 // Percent of the way from the start of the current level to the next one.
 export function levelProgress({ xp = 0, level = levelForXp(xp) } = {}) {

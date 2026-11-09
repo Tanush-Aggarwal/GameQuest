@@ -83,9 +83,11 @@ export function createAuthController({ authService, googleAdapter, config }) {
       if (result.accessToken && result.refreshToken) {
         setSession(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       }
+      const signedIn = Boolean(result.accessToken && result.refreshToken);
       res.status(201).json({
-        user: result.user,
-        ...(result.emailVerificationPending ? { emailVerificationPending: true } : {}),
+        ...(result.user ? { user: result.user } : {}),
+        signedIn,
+        ...(result.emailVerificationPending ? { emailVerificationPending: true, emailSent: result.emailSent === true } : {}),
       });
     },
 

@@ -317,7 +317,8 @@ describe('UserProfile', () => {
     expect(screen.getByText('Celeste').closest('a')).toHaveAttribute('href', expect.stringContaining('/games/'));
     expect(screen.getByText(/Indie & deckbuilder enthusiast/)).toBeInTheDocument();
     expect(screen.getByText('Trophies & Milestones')).toBeInTheDocument();
-    expect(screen.getByText('Veteran Collector')).toBeInTheDocument();
+    // 12 games: Silver collector (10+), working towards Gold at 25
+    expect(screen.getByText('Avid Collector')).toBeInTheDocument();
   });
 });
 

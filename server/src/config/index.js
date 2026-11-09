@@ -17,23 +17,19 @@ const envSchema = z.object({
   // Optional integrations: each feature degrades gracefully when its key is missing.
   STEAM_API_KEY: z.string().optional(),
   YOUTUBE_API_KEY: z.string().optional(),
-  DISCORD_CLIENT_ID: z.string().optional(),
-  DISCORD_CLIENT_SECRET: z.string().optional(),
   // Optional: without them "Continue with Google" sends people back to the login page with a clear message.
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   // Public URL of this API (used to build OAuth callback URLs). Defaults to localhost in development.
   PUBLIC_API_URL: z.string().url().optional(),
-  // Email delivery via Resend HTTPS API (avoids Render Free outbound SMTP port blocking)
-  RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().optional(),
-  // Legacy SMTP keys kept optional so existing environments don't fail schema validation
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().int().positive().optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_SECURE: z.enum(['true', 'false']).optional(),
+  // Transactional email delivery via Google Apps Script HTTPS mail relay
+  MAIL_RELAY_URL: z.string().url('MAIL_RELAY_URL must be a valid URL').optional(),
+  MAIL_RELAY_SECRET: z.string().optional(),
+  // Email accounts get a 6-digit code at sign-up (on everywhere except the test suite unless set).
   REQUIRE_EMAIL_VERIFICATION: z.enum(['true', 'false']).optional(),
+  // On by default: an email/password account must verify its email with the 6-digit code before it can log in.
+  // "false" lets unverified accounts log in (they see a "verify your email" banner), e.g. while email is broken.
+  BLOCK_UNVERIFIED_LOGIN: z.enum(['true', 'false']).optional(),
   // Cookies: the client proxies /api through its own domain in production, so Lax works and
   // survives browsers that block third-party cookies. Use "none" only for a direct cross-site setup.
   COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
@@ -67,21 +63,21 @@ export function loadConfig(env = process.env) {
       requireEmailVerification: e.REQUIRE_EMAIL_VERIFICATION
         ? e.REQUIRE_EMAIL_VERIFICATION === 'true'
         : e.NODE_ENV !== 'test',
+      blockUnverifiedLogin: e.BLOCK_UNVERIFIED_LOGIN !== 'false',
     },
     cookieSameSite: e.COOKIE_SAMESITE,
     trustProxy: e.TRUST_PROXY,
     publicApiUrl: e.PUBLIC_API_URL ?? `http://localhost:${e.PORT}`,
     steam: { apiKey: e.STEAM_API_KEY || null },
     youtube: { apiKey: e.YOUTUBE_API_KEY || null },
-    discord: { clientId: e.DISCORD_CLIENT_ID || null, clientSecret: e.DISCORD_CLIENT_SECRET || null },
     google: { clientId: e.GOOGLE_CLIENT_ID || null, clientSecret: e.GOOGLE_CLIENT_SECRET || null },
     twitch: {
       clientId: e.TWITCH_CLIENT_ID || null,
       clientSecret: e.TWITCH_CLIENT_SECRET || null,
     },
     email: {
-      resendApiKey: e.RESEND_API_KEY || null,
-      from: e.EMAIL_FROM || 'GameQuest <onboarding@resend.dev>',
+      relayUrl: e.MAIL_RELAY_URL || null,
+      relaySecret: e.MAIL_RELAY_SECRET || null,
     },
   };
 }

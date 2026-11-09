@@ -20,4 +20,3 @@ export function createEventBus({ logger = console } = {}) {
   };
 }
 
-export const eventBus = createEventBus();

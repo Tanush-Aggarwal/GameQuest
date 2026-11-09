@@ -61,7 +61,7 @@ export function isCatalogGame(raw) {
 // The game a DLC/edition belongs to (IGDB id), if any.
 export const parentIgdbIdOf = (raw) => raw.version_parent ?? raw.parent_game ?? null;
 
-export const igdbImageUrl = (imageId, size) => `${IMAGE_URL}/${size}/${imageId}.jpg`;
+const igdbImageUrl = (imageId, size) => `${IMAGE_URL}/${size}/${imageId}.jpg`;
 
 export function normaliseGame(raw) {
   const steam = raw.external_games?.find(isSteam)?.uid;

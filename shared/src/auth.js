@@ -13,7 +13,12 @@ export const emailSchema = z.string().trim().toLowerCase().email().max(254);
 const within72Bytes = (s) => new TextEncoder().encode(s).length <= 72;
 const PASSWORD_TOO_LONG = 'Password must be at most 72 bytes';
 
-export const passwordSchema = z.string().min(8).refine(within72Bytes, PASSWORD_TOO_LONG);
+// New passwords only (login accepts any existing password): 8+ characters with at least one letter and one number.
+export const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .refine(within72Bytes, PASSWORD_TOO_LONG)
+  .refine((s) => /[A-Za-z]/.test(s) && /\d/.test(s), 'Use at least one letter and one number');
 
 export const registerSchema = z.object({
   username: usernameSchema,
@@ -23,6 +28,12 @@ export const registerSchema = z.object({
   // be true, and the time is stored on the account.
   acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Accept the Terms and Privacy Policy to create an account' }) }).optional(),
 });
+
+// The register form: the API schema plus a "Confirm password" box that must match. Only the client uses it;
+// confirmPassword is never sent to the API.
+export const registerFormSchema = registerSchema
+  .extend({ confirmPassword: z.string().min(1, 'Type your password again') })
+  .refine((d) => d.password === d.confirmPassword, { path: ['confirmPassword'], message: "Passwords don't match" });
 
 export const loginSchema = z.object({
   email: emailSchema,

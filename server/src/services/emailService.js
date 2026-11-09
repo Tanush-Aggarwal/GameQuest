@@ -1,21 +1,17 @@
-import { Resend } from 'resend';
-
 /**
- * Creates the email delivery service backed by Resend's HTTPS API.
- * Avoids outbound SMTP port blocking (ports 25, 465, 587) on cloud platforms like Render Free.
+ * Creates the email delivery service backed by a Google Apps Script HTTPS mail relay.
+ * Avoids outbound SMTP port blocking (ports 25, 465, 587) on cloud hosts like Render Free.
  * When unconfigured in development/test, logs safely without leaking credentials.
  */
-export function createEmailService({ config, logger = console, resendClient = null }) {
+export function createEmailService({
+  config,
+  logger = console,
+  fetchFn = globalThis.fetch,
+  timeoutMs = 20000, // Apps Script can take several seconds to start and send
+}) {
   const { email, clientOrigin, env } = config;
-  const apiKey = email?.resendApiKey;
-  const isConfigured = Boolean(resendClient || apiKey);
-
-  let resend = resendClient;
-  if (!resend && apiKey) {
-    resend = new Resend(apiKey);
-  }
-
-  const defaultFrom = email?.from || 'GameQuest <onboarding@resend.dev>';
+  const { relayUrl, relaySecret } = email || {};
+  const isConfigured = Boolean(relayUrl && relaySecret);
 
   // Helper to mask email for logging (e.g. j***n@example.com)
   function maskEmail(addr) {
@@ -26,6 +22,92 @@ export function createEmailService({ config, logger = console, resendClient = nu
     return `${maskedUser}@${domain}`;
   }
 
+  async function sendViaRelay({ to, subject, text, html }) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetchFn(relayUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          secret: relaySecret,
+          to,
+          subject,
+          text,
+          html,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        logger.error?.(
+          { status: response.status, recipient: maskEmail(to) },
+          'Mail relay HTTP response not OK',
+        );
+        const err = new Error(`Mail relay HTTP ${response.status}`);
+        err.name = 'MailRelayError';
+        err.statusCode = response.status;
+        throw err;
+      }
+
+      let payload;
+      // Read the body once as text so an HTML error page can be logged (only its first characters).
+      const raw = typeof response.text === 'function' ? await response.text().catch(() => null) : null;
+      try {
+        payload = raw === null ? await response.json() : JSON.parse(raw);
+      } catch {
+        // An HTML page here almost always means the Apps Script web app is not deployed with
+        // "Who has access: Anyone", or MAIL_RELAY_URL is not the /exec URL of the current deployment.
+        logger.error?.(
+          {
+            recipient: maskEmail(to),
+            bodyStart: typeof raw === 'string' ? raw.slice(0, 120).replace(/\s+/g, ' ') : null,
+          },
+          'Mail relay returned invalid JSON (check the Apps Script deployment access is "Anyone")',
+        );
+        const err = new Error('Mail relay returned invalid JSON');
+        err.name = 'MailRelayError';
+        throw err;
+      }
+
+      if (!payload || payload.ok !== true) {
+        const errorMsg = payload?.error || 'Mail relay rejected delivery';
+        logger.error?.(
+          { err: { message: errorMsg }, recipient: maskEmail(to) },
+          'Mail relay reported delivery failure',
+        );
+        const err = new Error(errorMsg);
+        err.name = 'MailRelayError';
+        throw err;
+      }
+
+      logger.info?.({ recipient: maskEmail(to) }, 'Email successfully dispatched via mail relay');
+      return { sent: true };
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        logger.error?.(
+          { recipient: maskEmail(to), timeoutMs },
+          'Mail relay request timed out',
+        );
+        const timeoutErr = new Error(`Mail relay request timed out after ${timeoutMs}ms`);
+        timeoutErr.name = 'TimeoutError';
+        throw timeoutErr;
+      }
+      if (err.name !== 'MailRelayError') {
+        logger.error?.(
+          { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
+          'Mail relay network request failed',
+        );
+      }
+      throw err;
+    }
+  }
+
   return {
     isConfigured() {
       return isConfigured;
@@ -33,7 +115,6 @@ export function createEmailService({ config, logger = console, resendClient = nu
 
     async sendPasswordResetEmail({ to, username, token }) {
       const resetUrl = `${clientOrigin}/reset-password?token=${encodeURIComponent(token)}`;
-      const from = defaultFrom;
       const subject = 'Reset your GameQuest password';
 
       const textBody = `Hi ${username || 'Player'},
@@ -80,38 +161,13 @@ If you didn't request a password reset, you can safely ignore this email — you
 </body>
 </html>`;
 
-      if (resend) {
-        try {
-          const { data, error } = await resend.emails.send({
-            from,
-            to,
-            subject,
-            text: textBody,
-            html: htmlBody,
-          });
-
-          if (error) {
-            logger.error?.(
-              { err: { name: error.name, message: error.message }, recipient: maskEmail(to) },
-              'Failed to send password reset email via Resend',
-            );
-            const sendErr = new Error(error.message || 'Resend delivery rejected');
-            sendErr.name = error.name || 'ResendError';
-            sendErr.statusCode = error.statusCode;
-            throw sendErr;
-          }
-
-          logger.info?.({ id: data?.id, recipient: maskEmail(to) }, 'Password reset email sent');
-          return { sent: true, id: data?.id };
-        } catch (err) {
-          if (!err.name || err.name !== 'ResendError') {
-            logger.error?.(
-              { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
-              'Failed to send password reset email via Resend',
-            );
-          }
-          throw err;
-        }
+      if (isConfigured) {
+        return sendViaRelay({
+          to,
+          subject,
+          text: textBody,
+          html: htmlBody,
+        });
       }
 
       // Safe local development & test fallback (never active in production)
@@ -120,11 +176,11 @@ If you didn't request a password reset, you can safely ignore this email — you
         console.log('📧 [DEV EMAIL SIMULATION] Password reset dispatched!');
         console.log(`   Recipient: ${maskEmail(to)}`);
         console.log(`   Reset Link: ${resetUrl}`);
-        console.log('   (To send real emails to your inbox, configure RESEND_API_KEY in server/.env)');
+        console.log('   (To send real emails to your inbox, configure MAIL_RELAY_URL & MAIL_RELAY_SECRET in server/.env)');
         console.log('=============================================================\n');
         logger.info?.(
           { recipient: maskEmail(to), devResetUrl: resetUrl },
-          'Password reset requested (Resend unconfigured; set RESEND_API_KEY in .env for real delivery)',
+          'Password reset requested (Mail relay unconfigured; set MAIL_RELAY_URL in .env for real delivery)',
         );
         return { sent: false, devResetUrl: resetUrl };
       }
@@ -134,12 +190,11 @@ If you didn't request a password reset, you can safely ignore this email — you
       }
 
       // Production without configured email provider
-      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password reset: Resend provider is not configured in production');
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password reset: Mail relay is not configured in production');
       return { sent: false };
     },
 
     async sendVerificationEmail({ to, username, code }) {
-      const from = defaultFrom;
       const subject = `Your GameQuest verification code is ${code}`;
 
       const textBody = `Hi ${username || 'Player'},
@@ -184,38 +239,13 @@ If you didn't create a GameQuest account, you can safely ignore this email.
 </body>
 </html>`;
 
-      if (resend) {
-        try {
-          const { data, error } = await resend.emails.send({
-            from,
-            to,
-            subject,
-            text: textBody,
-            html: htmlBody,
-          });
-
-          if (error) {
-            logger.error?.(
-              { err: { name: error.name, message: error.message }, recipient: maskEmail(to) },
-              'Failed to send verification email via Resend',
-            );
-            const sendErr = new Error(error.message || 'Resend delivery rejected');
-            sendErr.name = error.name || 'ResendError';
-            sendErr.statusCode = error.statusCode;
-            throw sendErr;
-          }
-
-          logger.info?.({ id: data?.id, recipient: maskEmail(to) }, 'Verification email code sent');
-          return { sent: true, id: data?.id };
-        } catch (err) {
-          if (!err.name || err.name !== 'ResendError') {
-            logger.error?.(
-              { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
-              'Failed to send verification email via Resend',
-            );
-          }
-          throw err;
-        }
+      if (isConfigured) {
+        return sendViaRelay({
+          to,
+          subject,
+          text: textBody,
+          html: htmlBody,
+        });
       }
 
       if (env === 'development') {
@@ -223,11 +253,11 @@ If you didn't create a GameQuest account, you can safely ignore this email.
         console.log('📧 [DEV EMAIL SIMULATION] Email verification code dispatched!');
         console.log(`   Recipient: ${maskEmail(to)}`);
         console.log(`   Verification Code: ${code}`);
-        console.log('   (To send real emails to your inbox, configure RESEND_API_KEY in server/.env)');
+        console.log('   (To send real emails to your inbox, configure MAIL_RELAY_URL & MAIL_RELAY_SECRET in server/.env)');
         console.log('=============================================================\n');
         logger.info?.(
           { recipient: maskEmail(to) },
-          'Email verification code requested (Resend unconfigured; set RESEND_API_KEY in .env for real delivery)',
+          'Email verification code requested (Mail relay unconfigured; set MAIL_RELAY_URL in .env for real delivery)',
         );
         return { sent: false };
       }
@@ -236,12 +266,52 @@ If you didn't create a GameQuest account, you can safely ignore this email.
         return { sent: false, testCode: code };
       }
 
-      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send verification email: Resend provider is not configured in production');
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send verification email: Mail relay is not configured in production');
+      return { sent: false };
+    },
+
+    // Sent when someone signs up with an email that already has an account. The sign-up page answers the same
+    // way for new and taken emails, so only the owner of the inbox learns the account exists.
+    async sendAccountExistsEmail({ to, username }) {
+      const loginUrl = `${clientOrigin}/login`;
+      const resetUrl = `${clientOrigin}/forgot-password`;
+      const subject = 'You already have a GameQuest account';
+      const textBody = `Hi ${username || 'Player'},
+
+Someone (hopefully you) just tried to create a new GameQuest account with this email address, but it already has an account.
+
+Log in: ${loginUrl}
+Forgot your password? ${resetUrl}
+
+If this wasn't you, you can ignore this email. Nothing about your account has changed.
+
+— The GameQuest Team`;
+      const htmlBody = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>${subject}</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#F2EEE4;margin:0;padding:24px;color:#111311;">
+  <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-radius:12px;border:1px solid #E2DCD0;padding:32px;">
+    <div style="font-size:22px;font-weight:800;margin-bottom:24px;">Game<span style="color:#84a82a;">Quest</span></div>
+    <h2 style="margin-top:0;font-size:20px;">You already have an account</h2>
+    <p>Hi ${username || 'Player'},</p>
+    <p>Someone (hopefully you) just tried to create a new GameQuest account with this email address, but it already has one.</p>
+    <p><a href="${loginUrl}" style="display:inline-block;background:#111311;color:#FFFFFF;font-weight:600;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px;">Log in</a></p>
+    <p style="font-size:13px;color:#687063;">Forgot your password? <a href="${resetUrl}" style="color:#687063;">Reset it here</a>.</p>
+    <p style="font-size:13px;color:#687063;border-top:1px solid #F0EBE0;padding-top:16px;margin-top:24px;">If this wasn't you, you can ignore this email. Nothing about your account has changed.</p>
+  </div>
+</body>
+</html>`;
+      if (isConfigured) return sendViaRelay({ to, subject, text: textBody, html: htmlBody });
+      if (env === 'development') {
+        console.log(`\n📧 [DEV EMAIL SIMULATION] "Account already exists" email to ${maskEmail(to)}\n`);
+        return { sent: false };
+      }
+      if (env === 'test') return { sent: false };
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send account-exists email: Mail relay unconfigured in production');
       return { sent: false };
     },
 
     async sendPasswordChangedNotification({ to, username }) {
-      const from = defaultFrom;
       const subject = 'Your GameQuest password was changed';
 
       const textBody = `Hi ${username || 'Player'},
@@ -280,38 +350,13 @@ If you did NOT change your password, please reset your password immediately or c
 </body>
 </html>`;
 
-      if (resend) {
-        try {
-          const { data, error } = await resend.emails.send({
-            from,
-            to,
-            subject,
-            text: textBody,
-            html: htmlBody,
-          });
-
-          if (error) {
-            logger.error?.(
-              { err: { name: error.name, message: error.message }, recipient: maskEmail(to) },
-              'Failed to send password changed notification via Resend',
-            );
-            const sendErr = new Error(error.message || 'Resend delivery rejected');
-            sendErr.name = error.name || 'ResendError';
-            sendErr.statusCode = error.statusCode;
-            throw sendErr;
-          }
-
-          logger.info?.({ id: data?.id, recipient: maskEmail(to) }, 'Password changed notification sent');
-          return { sent: true, id: data?.id };
-        } catch (err) {
-          if (!err.name || err.name !== 'ResendError') {
-            logger.error?.(
-              { err: { name: err.name, message: err.message }, recipient: maskEmail(to) },
-              'Failed to send password changed notification via Resend',
-            );
-          }
-          throw err;
-        }
+      if (isConfigured) {
+        return sendViaRelay({
+          to,
+          subject,
+          text: textBody,
+          html: htmlBody,
+        });
       }
 
       if (env === 'development' || env === 'test') {
@@ -319,7 +364,7 @@ If you did NOT change your password, please reset your password immediately or c
         return { sent: false };
       }
 
-      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password change notification: Resend unconfigured in production');
+      logger.warn?.({ recipient: maskEmail(to) }, 'Cannot send password change notification: Mail relay unconfigured in production');
       return { sent: false };
     },
   };

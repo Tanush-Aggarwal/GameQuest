@@ -5,7 +5,7 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 const TIMEOUT_MS = 10_000;
 
-export const GOOGLE_CALLBACK_PATH = '/api/v1/auth/google/callback';
+const GOOGLE_CALLBACK_PATH = '/api/v1/auth/google/callback';
 
 // Google sign-in adapter (authorization-code flow). Only this module talks to Google. The secret never leaves the
 // server and is never put in an error message. `fetchImpl` is injectable for tests.

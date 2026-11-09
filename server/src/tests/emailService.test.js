@@ -1,40 +1,37 @@
 import { jest } from '@jest/globals';
 import { createEmailService } from '../services/emailService.js';
 
-describe('emailService (Resend HTTPS API)', () => {
-  it('reports unconfigured when RESEND_API_KEY is missing', () => {
-    const service = createEmailService({
+describe('emailService (Google Apps Script HTTPS Mail Relay)', () => {
+  it('reports unconfigured when MAIL_RELAY_URL or MAIL_RELAY_SECRET is missing', () => {
+    const service1 = createEmailService({
       config: {
         env: 'test',
         clientOrigin: 'http://localhost:5173',
-        email: { resendApiKey: null },
+        email: { relayUrl: null, relaySecret: 'my_secret' },
       },
     });
-    expect(service.isConfigured()).toBe(false);
+    expect(service1.isConfigured()).toBe(false);
+
+    const service2 = createEmailService({
+      config: {
+        env: 'test',
+        clientOrigin: 'http://localhost:5173',
+        email: { relayUrl: 'https://script.google.com/macros/s/xyz/exec', relaySecret: null },
+      },
+    });
+    expect(service2.isConfigured()).toBe(false);
   });
 
-  it('reports configured when RESEND_API_KEY is present', () => {
+  it('reports configured when both relayUrl and relaySecret are present', () => {
     const service = createEmailService({
       config: {
         env: 'test',
         clientOrigin: 'http://localhost:5173',
         email: {
-          resendApiKey: 're_test_1234567890abcdef',
+          relayUrl: 'https://script.google.com/macros/s/xyz/exec',
+          relaySecret: 'relay_shared_secret_123',
         },
       },
-    });
-    expect(service.isConfigured()).toBe(true);
-  });
-
-  it('reports configured when resendClient is explicitly injected', () => {
-    const mockResend = { emails: { send: jest.fn() } };
-    const service = createEmailService({
-      config: {
-        env: 'test',
-        clientOrigin: 'http://localhost:5173',
-        email: {},
-      },
-      resendClient: mockResend,
     });
     expect(service.isConfigured()).toBe(true);
   });
@@ -129,31 +126,32 @@ describe('emailService (Resend HTTPS API)', () => {
     });
   });
 
-  describe('Resend Delivery (Mocked SDK)', () => {
-    let mockSend;
-    let mockResend;
+  describe('Mail Relay Delivery (Mocked Fetch)', () => {
+    const mockRelayUrl = 'https://script.google.com/macros/s/AKfycbx_fake_script_id/exec';
+    const mockSecret = 'super_secret_relay_key_456';
+    let mockFetch;
     let mockLogger;
 
     beforeEach(() => {
-      mockSend = jest.fn();
-      mockResend = { emails: { send: mockSend } };
+      mockFetch = jest.fn();
       mockLogger = { info: jest.fn(), error: jest.fn(), warn: jest.fn() };
     });
 
-    it('sends 6-digit verification code email via Resend with onboarding@resend.dev sender default', async () => {
-      mockSend.mockResolvedValueOnce({
-        data: { id: 'resend_msg_001' },
-        error: null,
+    it('sends 6-digit verification code email via relay POST payload and handles { ok: true }', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
       });
 
       const service = createEmailService({
         config: {
           env: 'production',
           clientOrigin: 'https://gamequest-five.vercel.app',
-          email: { resendApiKey: 're_dummy_key' },
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
         },
         logger: mockLogger,
-        resendClient: mockResend,
+        fetchFn: mockFetch,
       });
 
       const result = await service.sendVerificationEmail({
@@ -162,69 +160,77 @@ describe('emailService (Resend HTTPS API)', () => {
         code: '748291',
       });
 
-      expect(result).toEqual({ sent: true, id: 'resend_msg_001' });
-      expect(mockSend).toHaveBeenCalledTimes(1);
-      const callArg = mockSend.mock.calls[0][0];
-      expect(callArg.from).toBe('GameQuest <onboarding@resend.dev>');
-      expect(callArg.to).toBe('tester@example.com');
-      expect(callArg.subject).toBe('Your GameQuest verification code is 748291');
-      expect(callArg.text).toContain('748291');
-      expect(callArg.html).toContain('748291');
+      expect(result).toEqual({ sent: true });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      const [url, options] = mockFetch.mock.calls[0];
+      expect(url).toBe(mockRelayUrl);
+      expect(options.method).toBe('POST');
+      expect(options.headers).toEqual({ 'Content-Type': 'application/json' });
+
+      const parsedBody = JSON.parse(options.body);
+      expect(parsedBody.secret).toBe(mockSecret);
+      expect(parsedBody.to).toBe('tester@example.com');
+      expect(parsedBody.subject).toBe('Your GameQuest verification code is 748291');
+      expect(parsedBody.text).toContain('748291');
+      expect(parsedBody.html).toContain('748291');
+
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ recipient: 't***r@example.com', id: 'resend_msg_001' }),
+        expect.objectContaining({ recipient: 't***r@example.com' }),
         expect.any(String),
       );
     });
 
-    it('sends password reset email via Resend using custom EMAIL_FROM sender', async () => {
-      mockSend.mockResolvedValueOnce({
-        data: { id: 'resend_msg_002' },
-        error: null,
+    it('sends password reset email via relay POST payload and handles { ok: true }', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
       });
 
       const service = createEmailService({
         config: {
           env: 'production',
           clientOrigin: 'https://gamequest-five.vercel.app',
-          email: {
-            resendApiKey: 're_dummy_key',
-            from: 'GameQuest Support <security@gamequest.app>',
-          },
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
         },
         logger: mockLogger,
-        resendClient: mockResend,
+        fetchFn: mockFetch,
       });
 
       const result = await service.sendPasswordResetEmail({
         to: 'alex@example.com',
         username: 'AlexPlayer',
-        token: 'secret-token-12345',
+        token: 'secret-reset-token-999',
       });
 
-      expect(result).toEqual({ sent: true, id: 'resend_msg_002' });
-      expect(mockSend).toHaveBeenCalledTimes(1);
-      const callArg = mockSend.mock.calls[0][0];
-      expect(callArg.from).toBe('GameQuest Support <security@gamequest.app>');
-      expect(callArg.to).toBe('alex@example.com');
-      expect(callArg.subject).toBe('Reset your GameQuest password');
-      expect(callArg.text).toContain('https://gamequest-five.vercel.app/reset-password?token=secret-token-12345');
-      expect(callArg.html).toContain('https://gamequest-five.vercel.app/reset-password?token=secret-token-12345');
+      expect(result).toEqual({ sent: true });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      const [, options] = mockFetch.mock.calls[0];
+      const parsedBody = JSON.parse(options.body);
+      expect(parsedBody.secret).toBe(mockSecret);
+      expect(parsedBody.to).toBe('alex@example.com');
+      expect(parsedBody.subject).toBe('Reset your GameQuest password');
+      expect(parsedBody.text).toContain('https://gamequest-five.vercel.app/reset-password?token=secret-reset-token-999');
+      expect(parsedBody.html).toContain('https://gamequest-five.vercel.app/reset-password?token=secret-reset-token-999');
     });
 
-    it('sends password changed notification via Resend', async () => {
-      mockSend.mockResolvedValueOnce({
-        data: { id: 'resend_msg_003' },
-        error: null,
+    it('sends password changed notification via relay POST payload', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
       });
 
       const service = createEmailService({
         config: {
           env: 'production',
           clientOrigin: 'https://gamequest-five.vercel.app',
-          email: { resendApiKey: 're_dummy_key' },
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
         },
         logger: mockLogger,
-        resendClient: mockResend,
+        fetchFn: mockFetch,
       });
 
       const result = await service.sendPasswordChangedNotification({
@@ -232,60 +238,64 @@ describe('emailService (Resend HTTPS API)', () => {
         username: 'AlexPlayer',
       });
 
-      expect(result).toEqual({ sent: true, id: 'resend_msg_003' });
-      expect(mockSend).toHaveBeenCalledTimes(1);
-      const callArg = mockSend.mock.calls[0][0];
-      expect(callArg.subject).toBe('Your GameQuest password was changed');
+      expect(result).toEqual({ sent: true });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      const [, options] = mockFetch.mock.calls[0];
+      const parsedBody = JSON.parse(options.body);
+      expect(parsedBody.subject).toBe('Your GameQuest password was changed');
     });
 
-    it('does NOT report success when Resend API returns an error response (e.g. unverified domain or restricted recipient)', async () => {
-      mockSend.mockResolvedValueOnce({
-        data: null,
-        error: {
-          name: 'validation_error',
-          message: 'You can only send testing emails to your own email address.',
-          statusCode: 403,
-        },
+    it('does NOT report success when relay returns { ok: false, error: "..." }', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: false, error: 'Unauthorized: Invalid secret' }),
       });
 
       const service = createEmailService({
         config: {
           env: 'production',
           clientOrigin: 'https://gamequest-five.vercel.app',
-          email: { resendApiKey: 're_dummy_key' },
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
         },
         logger: mockLogger,
-        resendClient: mockResend,
+        fetchFn: mockFetch,
       });
 
       await expect(
         service.sendVerificationEmail({
-          to: 'someoneelse@gmail.com',
-          username: 'Guest',
+          to: 'gamer@example.com',
+          username: 'GamerGuy',
           code: '123456',
         }),
-      ).rejects.toThrow('You can only send testing emails to your own email address.');
+      ).rejects.toThrow('Unauthorized: Invalid secret');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-          err: { name: 'validation_error', message: 'You can only send testing emails to your own email address.' },
-          recipient: 's***e@gmail.com',
+          err: { message: 'Unauthorized: Invalid secret' },
+          recipient: 'g***r@example.com',
         }),
-        expect.stringMatching(/failed/i),
+        expect.stringMatching(/failure/i),
       );
     });
 
-    it('handles unexpected network failure or SDK rejection gracefully and sanitizes logs', async () => {
-      mockSend.mockRejectedValueOnce(new Error('Connection timeout to api.resend.com'));
+    it('handles HTTP error responses (e.g. 500 or 502) without reporting success', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        text: async () => 'Service Unavailable',
+      });
 
       const service = createEmailService({
         config: {
           env: 'production',
           clientOrigin: 'https://gamequest-five.vercel.app',
-          email: { resendApiKey: 're_dummy_key' },
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
         },
         logger: mockLogger,
-        resendClient: mockResend,
+        fetchFn: mockFetch,
       });
 
       await expect(
@@ -294,23 +304,119 @@ describe('emailService (Resend HTTPS API)', () => {
           username: 'GamerGuy',
           token: 'token-xyz',
         }),
-      ).rejects.toThrow('Connection timeout to api.resend.com');
+      ).rejects.toThrow('Mail relay HTTP 502');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.objectContaining({
-          err: { name: 'Error', message: 'Connection timeout to api.resend.com' },
-          recipient: 'g***r@example.com',
-        }),
-        expect.any(String),
+        expect.objectContaining({ status: 502, recipient: 'g***r@example.com' }),
+        expect.stringMatching(/not ok/i),
       );
     });
 
-    it('warns and returns { sent: false } in production when Resend is unconfigured', async () => {
+    it('handles malformed or non-JSON responses without crashing or reporting success', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => {
+          throw new SyntaxError('Unexpected token < in JSON at position 0');
+        },
+      });
+
       const service = createEmailService({
         config: {
           env: 'production',
           clientOrigin: 'https://gamequest-five.vercel.app',
-          email: { resendApiKey: null },
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
+        },
+        logger: mockLogger,
+        fetchFn: mockFetch,
+      });
+
+      await expect(
+        service.sendVerificationEmail({
+          to: 'gamer@example.com',
+          username: 'GamerGuy',
+          code: '123456',
+        }),
+      ).rejects.toThrow('Mail relay returned invalid JSON');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ recipient: 'g***r@example.com' }),
+        expect.stringMatching(/invalid json/i),
+      );
+    });
+
+    it('handles request timeout using AbortController and throws TimeoutError', async () => {
+      const abortErr = new Error('The operation was aborted');
+      abortErr.name = 'AbortError';
+      mockFetch.mockRejectedValueOnce(abortErr);
+
+      const service = createEmailService({
+        config: {
+          env: 'production',
+          clientOrigin: 'https://gamequest-five.vercel.app',
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
+        },
+        logger: mockLogger,
+        fetchFn: mockFetch,
+        timeoutMs: 5000,
+      });
+
+      await expect(
+        service.sendVerificationEmail({
+          to: 'gamer@example.com',
+          username: 'GamerGuy',
+          code: '123456',
+        }),
+      ).rejects.toThrow('Mail relay request timed out after 5000ms');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ recipient: 'g***r@example.com', timeoutMs: 5000 }),
+        expect.stringMatching(/timed out/i),
+      );
+    });
+
+    it('handles network failure gracefully and logs sanitized error without credentials', async () => {
+      mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'));
+
+      const service = createEmailService({
+        config: {
+          env: 'production',
+          clientOrigin: 'https://gamequest-five.vercel.app',
+          email: { relayUrl: mockRelayUrl, relaySecret: mockSecret },
+        },
+        logger: mockLogger,
+        fetchFn: mockFetch,
+      });
+
+      await expect(
+        service.sendPasswordResetEmail({
+          to: 'gamer@example.com',
+          username: 'GamerGuy',
+          token: 'token-xyz',
+        }),
+      ).rejects.toThrow('fetch failed');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          err: { name: 'TypeError', message: 'fetch failed' },
+          recipient: 'g***r@example.com',
+        }),
+        expect.any(String),
+      );
+
+      // Verify that the secret key was never passed to any logger call
+      for (const call of [...mockLogger.info.mock.calls, ...mockLogger.error.mock.calls, ...mockLogger.warn.mock.calls]) {
+        const str = JSON.stringify(call);
+        expect(str).not.toContain(mockSecret);
+      }
+    });
+
+    it('warns and returns { sent: false } in production when relay is unconfigured', async () => {
+      const service = createEmailService({
+        config: {
+          env: 'production',
+          clientOrigin: 'https://gamequest-five.vercel.app',
+          email: { relayUrl: null, relaySecret: null },
         },
         logger: mockLogger,
       });

@@ -18,4 +18,3 @@ export const DESKTOP_NAV_ITEMS = [
   { to: '/profile', label: 'Profile', icon: User },
 ];
 
-export const NAV_ITEMS = MOBILE_NAV_ITEMS;

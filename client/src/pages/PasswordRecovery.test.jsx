@@ -93,7 +93,7 @@ describe('ResetPassword Page', () => {
     await userEvent.type(screen.getByLabelText(/^confirm new password/i), 'different-password');
     await userEvent.click(screen.getByRole('button', { name: /reset password/i }));
 
-    expect(await screen.findByText(/at least 8 characters/i)).toBeInTheDocument();
+    expect(await screen.findByText(/password must be at least 8 characters/i)).toBeInTheDocument();
     expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
     expect(resetPassword).not.toHaveBeenCalled();
   });

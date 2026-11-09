@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils.js';
-import { NAV_ITEMS } from './navItems.js';
+import { MOBILE_NAV_ITEMS } from './navItems.js';
 
 export function BottomTabBar() {
   const { pathname } = useLocation();
@@ -15,7 +15,7 @@ export function BottomTabBar() {
       )}
     >
       <ul className="grid grid-cols-5">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+        {MOBILE_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <li key={to}>
             <NavLink
               to={to}

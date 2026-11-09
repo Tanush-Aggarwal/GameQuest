@@ -34,6 +34,10 @@ export default [
     },
   },
   {
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: { ecmaVersion: 2023, sourceType: 'module', globals: { ...globals.node, ...globals.browser } },
+  },
+  {
     files: ['client/*.config.js'],
     languageOptions: { globals: globals.node },
   },

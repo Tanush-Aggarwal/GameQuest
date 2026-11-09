@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { AuthError, ConflictError, RateLimitError } from '../utils/errors.js';
+import { AuthError, ConflictError } from '../utils/errors.js';
 
 const BCRYPT_ROUNDS = 12;
 // Compared against when the email is unknown so login timing does not reveal which emails exist.
@@ -11,7 +11,7 @@ const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', BCRYPT_ROUNDS);
  * Computes a purpose-specific HMAC for 6-digit verification codes using the server secret.
  * Low-entropy 6-digit codes are protected with HMAC-SHA256 keyed with server secrets.
  */
-export function hashVerificationCode(email, code, secret) {
+function hashVerificationCode(email, code, secret) {
   return createHmac('sha256', secret)
     .update(`email-verification:${String(email || '').toLowerCase().trim()}:${String(code || '').trim()}`)
     .digest('hex');
@@ -24,7 +24,7 @@ export function hashVerificationCode(email, code, secret) {
  * 2. Cryptographic email verification token redemption with verified timestamp evidence (emailVerifiedAt)
  * Legacy password accounts with missing/null emailVerified or unevidenced flags are treated as unverified.
  */
-export function isUserEmailVerified(user) {
+function isUserEmailVerified(user) {
   if (!user || !user.emailVerified) return false;
   // Account verified via Google OAuth claim
   if (user.googleId && user.emailVerified === true) return true;
@@ -36,7 +36,7 @@ export function isUserEmailVerified(user) {
   return false;
 }
 
-export function toPublicUser(user) {
+function toPublicUser(user) {
   return {
     id: String(user._id),
     username: user.username,
@@ -67,6 +67,13 @@ export function createAuthService({
 }) {
   const { accessSecret, refreshSecret, accessTtlSeconds, refreshTtlSeconds } = config.auth;
   const requireEmailVerification = config.auth.requireEmailVerification ?? true;
+  // When true (the default) an email/password account must verify its email before it can log in. When false the
+  // email is still verified with a code, but an unverified account can log in (it cannot reset its password).
+  const blockUnverifiedLogin = config.auth.blockUnverifiedLogin ?? true;
+  // In strict mode sign-up never reveals whether an email is registered: a taken email gets the same "check your
+  // inbox" answer, and the owner gets an email saying someone tried to sign up with it.
+  const hideTakenEmail = requireEmailVerification && blockUnverifiedLogin;
+  const pendingResponse = { user: null, emailVerificationPending: true, emailSent: true };
 
   async function issueTokens(user, familyId = randomUUID()) {
     const jti = randomUUID();
@@ -90,7 +97,7 @@ export function createAuthService({
 
   function verifyRefresh(token) {
     try {
-      return jwt.verify(token, refreshSecret);
+      return jwt.verify(token, refreshSecret, { algorithms: ['HS256'] });
     } catch {
       throw new AuthError('Session expired, please log in again');
     }
@@ -102,6 +109,15 @@ export function createAuthService({
     const existing = await User.findOne({ $or: [{ email: normalisedEmail }, { usernameLower }] });
     if (existing) {
       const field = existing.email === normalisedEmail ? 'email' : 'username';
+      if (field === 'email' && hideTakenEmail) {
+        await bcrypt.hash(password, bcryptRounds); // same work as a real sign-up, so timing does not tell either
+        if (emailService?.sendAccountExistsEmail) {
+          emailService
+            .sendAccountExistsEmail({ to: existing.email, username: existing.username })
+            .catch((err) => logger?.error?.({ err: { name: err.name, message: err.message } }, 'Failed to send account-exists email'));
+        }
+        return pendingResponse;
+      }
       throw new ConflictError(`That ${field} is already taken`, { field });
     }
     const passwordHash = await bcrypt.hash(password, bcryptRounds);
@@ -130,26 +146,33 @@ export function createAuthService({
       } catch (err) {
         if (isDuplicateKey(err)) {
           const field = Object.keys(err.keyPattern ?? {})[0]?.startsWith('email') ? 'email' : 'username';
+          if (field === 'email' && hideTakenEmail) return pendingResponse;
           throw new ConflictError(`That ${field} is already taken`, { field });
         }
         throw err;
       }
 
+      let emailSent = false;
       if (emailService) {
         try {
-          await emailService.sendVerificationEmail({
+          const res = await emailService.sendVerificationEmail({
             to: user.email,
             username: user.username,
             code: rawCode,
           });
+          emailSent = res?.sent === true;
         } catch (err) {
           logger?.error?.({ err: { name: err.name, message: err.message } }, 'Failed to dispatch verification email');
         }
       }
+      if (!emailSent) logger?.warn?.('Verification email was not delivered; the account can still log in and resend later');
 
       return {
         user: toPublicUser(user),
         emailVerificationPending: true,
+        emailSent,
+        // Signed in straight away unless unverified logins are blocked.
+        ...(blockUnverifiedLogin ? {} : await issueTokens(user)),
       };
     }
 
@@ -187,16 +210,36 @@ export function createAuthService({
     return `${base}${randomUUID().slice(0, 4)}`;
   }
 
-  // Sign in (or sign up) with a verified Google profile. An email that already belongs to a password account is
-  // refused, never linked: GameQuest does not verify emails, so linking could give the account to whoever
-  // registered the address first.
+  // Sign in (or sign up) with a verified Google profile. Google has proved the person owns the address, so:
+  // - a verified account with that email is linked to Google (same person, two ways to sign in);
+  // - an unverified password account with that email is claimed: its password is removed and its sessions are ended,
+  //   so someone who registered an address that is not theirs cannot keep using it.
+  async function linkGoogle(existing, sub) {
+    const claim = !isUserEmailVerified(existing);
+    const update = {
+      $set: { googleId: sub, emailVerified: true, emailVerifiedAt: existing.emailVerifiedAt ?? new Date() },
+      ...(claim
+        ? { $unset: { passwordHash: 1, emailVerificationCodeHmac: 1, emailVerificationExpiresAt: 1, resetPasswordTokenHash: 1, resetPasswordExpiresAt: 1 } }
+        : {}),
+    };
+    const linked = await User.findOneAndUpdate({ _id: existing._id }, update, { new: true });
+    if (!linked) throw new ConflictError('This email is already linked to another Google account.', { field: 'email' });
+    if (claim) await RefreshToken.deleteMany({ userId: existing._id });
+    return linked;
+  }
+
   async function loginWithGoogle({ sub, email, emailVerified, name }) {
     if (!sub || !email || !emailVerified) throw new AuthError('Google did not confirm your email address');
     const normalisedEmail = email.toLowerCase().trim();
     const known = await User.findOne({ googleId: sub });
     if (known) return { user: toPublicUser(known), ...(await issueTokens(known)) };
-    if (await User.findOne({ email: normalisedEmail })) {
-      throw new ConflictError('An account with this email already exists. Log in with your password.', { field: 'email' });
+    const sameEmail = await User.findOne({ email: normalisedEmail });
+    if (sameEmail) {
+      if (sameEmail.googleId) {
+        throw new ConflictError('This email is already linked to another Google account.', { field: 'email' });
+      }
+      const linked = await linkGoogle(sameEmail, sub);
+      return { user: toPublicUser(linked), ...(await issueTokens(linked)) };
     }
     // A duplicate key here is a race: the same person's second tab got there first (sign them in), or someone took
     // the username a moment ago (pick another once).
@@ -216,8 +259,10 @@ export function createAuthService({
         if (!isDuplicateKey(err)) throw err;
         const raced = await User.findOne({ googleId: sub });
         if (raced) return { user: toPublicUser(raced), ...(await issueTokens(raced)) };
-        if (await User.findOne({ email: normalisedEmail })) {
-          throw new ConflictError('An account with this email already exists. Log in with your password.', { field: 'email' });
+        const racedEmail = await User.findOne({ email: normalisedEmail });
+        if (racedEmail && !racedEmail.googleId) {
+          const linked = await linkGoogle(racedEmail, sub);
+          return { user: toPublicUser(linked), ...(await issueTokens(linked)) };
         }
       }
     }
@@ -229,7 +274,7 @@ export function createAuthService({
     const user = await User.findOne({ email: normalisedEmail }).select('+passwordHash');
     const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
     if (!user || !ok) throw new AuthError('Invalid email or password');
-    if (requireEmailVerification && !isUserEmailVerified(user)) {
+    if (requireEmailVerification && blockUnverifiedLogin && !isUserEmailVerified(user)) {
       throw new AuthError(
         'Please verify your email address before logging in.',
         { email: user.email, unverified: true },
@@ -267,7 +312,7 @@ export function createAuthService({
   async function logout(refreshToken) {
     if (!refreshToken) return;
     try {
-      const payload = jwt.verify(refreshToken, refreshSecret, { ignoreExpiration: true });
+      const payload = jwt.verify(refreshToken, refreshSecret, { ignoreExpiration: true, algorithms: ['HS256'] });
       await RefreshToken.deleteMany({ familyId: payload.fam });
     } catch {
       // Invalid token: nothing to revoke. Logout is idempotent.
@@ -282,7 +327,7 @@ export function createAuthService({
 
   function verifyAccess(token) {
     try {
-      const payload = jwt.verify(token, accessSecret);
+      const payload = jwt.verify(token, accessSecret, { algorithms: ['HS256'] });
       return { userId: payload.sub, role: payload.role };
     } catch {
       throw new AuthError();
@@ -305,9 +350,10 @@ export function createAuthService({
     }
 
     // 60-second cooldown check
+    // 60-second cooldown, answered with the same message as everything else: a 429 here would tell anyone that this
+    // email has a verified password account.
     if (user.resetPasswordSentAt && Date.now() - new Date(user.resetPasswordSentAt).getTime() < 60_000) {
-      const retryAfter = Math.ceil((60_000 - (Date.now() - new Date(user.resetPasswordSentAt).getTime())) / 1000);
-      throw new RateLimitError('Please wait before requesting another password reset email.', { retryAfter });
+      return GENERIC_RECOVERY_RESPONSE;
     }
 
     const rawToken = randomBytes(32).toString('hex');
@@ -399,9 +445,9 @@ export function createAuthService({
       return GENERIC_RESEND_RESPONSE;
     }
 
+    // Silent cooldown (same answer, no new email) so the reply never reveals that an unverified account exists.
     if (user.emailVerificationSentAt && Date.now() - new Date(user.emailVerificationSentAt).getTime() < 60_000) {
-      const retryAfter = Math.ceil((60_000 - (Date.now() - new Date(user.emailVerificationSentAt).getTime())) / 1000);
-      throw new RateLimitError('Please wait before requesting another verification code.', { retryAfter });
+      return GENERIC_RESEND_RESPONSE;
     }
 
     const rawCode = String(randomInt(100000, 1000000));

@@ -161,7 +161,7 @@ npm run seed                    # optional demo data
 npm run dev                     # API on :4000, client on :5173
 ```
 
-Open **http://localhost:5173** and log in with `demo@gamequest.dev` / `Demo1234!`, or register.
+Open **http://localhost:5174** and log in with `demo@gamequest.dev` / `Demo1234!`, or register.
 
 ### Environment (`server/.env`)
 
@@ -169,8 +169,7 @@ Open **http://localhost:5173** and log in with `demo@gamequest.dev` / `Demo1234!
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/gamequest
 JWT_ACCESS_SECRET=<random 32+ chars>
 JWT_REFRESH_SECRET=<different random 32+ chars>
-TOKEN_ENCRYPTION_KEY=<32 bytes, base64>
-CLIENT_ORIGIN=http://localhost:5173
+CLIENT_ORIGIN=http://localhost:5174
 
 # Optional: each feature switches itself off without its key
 TWITCH_CLIENT_ID=           # game search (IGDB)

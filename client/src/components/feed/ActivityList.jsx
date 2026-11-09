@@ -25,7 +25,7 @@ const TONE = {
 };
 
 // One sentence per activity type; the game and collection names are links.
-export function describe(item) {
+function describe(item) {
   const game = item.game ? (
     <Link to={`/games/${item.game.slug}`} className="font-medium text-text hover:underline">{item.game.title}</Link>
   ) : (

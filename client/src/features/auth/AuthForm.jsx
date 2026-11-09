@@ -39,6 +39,9 @@ export function AuthForm({
   const [formError, setFormError] = useState(initialError);
   const [pending, setPending] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+  const passwordFields = fields.filter((f) => f.type === 'password');
+  const lastPasswordField = passwordFields[passwordFields.length - 1]?.name;
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendPending, setResendPending] = useState(false);
 
@@ -144,13 +147,25 @@ export function AuthForm({
             <FormField
               label={f.label}
               name={f.name}
-              type={f.type ?? 'text'}
+              type={f.type === 'password' && showPasswords ? 'text' : (f.type ?? 'text')}
               autoComplete={f.autoComplete}
               hint={f.hint}
               value={values[f.name]}
               onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
               error={errors[f.name]}
             />
+            {f.strength && <PasswordStrength value={values[f.name]} />}
+            {f.name === lastPasswordField && (
+              <label className="flex w-fit cursor-pointer select-none items-center gap-2 text-xs text-text-muted">
+                <input
+                  type="checkbox"
+                  checked={showPasswords}
+                  onChange={(e) => setShowPasswords(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border"
+                />
+                Show password
+              </label>
+            )}
             {f.name === 'password' && forgotPasswordHref && (
               <div className="flex justify-end">
                 <Link
@@ -234,6 +249,43 @@ export function AuthForm({
       </form>
       <p className="rounded-card bg-bg/70 px-3 py-2 text-center text-sm text-text-muted md:bg-transparent md:px-0">{footer}</p>
       </main>
+    </div>
+  );
+}
+
+// A rough guide while typing a new password: length and the mix of character types. The real rule is enforced
+// by the shared schema (8+ characters, a letter and a number).
+function scorePassword(p) {
+  if (!p) return 0;
+  let score = 0;
+  if (p.length >= 8) score += 1;
+  if (p.length >= 12) score += 1;
+  if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score += 1;
+  if (/\d/.test(p)) score += 1;
+  if (/[^A-Za-z0-9]/.test(p)) score += 1;
+  return Math.min(4, score);
+}
+
+const STRENGTH = [
+  { label: 'Too weak', color: 'var(--danger, #c2410c)' },
+  { label: 'Weak', color: 'var(--danger, #c2410c)' },
+  { label: 'Okay', color: 'var(--warning, #ca8a04)' },
+  { label: 'Good', color: 'var(--accent, #84a82a)' },
+  { label: 'Strong', color: 'var(--accent, #84a82a)' },
+];
+
+function PasswordStrength({ value }) {
+  if (!value) return null;
+  const score = scorePassword(value);
+  const { label, color } = STRENGTH[score];
+  return (
+    <div className="flex items-center gap-2" aria-live="polite">
+      <div className="flex flex-1 gap-1" aria-hidden="true">
+        {[1, 2, 3, 4].map((i) => (
+          <span key={i} className="h-1 flex-1 rounded-full bg-border" style={i <= score ? { background: color } : undefined} />
+        ))}
+      </div>
+      <span className="text-xs text-text-muted">Strength: {label}</span>
     </div>
   );
 }

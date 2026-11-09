@@ -10,6 +10,8 @@ describe('Email Verification & Security Hardening', () => {
   function setup(configExtra = {}) {
     const config = testConfig({
       REQUIRE_EMAIL_VERIFICATION: 'true',
+      // These tests cover the strict mode; the default (soft) mode is covered in authSoftVerification.test.js.
+      BLOCK_UNVERIFIED_LOGIN: 'true',
       ...configExtra,
     });
     const models = createFakeModels();
@@ -22,6 +24,10 @@ describe('Email Verification & Security Hardening', () => {
       },
       async sendPasswordResetEmail(payload) {
         sentEmails.push({ type: 'reset', ...payload });
+        return { sent: true };
+      },
+      async sendAccountExistsEmail(payload) {
+        sentEmails.push({ type: 'account_exists', ...payload });
         return { sent: true };
       },
       async sendPasswordChangedNotification(payload) {
@@ -98,8 +104,8 @@ describe('Email Verification & Security Hardening', () => {
       expect(loginRes.headers['set-cookie']).toBeUndefined();
     });
 
-    it('prevents account takeover: repeated registration with existing unverified email throws ConflictError and does NOT overwrite credentials', async () => {
-      const { app, models } = setup();
+    it('prevents account takeover and email enumeration: re-registering a taken email changes nothing and looks like a new sign-up', async () => {
+      const { app, models, sentEmails } = setup();
       // Original user registers
       const reg1 = await request(app).post('/api/v1/auth/register').send(creds);
       expect(reg1.status).toBe(201);
@@ -115,8 +121,16 @@ describe('Email Verification & Security Hardening', () => {
         password: 'AttackerNewPassword999!',
       });
 
-      expect(attackRes.status).toBe(409);
-      expect(attackRes.body.error.message).toMatch(/email is already taken/i);
+      // Same answer as a new sign-up, so the page does not reveal the email is registered;
+      // the real owner gets an "account already exists" email instead of a code.
+      expect(attackRes.status).toBe(201);
+      expect(attackRes.body).toMatchObject({ emailVerificationPending: true, signedIn: false });
+      expect(attackRes.body.user).toBeUndefined();
+      await new Promise((r) => setImmediate(r));
+      expect(sentEmails.filter((e) => e.type === 'account_exists')).toEqual([
+        expect.objectContaining({ to: creds.email, username: 'QuestTester' }),
+      ]);
+      expect((attackRes.headers['set-cookie'] ?? []).join(';')).not.toMatch(/gq_access/);
 
       // Verify that the existing user credentials were NOT modified
       const userAfterAttack = models.User.docs.find((u) => u.email === creds.email);
@@ -267,14 +281,14 @@ describe('Email Verification & Security Hardening', () => {
       await request(app).post('/api/v1/auth/register').send(creds);
       expect(sentEmails).toHaveLength(1);
 
-      // Immediate second request within 60s should fail with 429
+      // A second request within 60s gets the same generic answer but sends nothing (no enumeration via 429)
       const tooSoon = await request(app)
         .post('/api/v1/auth/resend-verification')
         .send({ email: creds.email });
 
-      expect(tooSoon.status).toBe(429);
-      expect(tooSoon.body.error.code).toBe('RATE_LIMITED');
-      expect(tooSoon.body.error.message).toMatch(/wait before requesting another/i);
+      expect(tooSoon.status).toBe(200);
+      expect(tooSoon.body.message).toMatch(/if an unverified account exists/i);
+      expect(sentEmails).toHaveLength(1);
 
       // After 60s elapses, request succeeds and sends fresh code
       const { models, app: app2, sentEmails: emails2 } = setup();
@@ -354,13 +368,14 @@ describe('Email Verification & Security Hardening', () => {
       const resetEmail = sentEmails.find((e) => e.type === 'reset');
       expect(resetEmail).toBeDefined();
 
-      // Immediate second request within 60s fails with 429
+      // A second request within 60s gets the generic answer and sends no second email
+      const resetsBefore = sentEmails.filter((e) => e.type === 'reset').length;
       const tooSoon = await request(app)
         .post('/api/v1/auth/forgot-password')
         .send({ email: creds.email });
 
-      expect(tooSoon.status).toBe(429);
-      expect(tooSoon.body.error.code).toBe('RATE_LIMITED');
+      expect(tooSoon.status).toBe(200);
+      expect(sentEmails.filter((e) => e.type === 'reset')).toHaveLength(resetsBefore);
 
       // Complete password reset
       const resetCompleteRes = await request(app)

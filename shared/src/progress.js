@@ -21,7 +21,3 @@ export const playNextQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(12).default(5),
 });
 
-export const journalIdParamsSchema = z.object({
-  id: z.string().regex(/^[a-f0-9]{24}$/i, 'Invalid id'),
-  noteId: z.string().regex(/^[a-f0-9]{24}$/i, 'Invalid id'),
-});

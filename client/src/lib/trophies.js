@@ -2,14 +2,14 @@ import { CalendarClock, Gamepad2, Layers3, Library, MonitorSmartphone, PenLine, 
 
 // Trophy tracks. Each one reads a single number from the profile stats the server computes from the
 // player's own library, reviews and friends; tiers are earned in order and every tier shows the next goal.
-export const TIERS = [
+const TIERS = [
   { name: 'Bronze', color: 'var(--trophy-bronze)' },
   { name: 'Silver', color: 'var(--trophy-silver)' },
   { name: 'Gold', color: 'var(--trophy-gold)' },
   { name: 'Platinum', color: 'var(--trophy-platinum)' },
 ];
 
-export const TRACKS = [
+const TRACKS = [
   { key: 'games', name: 'Collector', icon: Library, unit: 'games in library', goals: [1, 10, 25, 50], titles: ['Apprentice', 'Avid Collector', 'Veteran Collector', 'Master Collector'] },
   { key: 'completed', name: 'Finisher', icon: Trophy, unit: 'games completed', goals: [1, 5, 15, 30], titles: ['First Quest Cleared', 'Dedicated Finisher', 'Master Finisher', 'Legendary Finisher'] },
   { key: 'hours', name: 'Time played', icon: CalendarClock, unit: 'hours played', goals: [10, 50, 150, 500], titles: ['Initiate', 'Regular', 'Century Club', 'No-Lifer'] },
@@ -21,7 +21,7 @@ export const TRACKS = [
 ];
 
 // For one track: the tier earned (index, or -1), its title, and progress towards the next goal.
-export function trackState(track, stats = {}) {
+function trackState(track, stats = {}) {
   const value = Number(stats?.[track.key]) || 0;
   let tier = -1;
   track.goals.forEach((goal, i) => { if (value >= goal) tier = i; });

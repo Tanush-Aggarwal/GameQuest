@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { AuthContext } from '@/features/auth/AuthContext.jsx';
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { verifyEmail, resendVerification } from '@/services/authApi.js';
@@ -17,6 +18,24 @@ import {
 export default function VerifyEmail() {
   const [params] = useSearchParams();
   const initialEmail = params.get('email') || '';
+  // Set by the register page: the new account is already signed in, and whether the email went out.
+  const justSignedUp = params.get('signedIn') === '1';
+  const emailNotSent = params.get('sent') === '0';
+  // Read directly: the page also works outside the provider (it is public), treating the visitor as signed out.
+  const { status = 'anonymous', retry = async () => {} } = useContext(AuthContext) ?? {};
+  const navigate = useNavigate();
+  const signedIn = status === 'authenticated';
+
+  // Pick up the session cookie the register call set, so "Skip for now" and the app work straight away.
+  useEffect(() => {
+    if (justSignedUp && status !== 'authenticated') retry();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [justSignedUp]);
+
+  async function continueToApp() {
+    await retry(); // refreshes emailVerified on the signed-in user
+    navigate('/', { replace: true });
+  }
 
   const [email, setEmail] = useState(initialEmail);
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
@@ -101,7 +120,7 @@ export default function VerifyEmail() {
     try {
       await verifyEmail({ email: email.trim(), code: fullCode });
       setVerified(true);
-      toast.success('Email verified successfully! You can now log in.');
+      toast.success(signedIn ? 'Email verified.' : 'Email verified successfully! You can now log in.');
     } catch (err) {
       const info = getErrorInfo(err);
       setErrorMessage(info.message || 'Invalid or expired verification code.');
@@ -184,19 +203,37 @@ export default function VerifyEmail() {
                 <div className="flex flex-col gap-1 text-sm leading-relaxed text-text">
                   <p className="font-medium text-text">Account activated!</p>
                   <p className="text-text-muted">
-                    Your email address has been successfully verified. You can now log in to access your GameQuest library.
+                    {signedIn
+                      ? 'Your email address has been verified.'
+                      : 'Your email address has been successfully verified. You can now log in to access your GameQuest library.'}
                   </p>
                 </div>
               </div>
-              <Link to="/login">
-                <Button className="w-full">Log in to GameQuest</Button>
-              </Link>
+              {signedIn ? (
+                <Button className="w-full" onClick={continueToApp}>
+                  Continue to GameQuest
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button className="w-full">Log in to GameQuest</Button>
+                </Link>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <p className="text-sm text-text-muted leading-relaxed">
-                Enter the 6-digit verification code sent to your email address to activate your account.
+                Enter the 6-digit code we sent to your email address. You can use GameQuest while you wait;
+                a verified email lets you reset your password if you forget it.
               </p>
+              {emailNotSent && (
+                <div role="status" className="flex items-start gap-2.5 rounded-card border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed text-text-muted">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                  <span>
+                    We couldn&apos;t send the email just now. Your account is ready and you&apos;re signed in. Try
+                    &ldquo;Resend code&rdquo; in a minute, or skip this and verify later from the banner in the app.
+                  </span>
+                </div>
+              )}
 
               {errorMessage && (
                 <div
@@ -289,9 +326,19 @@ export default function VerifyEmail() {
                 </button>
               </div>
 
-              <Link to="/login" className="text-center text-xs text-text-muted hover:text-text underline mt-1">
-                Return to log in
-              </Link>
+              {signedIn ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/', { replace: true })}
+                  className="text-center text-xs text-text-muted hover:text-text underline mt-1"
+                >
+                  Skip for now
+                </button>
+              ) : (
+                <Link to="/login" className="text-center text-xs text-text-muted hover:text-text underline mt-1">
+                  Return to log in
+                </Link>
+              )}
             </form>
           )}
         </div>

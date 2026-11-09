@@ -5,7 +5,7 @@ import { GameCard, GameCardSkeleton } from '@/components/games/GameCard.jsx';
 import { useAsync } from '@/hooks/useAsync.js';
 import { searchGames } from '@/services/gamesApi.js';
 
-export const SHELF_SIZE = 12;
+const SHELF_SIZE = 12;
 const CARD = 'w-36 shrink-0 snap-start sm:w-44';
 
 function ShelfHeader({ title, subtitle, icon: Icon }) {

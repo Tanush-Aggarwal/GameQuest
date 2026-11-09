@@ -126,16 +126,14 @@ describe('RecommendationModal', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText(/Recommend Hades/i)).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: 'alex' })).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('dialog', { name: 'Hades' })).toBeInTheDocument();
+    const alex = await screen.findByRole('checkbox', { name: /alex/ });
+    // nothing picked yet: sending is disabled
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    await user.click(alex);
 
-    const msgBox = screen.getByRole('textbox', { name: /Why should they play it/i });
-    await user.type(msgBox, 'Great rogue-lite!');
-
-    const sendBtn = screen.getByRole('button', { name: /Send Recommendation/i });
-    await user.click(sendBtn);
+    await user.type(screen.getByPlaceholderText(/Why should they play it/i), 'Great rogue-lite!');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(recApi.sendRecommendation).toHaveBeenCalledWith({
       toId: 'f1',

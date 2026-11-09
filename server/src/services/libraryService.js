@@ -31,7 +31,7 @@ export const toEntryDto = (entry, game) => ({
   game: game ? toGameDto(game) : null,
 });
 
-export const toHistoryDto = (h) => ({ id: String(h._id), from: h.from ?? null, to: h.to, at: h.at });
+const toHistoryDto = (h) => ({ id: String(h._id), from: h.from ?? null, to: h.to, at: h.at });
 
 // Every method takes the userId from the auth middleware and scopes queries by it, so an entry
 // that belongs to someone else is indistinguishable from one that does not exist.

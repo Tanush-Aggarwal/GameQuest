@@ -5,10 +5,3 @@ export const upsertReviewSchema = z.object({
   body: z.string().trim().min(1).max(3000).optional(),
 });
 
-export const reviewListQuerySchema = z.object({
-  cursor: z.string().optional(),
-  limit: z
-    .string()
-    .optional()
-    .transform((v) => (v ? Math.min(Number(v), 50) : 20)),
-});

@@ -9,11 +9,12 @@ import { PAGE_TRANSITION, useMotionOk } from '@/lib/motion.js';
 import { SideRail } from './SideRail.jsx';
 import { TopBar } from './TopBar.jsx';
 import { BottomTabBar } from './BottomTabBar.jsx';
+import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner.jsx';
 
 // Loaded the first time it is opened, so it costs nothing on a page that never uses it.
 const CommandPalette = lazy(() => import('@/components/command/CommandPalette.jsx'));
 
-export function PageSkeleton() {
+function PageSkeleton() {
   return (
     <div className="flex flex-col gap-4" role="status" aria-label="Loading page">
       <Skeleton className="h-8 w-48" />
@@ -75,6 +76,7 @@ export function AppLayout() {
           <SideRail />
           <div className="md:pl-[160px]">
             <TopBar onOpenPalette={() => openPalette(true)} />
+            <VerifyEmailBanner />
             <main
               id="main"
               className={`gq-main mx-auto w-full pb-24 lg:pb-12 ${

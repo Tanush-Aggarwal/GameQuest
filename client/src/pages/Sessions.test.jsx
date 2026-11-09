@@ -168,7 +168,7 @@ describe('Schedule a session', () => {
     await userEvent.type(screen.getByLabelText('Title'), 'Boss night');
     setStart('2099-01-01T18:30');
     await userEvent.type(screen.getByLabelText('Platform'), 'PC');
-    await userEvent.click(await screen.findByLabelText('bea'));
+    await userEvent.click(await screen.findByRole('checkbox', { name: /bea/ }));
     await userEvent.type(screen.getByLabelText('Discord invite'), 'discord.gg/hades-night');
     await userEvent.click(screen.getByRole('button', { name: 'Schedule session' }));
     await waitFor(() => expect(api.createSession).toHaveBeenCalled());

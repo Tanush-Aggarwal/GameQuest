@@ -29,8 +29,6 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-      - key: TOKEN_ENCRYPTION_KEY
-        sync: false
       - key: TWITCH_CLIENT_ID
         sync: false
       - key: TWITCH_CLIENT_SECRET
@@ -39,11 +37,11 @@ services:
         sync: false
       - key: YOUTUBE_API_KEY
         sync: false
-      - key: DISCORD_CLIENT_ID
+      - key: MAIL_RELAY_URL
         sync: false
-      - key: DISCORD_CLIENT_SECRET
+      - key: MAIL_RELAY_SECRET
         sync: false
-      - key: RESEND_API_KEY
+      - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: EMAIL_FROM
+      - key: GOOGLE_CLIENT_SECRET
         sync: false

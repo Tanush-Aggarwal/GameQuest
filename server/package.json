@@ -17,7 +17,8 @@
     "db:indexes": "node --env-file-if-exists=.env scripts/sync-indexes.js",
     "catalog:ttb": "node --env-file-if-exists=.env scripts/fix-time-to-beat.js",
     "catalog:art": "node --env-file-if-exists=.env scripts/fix-art.js",
-    "steam:debug": "node --env-file-if-exists=.env scripts/debug-steam.js"
+    "steam:debug": "node --env-file-if-exists=.env scripts/debug-steam.js",
+    "mail:test": "node --env-file-if-exists=.env scripts/mail-test.js"
   },
   "jest": {
     "testEnvironment": "node",
@@ -38,7 +39,6 @@
     "mongoose": "^9.11.4",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
-    "resend": "^6.35.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

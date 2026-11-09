@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Check, Search, Send, Sparkles, X } from 'lucide-react';
+import { Check, Search, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Avatar } from '@/components/ui/Avatar.jsx';
@@ -71,7 +71,7 @@ function RecommendationDialog({ game, onClose }) {
             )}
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/60">
-                <Sparkles className="h-3.5 w-3.5 text-[var(--reward)]" aria-hidden="true" /> Recommend to friends
+                <Send className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" /> Recommend to friends
               </p>
               <Dialog.Title className="truncate font-heading text-xl font-bold" style={{ color: '#fff' }}>{game.title}</Dialog.Title>
               <Dialog.Description className="text-xs text-white/60">They’ll find it in their Recommendations inbox.</Dialog.Description>

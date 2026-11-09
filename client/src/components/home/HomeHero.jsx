@@ -222,7 +222,7 @@ function HeroBody({ dashboard, playNext }) {
 
           <Link
             to="/explore"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-bold text-[var(--accent-fg)] transition-transform hover:scale-[1.02] shadow-sm"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-bold text-[var(--accent-fg)] transition-transform hover:scale-[1.02] "
           >
             Explore Games
             <span aria-hidden="true">&rarr;</span>
@@ -242,19 +242,19 @@ function HeroBody({ dashboard, playNext }) {
         <div className="flex items-center gap-8 pt-3">
           <div>
             <p className="text-xl font-bold tabular-nums text-white">
-              {stats?.games != null ? stats.games.toLocaleString() : '—'}
+              {stats?.games != null ? stats.games.toLocaleString() : '…'}
             </p>
             <p className="text-xs text-gray-400">Games Tracked</p>
           </div>
           <div>
             <p className="text-xl font-bold tabular-nums text-white">
-              {stats?.players != null ? stats.players.toLocaleString() : '—'}
+              {stats?.players != null ? stats.players.toLocaleString() : '…'}
             </p>
             <p className="text-xs text-gray-400">Players</p>
           </div>
           <div>
             <p className="text-xl font-bold tabular-nums text-white">
-              {stats?.collections != null ? stats.collections.toLocaleString() : '—'}
+              {stats?.collections != null ? stats.collections.toLocaleString() : '…'}
             </p>
             <p className="text-xs text-gray-400">Public Collections</p>
           </div>

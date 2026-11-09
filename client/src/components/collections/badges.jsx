@@ -1,4 +1,4 @@
-import { Globe, Layers, Lock, Sparkles, Users } from 'lucide-react';
+import { Globe, Layers, ListFilter, Lock, Users } from 'lucide-react';
 
 // Icon + label, never colour alone.
 const VISIBILITY = {
@@ -8,7 +8,7 @@ const VISIBILITY = {
 };
 const TYPE = {
   manual: { label: 'Manual', icon: Layers },
-  smart: { label: 'Smart', icon: Sparkles },
+  smart: { label: 'Smart', icon: ListFilter },
 };
 
 function Badge({ meta }) {

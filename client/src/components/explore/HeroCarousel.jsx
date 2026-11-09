@@ -101,8 +101,8 @@ export function HeroCarousel() {
         <BackdropHero as="div" art={game} seed={game.title} className="gq-home-hero flex flex-col justify-center !min-h-[320px] px-5 py-9 sm:!min-h-[360px] sm:px-10 sm:py-10 lg:!min-h-[390px]">
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <motion.div {...fade} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${count}`} className="flex max-w-xl flex-col gap-3">
-              <p className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--accent)]">
-                <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> Trending now
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-[var(--accent)]">
+                <TrendingUp className="h-4 w-4" aria-hidden="true" /> Trending now
               </p>
               <h2 className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-[2.75rem]">{game.title}</h2>
               <p className="text-sm font-medium text-gray-300">{[year, ...(game.genres ?? []).slice(0, 2)].filter(Boolean).join(' · ')}</p>

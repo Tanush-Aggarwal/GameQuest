@@ -2,7 +2,7 @@ import { CoverImage } from '@/components/games/GameCard.jsx';
 import { Avatar } from '@/components/ui/Avatar.jsx';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Clock, Heart, Inbox, Send, Sparkles, Star, ThumbsDown, Trophy, Trash2 } from 'lucide-react';
+import { Check, Clock, Heart, Inbox, Send, Star, ThumbsDown, Trophy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -168,7 +168,7 @@ function PickScoreCard({ scoreData, loading }) {
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--reward)]/15 text-[var(--reward)]">
-          <Sparkles className="h-6 w-6" />
+          <Send className="h-6 w-6" aria-hidden="true" />
         </div>
         <div>
           <h2 className="font-bold font-heading text-base">Your Recommendation Pick Score</h2>

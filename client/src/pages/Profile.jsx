@@ -7,7 +7,7 @@ import {
   Save,
   Shield,
   ShieldOff,
-  Sparkles,
+  Heart,
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -35,9 +35,9 @@ import {
 } from '@/services/socialApi.js';
 
 const PRIVACY_LABELS = {
-  public: 'Public — anyone signed in can view my profile',
+  public: 'Public: anyone signed in can view my profile',
   friends: 'Friends only',
-  private: 'Private — only me',
+  private: 'Private: only me',
 };
 
 const AVATAR_PRESETS = [
@@ -229,7 +229,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <span className="flex items-center gap-1.5 text-sm font-semibold">
-                <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
+                <Heart className="h-4 w-4 text-text-muted" aria-hidden="true" />
                 Favourite 4 Showcase
               </span>
               <p className="mt-0.5 text-xs text-text-muted">Pick up to 4 games to feature on your profile</p>
@@ -267,7 +267,7 @@ function ProfileEditor({ initialProfile, onSaved }) {
             <Button
               type="submit"
               disabled={saving}
-              className="text-xs font-bold shadow-sm"
+              className="text-xs font-bold "
             >
               <Save className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
               {saving ? 'Saving...' : 'Save Profile'}
@@ -548,7 +548,7 @@ function ProfileHeaderBanner({ user, banner, profileData }) {
               Member since{' '}
               {user?.createdAt
                 ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
-                : '—'}
+                : 'recently'}
             </p>
           </div>
         </div>
@@ -600,7 +600,7 @@ export default function Profile() {
               <div>
                 <dt className="text-xs font-medium text-text-muted">Member since</dt>
                 <dd className="font-normal text-text mt-0.5">
-                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : '—'}
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'Not available'}
                 </dd>
               </div>
             </dl>

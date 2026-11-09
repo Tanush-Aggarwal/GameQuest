@@ -320,7 +320,7 @@ export default function Library() {
                   aria-pressed={active}
                   onClick={() => setParams(t === 'all' ? {} : { status: t })}
                   className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control border px-3 text-sm font-medium transition-colors ${
-                    active ? 'border-text bg-surface-raised text-text shadow-sm' : 'border-border text-text-muted hover:text-text'
+                    active ? 'border-text bg-surface-raised text-text ' : 'border-border text-text-muted hover:text-text'
                   }`}
                 >
                   {tabLabel(t)} {count !== undefined && <span className="tabular-nums text-text-muted">{count}</span>}

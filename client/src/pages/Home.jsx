@@ -310,7 +310,7 @@ function AdventureCard() {
       <div className="relative z-10 pt-4">
         <Link
           to={ctaLink}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-5 py-2 text-xs font-bold text-[var(--accent-fg)] transition-transform hover:scale-105 shadow-sm"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-5 py-2 text-xs font-bold text-[var(--accent-fg)] transition-transform hover:scale-105 "
         >
           {ctaText}
           <span aria-hidden="true">&rarr;</span>

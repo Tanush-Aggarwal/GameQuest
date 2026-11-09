@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ProgressBar } from '@/components/ui/ProgressBar.jsx';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Clock, Gamepad2, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Gamepad2, TrendingUp } from 'lucide-react';
 import { ArtPanel } from '@/components/art/ArtPanel.jsx';
 import { useAmbient } from '@/components/art/ambientContext.js';
 import { CoverImage } from '@/components/games/GameCard.jsx';
@@ -38,7 +38,7 @@ export function PlayNextCard({ item }) {
   return (
     <li className={`${CARD} gq-play-next-card`}>
       <div
-        className="group flex h-full flex-col gap-3 rounded-card border border-border bg-surface p-2 pb-3 shadow-sm transition-[transform,box-shadow,border-color] delay-0 duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:delay-150 hover:border-[color-mix(in_srgb,var(--text)_25%,var(--border))] hover:shadow-[0_18px_36px_-14px_rgba(21,23,19,0.35)] motion-safe:hover:-translate-y-1 focus-within:border-text"
+        className="group flex h-full flex-col gap-3 rounded-card border border-border bg-surface p-2 pb-3 transition-[transform,box-shadow,border-color] delay-0 duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:delay-150 hover:border-[color-mix(in_srgb,var(--text)_25%,var(--border))] hover:shadow-[0_18px_36px_-14px_rgba(21,23,19,0.35)] motion-safe:hover:-translate-y-1 focus-within:border-text"
         onMouseEnter={() => previewGame(item)}
         onFocus={() => previewGame(item)}
         onMouseLeave={clearPreview}
@@ -86,7 +86,6 @@ export function PlayNextCard({ item }) {
                   title={reason}
                   className="flex max-w-full items-center gap-1 truncate rounded-full bg-bg px-2 py-0.5 text-[11px] font-medium leading-5 text-text-muted"
                 >
-                  <Sparkles className="h-3 w-3 shrink-0 text-[var(--secondary-accent)]" aria-hidden="true" />
                   <span className="truncate">{reason}</span>
                 </li>
               ))}

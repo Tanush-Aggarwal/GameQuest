@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarDays, Check, Compass, Inbox, Search, Sparkles, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
+import { CalendarDays, Check, Compass, Inbox, Search, Send, UserMinus, UserPlus, Users, X, ShieldBan } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar.jsx';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
@@ -29,7 +29,7 @@ import { RecommendationsTab } from '@/components/recommendations/Recommendations
 const TABS = [
   ['friends', 'Friends', Users],
   ['requests', 'Requests', Inbox],
-  ['recommendations', 'Recommendations', Sparkles],
+  ['recommendations', 'Recommendations', Send],
   ['find', 'Find people', Compass],
 ];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -46,7 +46,7 @@ function ListSkeleton() {
 
 // A person's card: their art behind a soft scrim, so the lists are never flat grey boxes.
 const Row = ({ children, art, seed }) => (
-  <ArtPanel as="li" art={art} seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-4 transition-shadow hover:shadow-md">
+  <ArtPanel as="li" art={art} seed={seed} className="flex flex-wrap items-center justify-between gap-3 p-4 transition-shadow ">
     {children}
   </ArtPanel>
 );

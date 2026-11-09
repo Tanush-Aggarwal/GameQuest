@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { CalendarPlus, ChevronDown, EyeOff, Gamepad2, ImageIcon, MoreHorizontal, Play, Sparkles } from 'lucide-react';
+import { CalendarPlus, ChevronDown, EyeOff, Gamepad2, ImageIcon, MoreHorizontal, Play, Send } from 'lucide-react';
 import { BackdropHero } from '@/components/art/BackdropHero.jsx';
 import { GameCover, SharedCover } from '@/components/games/GameCard.jsx';
 import { AddToCollection } from '@/components/collections/AddToCollection.jsx';
@@ -132,7 +132,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
                   <DropdownMenu.Trigger asChild><Button variant="secondary" aria-label="More game actions" className="h-11 w-11 rounded-full border-white/30 bg-transparent px-0 text-white hover:bg-white/10"><MoreHorizontal className="h-5 w-5" aria-hidden="true" /></Button></DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content align="start" className="z-50 min-w-56 rounded-control border border-border bg-surface p-1 text-text shadow-xl">
-                      <DropdownMenu.Item onSelect={onRecommend} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><Sparkles className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Recommend to a friend</DropdownMenu.Item>
+                      <DropdownMenu.Item onSelect={onRecommend} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><Send className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Recommend to a friend</DropdownMenu.Item>
                       <DropdownMenu.Item onSelect={onSchedule} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised"><CalendarPlus className="mr-2 h-4 w-4 text-text-muted" aria-hidden="true" />Schedule a session</DropdownMenu.Item>
                       {entry && <DropdownMenu.Item onSelect={() => setCollectionOpen(true)} className="flex w-full cursor-pointer items-center rounded px-3 py-2 text-sm font-medium text-text outline-none hover:bg-surface-raised data-[highlighted]:bg-surface-raised">Add to collection</DropdownMenu.Item>}
                       {isAdmin && (

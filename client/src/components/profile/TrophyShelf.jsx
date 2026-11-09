@@ -14,7 +14,7 @@ export function TrophyShelf({ stats, isSelf = false }) {
   const visible = showAll ? sorted : started.length ? started : sorted.slice(0, 3);
 
   return (
-    <section aria-labelledby="trophies-title" className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
+    <section aria-labelledby="trophies-title" className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 ">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="trophies-title" className="flex items-center gap-2 font-heading text-lg font-semibold">

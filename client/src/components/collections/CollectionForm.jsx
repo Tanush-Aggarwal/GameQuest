@@ -84,8 +84,8 @@ export function CollectionForm({ initial, submitLabel, onSubmit, onCancel }) {
           <div className="flex flex-col gap-1">
             <label htmlFor={`${id}-type`} className="text-sm font-medium">Type</label>
             <FancySelect id={`${id}-type`} className={selectClass} value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="manual">Manual — I pick the games</option>
-              <option value="smart">Smart — filled by rules</option>
+              <option value="manual">Manual: I pick the games</option>
+              <option value="smart">Smart: filled by rules</option>
             </FancySelect>
           </div>
         )}

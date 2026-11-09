@@ -10,7 +10,7 @@ export function shareDetails(game, origin = window.location.origin) {
   const year = game.releaseDate ? new Date(game.releaseDate).getUTCFullYear() : null;
   const rating = game.totalRating != null ? `★ ${(game.totalRating / 10).toFixed(1)}/10` : null;
   const facts = [year, ...(game.genres ?? []).slice(0, 2), rating].filter(Boolean).join(' · ');
-  const text = `🎮 ${game.title}${facts ? ` (${facts})` : ''}\nCheck it out on GameQuest:`;
+  const text = `${game.title}${facts ? ` (${facts})` : ''}\nCheck it out on GameQuest:`;
   return { url, text, message: `${text}\n${url}` };
 }
 

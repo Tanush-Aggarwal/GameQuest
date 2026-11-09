@@ -48,7 +48,7 @@ export function CoverCollage() {
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  className="aspect-[3/4] w-full rounded-card border border-border/40 object-cover shadow-md"
+                  className="aspect-[3/4] w-full rounded-card border border-border/40 object-cover "
                 />
               ))}
             </div>

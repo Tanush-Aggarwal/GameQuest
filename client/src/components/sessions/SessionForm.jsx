@@ -89,7 +89,7 @@ export function SessionForm({ gameId, initial, submitLabel, onSubmit, onCancel }
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5" aria-label={editing ? 'Edit session' : 'New session'}>
       <Section icon={Pencil} title="Details" subtitle="Give it a name your friends will recognise.">
-        <Field id={`${id}-title`} label="Title" hint="Optional — defaults to “Playing <game>”." error={errors.title}>
+        <Field id={`${id}-title`} label="Title" hint="Optional. Leave empty to use “Playing <game>”." error={errors.title}>
           <Input id={`${id}-title`} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="Boss rush night" />
         </Field>
       </Section>
@@ -164,7 +164,7 @@ export function SessionForm({ gameId, initial, submitLabel, onSubmit, onCancel }
           <Field id={`${id}-platform`} label="Platform" hint="Optional" error={errors.platform}>
             <Input id={`${id}-platform`} value={platform} maxLength={50} onChange={(e) => setPlatform(e.target.value)} placeholder="PC, Switch, PS5…" />
           </Field>
-          <Field id={`${id}-discord`} label="Discord invite" hint="Optional — a discord.gg/… or discord.com/invite/… link." error={errors.discordInviteUrl}>
+          <Field id={`${id}-discord`} label="Discord invite" hint="Optional. A discord.gg/… or discord.com/invite/… link." error={errors.discordInviteUrl}>
             <Input id={`${id}-discord`} value={discord} maxLength={100} onChange={(e) => setDiscord(e.target.value)} placeholder="https://discord.gg/your-code" aria-invalid={Boolean(errors.discordInviteUrl)} />
           </Field>
         </div>
@@ -185,7 +185,7 @@ export function SessionForm({ gameId, initial, submitLabel, onSubmit, onCancel }
 
 function Section({ icon: Icon, title, subtitle, children }) {
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
+    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 ">
       <header className="flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-raised text-text" aria-hidden="true">
           <Icon className="h-4 w-4" />

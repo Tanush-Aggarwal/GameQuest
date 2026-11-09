@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Trophy, Gamepad2, Trash2, Eye, EyeOff, ChevronRight, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { LIBRARY_TRANSITIONS } from '@gamequest/shared';
 import { useAsync } from '@/hooks/useAsync.js';
@@ -217,7 +217,7 @@ export default function LibraryEntry() {
             <div className="flex flex-col gap-3">
               <AddToCollection entryId={id} />
               <Button variant="secondary" onClick={() => setRecommendOpen(true)} className="w-full">
-                <Sparkles size={16} aria-hidden="true" /> Recommend to a friend
+                <Send size={16} aria-hidden="true" /> Recommend to a friend
               </Button>
               <button
                 onClick={handleToggleVisibility}
@@ -257,7 +257,7 @@ export default function LibraryEntry() {
 
 function Card({ title, children }) {
   return (
-    <section className="rounded-card border border-border bg-surface p-5 shadow-sm">
+    <section className="rounded-card border border-border bg-surface p-5 ">
       <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">{title}</h2>
       {children}
     </section>

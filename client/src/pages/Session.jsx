@@ -242,7 +242,7 @@ export default function Session() {
           {editing && <SessionForm initial={session} submitLabel="Save changes" onSubmit={saveEdits} onCancel={() => setEditing(false)} />}
 
           {!session.isHost && open && (
-            <section aria-labelledby="rsvp-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
+            <section aria-labelledby="rsvp-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 ">
               <h2 id="rsvp-title" className="font-heading text-base font-bold">Will you play?</h2>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Your response">
                 {RSVP_OPTIONS.map(([value, label, Icon]) => (
@@ -269,7 +269,7 @@ export default function Session() {
             <ProgressBar value={(session.counts.going / Math.max(1, session.maxPlayers)) * 100} label="Spots filled" />
             <ul className="grid gap-2 sm:grid-cols-2">
               {session.attendees.map((a) => (
-                <li key={a.user.id} className="flex items-center justify-between gap-3 rounded-card border border-border bg-surface p-3 shadow-sm">
+                <li key={a.user.id} className="flex items-center justify-between gap-3 rounded-card border border-border bg-surface p-3 ">
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar user={a.user} size={40} />
                     <Link to={`/u/${a.user.username}`} className="min-h-6 truncate font-semibold text-text hover:underline">{a.user.username}</Link>
@@ -288,7 +288,7 @@ export default function Session() {
             </div>
 
           {/* Side card: everything about the session at a glance */}
-          <aside className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-24">
+          <aside className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 lg:sticky lg:top-24">
             <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted">Session details</h2>
             <dl className="flex flex-col gap-3 text-sm">
               <Detail icon={CalendarDays} label="When"><time dateTime={session.startsAt}>{fullWhen(session)}</time></Detail>

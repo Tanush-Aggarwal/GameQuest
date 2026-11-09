@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { Button } from '@/components/ui/button.jsx';
-import { CalendarDays, Check, Gamepad2, Library, Loader2, RefreshCw, ServerCog, Trophy } from 'lucide-react';
+import { Check, Gamepad2, Loader2, RefreshCw, ServerCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const AUTO_RETRY_SECONDS = 8;
@@ -57,10 +57,6 @@ function ServerWaking({ retry }) {
         {/* The fan: cards sit on one arc around a pivot below them, and the whole hand sways together. */}
         <div className="absolute inset-x-0 top-[12%] flex justify-center">
           <div className="relative h-[360px] w-[680px] xl:h-[400px]">
-            <span
-              className="absolute left-1/2 top-1/2 h-72 w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-              style={{ background: 'radial-gradient(closest-side, rgba(201,243,109,0.22), transparent)' }}
-            />
             <div className="group/fan absolute inset-0 origin-bottom motion-safe:animate-[gqsway_9s_ease-in-out_infinite]">
               {covers.map((cover, i) => (
                 <FanCard key={cover.hd} cover={cover} index={i} />
@@ -104,7 +100,7 @@ function ServerWaking({ retry }) {
 
         <section role="alert" className="my-auto flex max-w-xl flex-col gap-6 py-10">
           <div className="flex items-center gap-4">
-            <span className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+            <span className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border " style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
               {auto && <span className="absolute -inset-1 rounded-[20px] border-2 border-t-transparent motion-safe:animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent', animationDuration: '1.6s' }} aria-hidden="true" />}
               <ServerCog className="h-8 w-8" strokeWidth={1.75} style={{ color: auto ? 'var(--status-completed)' : 'var(--danger)' }} aria-hidden="true" />
             </span>
@@ -123,7 +119,7 @@ function ServerWaking({ retry }) {
             </p>
           </div>
 
-          <div className="rounded-card border p-5 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <div className="rounded-card border p-5 " style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             <ol className="flex flex-col gap-3">
               {steps.map((st) => (
                 <li key={st.label} className="flex items-center gap-3 text-sm font-medium" style={st.done || st.active ? ink : muted}>
@@ -178,17 +174,15 @@ function ServerWaking({ retry }) {
         {/* While you wait: what GameQuest does */}
         <footer>
           <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={muted}>While you wait</p>
-          <ul className="grid gap-3 sm:grid-cols-3">
-            {FEATURES.map(({ icon: Icon, title, text, color }) => (
-              <li key={title} className="flex flex-col gap-2 rounded-card border p-4" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
-                  <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                </span>
-                <span className="text-sm font-bold" style={ink}>{title}</span>
-                <span className="text-xs leading-5" style={muted}>{text}</span>
-              </li>
+          {/* A plain list, not a row of icon cards */}
+          <dl className="flex flex-col divide-y border-y" style={{ borderColor: 'var(--border)' }}>
+            {FEATURES.map(({ title, text }) => (
+              <div key={title} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5" style={{ borderColor: 'var(--border)' }}>
+                <dt className="w-32 shrink-0 text-sm font-bold" style={ink}>{title}</dt>
+                <dd className="text-sm" style={muted}>{text}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
         </footer>
       </div>
     </main>
@@ -293,9 +287,9 @@ function pickCovers(count = 5) {
 }
 
 const FEATURES = [
-  { icon: Library, title: 'One library', text: 'Steam and every other platform in one place.', color: 'var(--status-playing)' },
-  { icon: Trophy, title: 'Track progress', text: 'Playtime, achievements and time to beat.', color: 'var(--status-completed)' },
-  { icon: CalendarDays, title: 'Game nights', text: 'Plan sessions and invite your friends.', color: 'var(--secondary-accent)' },
+  { title: 'One library', text: 'Steam and every other platform in one place.' },
+  { title: 'Track progress', text: 'Playtime, achievements and time to beat.' },
+  { title: 'Game nights', text: 'Plan sessions and invite your friends.' },
 ];
 
 function SessionCheck({ status, retry }) {

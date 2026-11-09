@@ -8,7 +8,7 @@ import {
   Lock,
   Pencil,
   ShieldBan,
-  Sparkles,
+  Heart,
   Star,
   Trophy,
   UserMinus,
@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button.jsx';
 import { EmptyState, ErrorState } from '@/components/ui/states.jsx';
+import { Avatar } from '@/components/ui/Avatar.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { ActivityList } from '@/components/feed/ActivityList.jsx';
 import { CollectionCard } from '@/components/collections/CollectionCard.jsx';
@@ -54,31 +55,6 @@ function ProfileSkeleton() {
   );
 }
 
-function UserAvatar({ user, size = 'lg' }) {
-  const [failed, setFailed] = useState(false);
-  const sizeClasses = size === 'lg' ? 'h-24 w-24 text-3xl sm:h-28 sm:w-28' : 'h-12 w-12 text-base';
-  const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : '?';
-
-  if (user?.avatar && !failed) {
-    return (
-      <img
-        src={user.avatar}
-        alt={user.username}
-        onError={() => setFailed(true)}
-        className={`${sizeClasses} rounded-full object-cover border-2 border-white/80 shadow-md flex-shrink-0 bg-surface-raised`}
-      />
-    );
-  }
-
-  return (
-    <div
-      className={`${sizeClasses} rounded-full bg-gradient-to-br from-accent/90 to-purple-800 text-text font-bold font-heading flex items-center justify-center border-2 border-white/60 shadow-md flex-shrink-0`}
-      aria-label={`${user?.username} avatar`}
-    >
-      {initials}
-    </div>
-  );
-}
 
 // Add friend / Unfriend / Block, depending on how the viewer and this player are related.
 function RelationActions({ profile, setProfile }) {
@@ -180,7 +156,7 @@ function FavouriteShowcase({ games = [], isSelf }) {
     <ArtPanel aria-labelledby="favourites-title" art={games[0]} seed="profile-favourites" className="flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <h2 id="favourites-title" className="text-lg font-semibold font-heading flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[var(--secondary-accent)]" aria-hidden="true" />
+          <Heart className="h-4 w-4 text-text-muted" aria-hidden="true" />
           Favourite 4 Showcase
         </h2>
         {isSelf && (
@@ -275,7 +251,7 @@ export default function UserProfile() {
           <BackdropHero as="header" art={profile.restricted ? null : profile.user.favouriteGames?.[0]} seed={profile.user.username} className={`${PROFILE_HERO_CLASS} shadow-xl`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-5 sm:gap-6">
-                <UserAvatar user={profile.user} size="lg" />
+                <Avatar user={profile.user} size={104} className="ring-2 ring-white/70" />
                 <div>
                   <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-5xl">{profile.user.username}</h1>
                   {profile.stats?.level != null && (
@@ -309,7 +285,7 @@ export default function UserProfile() {
               {/* Stat Tiles */}
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {STAT_LABELS.map(([key, label, Icon, color]) => (
-                  <div key={key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-sm">
+                  <div key={key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 ">
                     {/* dt and dd are direct children of the div that groups them, as a description list requires */}
                     <dt className="flex items-center gap-2 text-xs font-medium text-text-muted">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
@@ -327,7 +303,7 @@ export default function UserProfile() {
                 <div className="flex min-w-0 flex-col gap-6">
                   <FavouriteShowcase games={profile.user.favouriteGames} isSelf={profile.relation === 'self'} />
 
-                  <section aria-labelledby="recent-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
+                  <section aria-labelledby="recent-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 ">
                     <h2 id="recent-title" className="text-lg font-semibold font-heading">Recent activity</h2>
                     <div className="-mx-2 flex max-h-[520px] flex-col overflow-y-auto px-2">
                       <ActivityList
@@ -342,7 +318,7 @@ export default function UserProfile() {
                 {/* Side column: achievements and shared collections */}
                 <aside className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
                   <TrophyShelf stats={profile.stats} isSelf={profile.relation === 'self'} />
-                  <section aria-labelledby="collections-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 shadow-sm">
+                  <section aria-labelledby="collections-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 ">
                     <h2 id="collections-title" className="flex items-center gap-2 text-lg font-semibold font-heading">
                       <Layers className="h-4 w-4 text-[var(--secondary-accent)]" aria-hidden="true" /> Collections
                     </h2>

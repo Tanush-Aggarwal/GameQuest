@@ -29,7 +29,7 @@ export function FavouriteTiles({ slots, openSlot, onOpen, onRemove }) {
                   aria-label={`Remove ${game.title} from favourites`}
                   className="absolute right-0 top-0 flex h-11 w-11 items-start justify-end p-1.5 text-text focus-visible:outline-offset-0"
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/80 text-white shadow-md ring-1 ring-white/20 transition hover:bg-danger">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/20 transition hover:bg-danger">
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
                 </button>

@@ -54,7 +54,7 @@ export function GameQuestWordmark({ size = 'lg', className = '' }) {
   if (size === 'sm') {
     return (
       <div className={`flex items-center gap-2.5 ${className}`}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#111311] text-white shadow-sm">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#111311] text-white ">
           <GameControllerEmblem className="h-5 w-5 text-white" />
         </div>
         <span className="font-heading text-2xl font-extrabold tracking-tight text-white leading-none">

@@ -29,7 +29,7 @@ function GamePicker({ onPick }) {
   const { status, data, error, retry } = useAsync(load);
 
   return (
-    <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-sm">
+    <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 ">
       <div>
         <h2 className="font-heading text-base font-bold text-text">Pick a game</h2>
         <p className="text-xs text-text-muted">Search the catalog; the session page uses its art.</p>
@@ -53,7 +53,7 @@ function GamePicker({ onPick }) {
                 onClick={() => onPick(g)}
                 className="group flex w-full flex-col gap-2 rounded-card text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text"
               >
-                <div className="overflow-hidden rounded-[10px] border border-border shadow-sm transition group-hover:-translate-y-0.5 group-hover:shadow-md">
+                <div className="overflow-hidden rounded-[10px] border border-border transition group-hover:-translate-y-0.5">
                   <GameCover game={g} compact />
                 </div>
                 <span className="line-clamp-2 text-sm font-semibold text-text">{g.title}</span>

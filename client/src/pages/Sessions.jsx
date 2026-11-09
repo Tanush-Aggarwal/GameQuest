@@ -61,7 +61,7 @@ export default function Sessions() {
         <EmptyState
           icon={CalendarDays}
           title="No upcoming sessions"
-          description="Plan a game night with your friends — pick a game, a time, and who to invite."
+          description="Plan a game night with your friends. Pick a game, a time and who to invite."
           actionLabel="Schedule a session"
           actionTo="/sessions/new"
           suggestions

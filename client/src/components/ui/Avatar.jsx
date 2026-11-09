@@ -18,7 +18,7 @@ export function Avatar({ user, size = 40, className = '', ring = false }) {
   const failed = Boolean(user?.avatar) && failedSrc === user.avatar;
   const name = user?.username ?? '?';
   const style = { width: size, height: size, fontSize: Math.max(11, Math.round(size * 0.4)) };
-  const ringClass = ring ? 'ring-2 ring-white/80 shadow-md' : '';
+  const ringClass = ring ? 'ring-2 ring-white/80 ' : '';
   if (user?.avatar && !failed) {
     return (
       <img

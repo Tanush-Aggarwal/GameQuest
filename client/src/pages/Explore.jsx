@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Clock, Compass, Flame, Gamepad2, Monitor, Search, Sparkles, Star } from 'lucide-react';
+import { CalendarClock, Clock, Compass, Flame, Gamepad2, Monitor, Search, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { FancySelect } from '@/components/ui/FancySelect.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -105,7 +105,7 @@ const isoDaysAgo = (days, from = Date.now()) => new Date(from - days * DAY_MS).t
 const buildRails = (today) => [
   { id: 'pc', title: 'Popular on PC', subtitle: 'What PC players are into', icon: Monitor, params: { platform: PLATFORMS[0] } },
   { id: 'top', title: 'Top rated', subtitle: 'Best rated by critics and players', icon: Star, params: { sort: 'rating', minRating: 80 } },
-  { id: 'new', title: 'New & upcoming', subtitle: 'Out in the last two months or on the way', icon: Sparkles, params: { releasedAfter: isoDaysAgo(60, today) } },
+  { id: 'new', title: 'New & upcoming', subtitle: 'Out in the last two months or on the way', icon: CalendarClock, params: { releasedAfter: isoDaysAgo(60, today) } },
   { id: 'short', title: 'Under 10 hours', subtitle: 'Quick weekend wins', icon: Clock, params: { maxHours: 10 } },
   ...CATEGORIES.filter((c) => c.rail).map((c) => ({ id: `genre-${c.id}`, title: c.label, subtitle: 'Popular right now', icon: Flame, params: { genre: c.id } })),
 ];

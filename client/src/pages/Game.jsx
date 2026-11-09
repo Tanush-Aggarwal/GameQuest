@@ -79,7 +79,7 @@ function TimeToBeat({ timeToBeat }) {
       {items.length > 0 && (
         <ul className="grid gap-3 sm:grid-cols-3">
           {items.map((item) => (
-            <li key={item.key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-sm">
+            <li key={item.key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 ">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{item.label}</span>
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} aria-hidden="true" />
@@ -149,7 +149,7 @@ function TrailerTiles({ slug, onPlay }) {
 }
 
 function Requirements({ data }) {
-  const list = (items) => <dl className="space-y-3">{(items ?? []).map((item) => <div key={`${item.label}-${item.value}`}><dt className="text-xs text-text-muted">{item.label}</dt><dd className="mt-1 text-sm text-text">{item.value || '—'}</dd></div>)}</dl>;
+  const list = (items) => <dl className="space-y-3">{(items ?? []).map((item) => <div key={`${item.label}-${item.value}`}><dt className="text-xs text-text-muted">{item.label}</dt><dd className="mt-1 text-sm text-text">{item.value || 'Unknown'}</dd></div>)}</dl>;
   return <div className="grid gap-6 sm:grid-cols-2"><section className="rounded-control border border-border bg-surface p-5"><h2 className="mb-5 text-lg font-semibold text-text">Minimum</h2>{list(data.minimum)}</section><section className="rounded-control border border-border bg-surface p-5"><h2 className="mb-5 text-lg font-semibold text-text">Recommended</h2>{list(data.recommended)}</section></div>;
 }
 

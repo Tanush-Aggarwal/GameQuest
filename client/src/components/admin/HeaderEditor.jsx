@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { AlertTriangle, Check, Link2, Loader2, Monitor, Move, RotateCcw, Smartphone, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, Check, Link2, Loader2, Monitor, Move, RotateCcw, Smartphone, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.jsx';
 import { getHeaderOptions, updateAdminGame } from '@/services/adminApi.js';
@@ -234,7 +234,7 @@ function EditorBody({ game, onOpenChange, onSaved, saving, setSaving }) {
 
         <footer className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-3">
           <Button variant="ghost" onClick={() => save(null)} disabled={saving} className="h-10 px-3">
-            <Sparkles className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">Back to automatic</span><span className="sm:hidden">Automatic</span>
+            <span className="hidden sm:inline">Back to automatic</span><span className="sm:hidden">Automatic</span>
           </Button>
           <div className="ml-auto flex gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={saving} className="h-10">Cancel</Button>

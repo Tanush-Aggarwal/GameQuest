@@ -12,7 +12,6 @@ import {
   Globe,
   Scale,
   Shield,
-  Sparkles,
   Trash2,
   UserCheck,
 } from 'lucide-react';
@@ -90,7 +89,6 @@ export default function Legal({ type: propType }) {
             </span>
             <span className="hidden sm:inline">•</span>
             <span className="inline-flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-secondary-accent" aria-hidden="true" />
               Mutual respect &amp; complete data ownership
             </span>
           </div>
@@ -103,7 +101,7 @@ export default function Legal({ type: propType }) {
             return (
               <section
                 key={idx}
-                className="group rounded-card border border-border bg-surface p-6 sm:p-7 shadow-xs transition-all duration-200 hover:border-text/30 hover:shadow-sm"
+                className="group rounded-card border border-border bg-surface p-6 sm:p-7 shadow-xs transition-all duration-200 hover:border-text/30 "
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-control border border-border bg-surface-raised text-text">

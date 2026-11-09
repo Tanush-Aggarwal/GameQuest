@@ -292,6 +292,33 @@ describe('catalog import', () => {
     expect(new Set(Game.docs.map((g) => g.externalIds.igdb)).size).toBe(count);
   });
 
+  it('imports Nintendo Switch 2 games when IGDB knows the platform slug, and skips it when not', async () => {
+    const switch2 = [{ id: 508, name: 'Nintendo Switch 2' }];
+    const games = [...universe(), raw(30, 'Switch Two Exclusive', { platforms: switch2, total_rating_count: 400 })];
+    const withSlug = { ...fakeIgdb(games, { popularity: popularity() }), getPlatformIdsBySlug: async () => new Map([['switch-2', 508]]) };
+    const a = setupImport(withSlug);
+    await a.importer.runImport();
+    expect(a.Game.docs.map((g) => g.slug)).toContain('switch-two-exclusive');
+
+    const withoutSlug = { ...fakeIgdb(games, { popularity: popularity() }), getPlatformIdsBySlug: async () => new Map() };
+    const b = setupImport(withoutSlug);
+    await b.importer.runImport();
+    expect(b.Game.docs.map((g) => g.slug)).not.toContain('switch-two-exclusive');
+  });
+
+  it('starts the steps over when the catalog size changes, without duplicating games', async () => {
+    const igdb = fakeIgdb(universe(), { popularity: popularity() });
+    const Game = createFakeCollection({ unique: [['slug']] });
+    const MediaCache = createFakeCollection();
+    const make = (targets) =>
+      createCatalogImportService({ Game, MediaCache, igdb, pageSize: 2, targets, now: () => new Date('2026-10-27T00:00:00Z') });
+    await make({ pc: 1, consolePerPlatform: 0, recent: 0 }).runImport();
+    expect(Game.docs).toHaveLength(1);
+    const bigger = await make({ pc: 4, consolePerPlatform: 0, recent: 0 }).runImport();
+    expect(bigger.steps.pc.pc).toBe(4);
+    expect(new Set(Game.docs.map((g) => g.externalIds.igdb)).size).toBe(Game.docs.length);
+  });
+
   it('skips console games that earlier steps already stored', async () => {
     const { Game, importer } = setupImport(fakeIgdb(universe(), { popularity: popularity() }), { targets: { pc: 5, consolePerPlatform: 5, recent: 0 } });
     await importer.runImport();

@@ -264,6 +264,15 @@ export function createIgdbAdapter({
       return pairs.filter((p) => raws.has(p.gameId)).map((p) => ({ appid: p.appid, raw: raws.get(p.gameId) }));
     },
 
+    // Platform ids by IGDB slug: Map(slug -> id). Used for platforms newer than the ids hard-coded in PLATFORM
+    // (e.g. Nintendo Switch 2), so the importer picks them up without guessing an id.
+    async getPlatformIdsBySlug(slugs) {
+      const list = [...new Set(slugs.map(String))];
+      if (!list.length) return new Map();
+      const rows = await query('platforms', `fields id,slug; where slug = (${list.map(quote).join(',')}); limit 50;`);
+      return new Map(rows.map((r) => [r.slug, r.id]));
+    },
+
     // The catalog filter as an Apicalypse fragment, for building bulk `where` clauses.
     catalogWhere: typeFilter,
 

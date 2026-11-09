@@ -7,7 +7,11 @@
  * Resumable and idempotent: progress lives in one MediaCache document and games are upserted by
  * IGDB id, so a crashed or interrupted run continues where it stopped. Use --fresh to start over.
  *
- * Usage: npm run catalog:import [-- --fresh]   (needs MONGODB_URI, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET in server/.env)
+ * Bigger catalog: add --more (about 4,000 PC/Steam + 800 new games per console, Switch 2 included, + 1,000 recent),
+ * or set each size: --pc=4000 --console=800 --recent=1000. Games already stored are updated, never duplicated.
+ *
+ * Usage: npm run catalog:import [-- --fresh] [-- --more] [-- --pc=N --console=N --recent=N]
+ *        (needs MONGODB_URI, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET in server/.env)
  */
 
 import mongoose from 'mongoose';
@@ -15,7 +19,7 @@ import { loadConfig } from '../src/config/index.js';
 import { Game } from '../src/models/Game.js';
 import { MediaCache } from '../src/models/MediaCache.js';
 import { createIgdbAdapter } from '../src/adapters/content/igdb.js';
-import { createCatalogImportService } from '../src/services/catalogImportService.js';
+import { createCatalogImportService, MORE_TARGETS } from '../src/services/catalogImportService.js';
 
 const stamp = () => new Date().toISOString().slice(11, 19);
 const log = (message) => console.log(`[${stamp()}] ${message}`);
@@ -35,7 +39,16 @@ if (!igdb.isConfigured()) {
 
 try {
   await mongoose.connect(config.mongoUri);
-  const importer = createCatalogImportService({ Game, MediaCache, igdb, log });
+  const flag = (name) => {
+    const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
+    const n = hit ? Number(hit.split('=')[1]) : NaN;
+    return Number.isInteger(n) && n > 0 ? n : undefined;
+  };
+  const base = process.argv.includes('--more') ? MORE_TARGETS : { pc: 1500, consolePerPlatform: 200, recent: 500 };
+  const targets = { pc: flag('pc') ?? base.pc, consolePerPlatform: flag('console') ?? base.consolePerPlatform, recent: flag('recent') ?? base.recent };
+  log(`targets: ${targets.pc} PC, ${targets.consolePerPlatform} new per console, ${targets.recent} recent`);
+  const importer = createCatalogImportService({ Game, MediaCache, igdb, log, targets });
+  // Changed sizes restart the steps; an interrupted run with the same sizes resumes where it stopped.
   const result = await importer.runImport({ fresh: process.argv.includes('--fresh') });
 
   console.log('\nCatalog import finished');

@@ -13,7 +13,12 @@ const CONSOLES = [
   { key: 'xboxSeries', id: PLATFORM.xboxSeries },
   { key: 'xboxOne', id: PLATFORM.xboxOne },
   { key: 'switch', id: PLATFORM.switch },
+  // Newer platforms are looked up by slug at run time; skipped when IGDB doesn't know the slug.
+  { key: 'switch2', slugs: ['switch-2', 'switch2', 'nintendo-switch-2'] },
 ];
+
+// Preset for `npm run catalog:import -- --more`: roughly 4,000 PC/Steam + 800 new per console + 1,000 recent.
+export const MORE_TARGETS = { pc: 4000, consolePerPlatform: 800, recent: 1000 };
 
 // Metric weights for the blended `popularity` score (0-100). Each metric is log-scaled against the
 // largest value seen so a few mega-hits don't flatten everything else.
@@ -169,7 +174,8 @@ export function createCatalogImportService({
     for (const key of ['steamPeak', 'visits', 'wantToPlay']) {
       if (!ctx.metricTypes[key]) continue;
       const rows = [];
-      for (let offset = 0; offset < 3000; offset += PAGE) {
+      // Enough candidates for the target: about half of a popularity list survives the PC + catalog filter.
+      for (let offset = 0; offset < Math.max(3000, targets.pc * 2); offset += PAGE) {
         const page = await igdb.getPopularityTop(ctx.metricTypes[key], { limit: PAGE, offset });
         rows.push(...page);
         if (page.length < PAGE) break;
@@ -205,9 +211,20 @@ export function createCatalogImportService({
   // 2. Top games per console by total_rating_count, skipping games earlier steps already stored.
   async function stepConsole(state, ctx) {
     state.done ??= {};
-    for (const platform of CONSOLES) {
+    const bySlug = igdb.getPlatformIdsBySlug
+      ? await igdb.getPlatformIdsBySlug(CONSOLES.flatMap((c) => c.slugs ?? []))
+      : new Map();
+    // Scan deep enough that most of the target can be new games (games other steps stored are skipped).
+    const maxOffset = Math.max(PAGE * 6, Math.ceil((targets.consolePerPlatform * 4) / PAGE) * PAGE);
+    for (const console_ of CONSOLES) {
+      const id = console_.id ?? console_.slugs?.map((slug) => bySlug.get(slug)).find(Boolean);
+      if (!id) {
+        log(`console ${console_.key}: not found on IGDB, skipped`);
+        continue;
+      }
+      const platform = { key: console_.key, id };
       let stored = state.done[platform.key] ?? 0;
-      for (let offset = state.offsets?.[platform.key] ?? 0; stored < targets.consolePerPlatform && offset < PAGE * 6; offset += PAGE) {
+      for (let offset = state.offsets?.[platform.key] ?? 0; stored < targets.consolePerPlatform && offset < maxOffset; offset += PAGE) {
         const raw = await igdb.fetchPage({
           where: `${igdb.catalogWhere} & platforms = (${platform.id}) & total_rating_count != null`,
           sort: 'total_rating_count desc',
@@ -288,7 +305,11 @@ export function createCatalogImportService({
         log('previous import already finished; re-running every step (use catalog:fix for repairs)');
         progress.steps = {};
         progress.finished = false;
+      } else if (progress.targets && JSON.stringify(progress.targets) !== JSON.stringify(targets)) {
+        log('catalog size changed since the saved run; starting the steps over (stored games are updated, not duplicated)');
+        progress.steps = {};
       }
+      progress.targets = targets;
       const metricTypes = await resolveMetricTypes();
       progress.maxima ??= await findMaxima(metricTypes);
       const ctx = { metricTypes, maxima: progress.maxima, checkpoint: () => saveProgress(progress) };

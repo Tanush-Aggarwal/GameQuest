@@ -189,6 +189,7 @@ The seed creates **demo** and **alex** (`alex@gamequest.dev` / `Demo1234!`), who
 
 ```bash
 npm run catalog:import     # ~3,000 games from IGDB; resumable, safe to re-run (add `-- --fresh` to start over)
+npm run catalog:import -- --more   # bigger catalog: ~4,000 PC/Steam + 800 more per console (PS5, PS4, Xbox Series, Xbox One, Switch, Switch 2) + 1,000 recent
 npm run catalog:fix        # repair games already in the database
 npm run catalog:steam-art  # Steam CDN cover/backdrop for games that have a Steam id but no art
 npm run db:indexes         # build indexes (production runs with autoIndex off)

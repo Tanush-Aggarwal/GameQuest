@@ -30,7 +30,7 @@ const GENRES = [
 ];
 
 // Catalog platform names as IGDB spells them (what the `platform` filter matches).
-const PLATFORMS = ['PC (Microsoft Windows)', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X|S', 'Xbox One', 'Nintendo Switch'];
+const PLATFORMS = ['PC (Microsoft Windows)', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X|S', 'Xbox One', 'Nintendo Switch', 'Nintendo Switch 2'];
 const platformLabel = (p) => p.replace(/\s*\(.*\)\s*$/, '');
 
 // How long a game takes (main story) and how well it is rated: both map onto catalog filters.

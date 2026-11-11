@@ -107,26 +107,26 @@ export default function LibraryEntry() {
       </Link>
 
       {/* Hero: backdrop behind a dark scrim, so every word on it is white and readable */}
-      <BackdropHero art={game} seed={game.title ?? 'entry'} className="min-h-[300px] px-5 py-7 text-white sm:px-10 sm:py-10">
+      <BackdropHero art={game} seed={game.title ?? 'entry'} className="min-h-[300px] px-5 py-7 text-white sm:px-10 sm:pb-12 sm:pt-24 lg:pb-14 lg:pt-32">
         <div className="flex h-full flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
           {game.cover ? (
-            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-48 w-36 flex-shrink-0 rounded-[14px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:h-60 sm:w-44" />
+            <CoverImage cover={game.cover} title={game.title} alt={game.title} className="h-48 w-36 flex-shrink-0 rounded-[14px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:h-64 sm:w-48 lg:h-72 lg:w-52" />
           ) : (
-            <div className="flex h-48 w-36 flex-shrink-0 items-center justify-center rounded-[10px] bg-white/10 sm:h-60 sm:w-44">
+            <div className="flex h-48 w-36 flex-shrink-0 items-center justify-center rounded-[10px] bg-white/10 sm:h-64 sm:w-48 lg:h-72 lg:w-52">
               <Gamepad2 size={32} className="text-white/60" aria-hidden="true" />
             </div>
           )}
 
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/70">
+          <div className="flex min-w-0 flex-1 flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/75">
               <span>In your library</span>
               {year && <><span aria-hidden="true">•</span><span>{year}</span></>}
               {game.developer?.[0] && <><span aria-hidden="true">•</span><span className="normal-case tracking-normal">{game.developer[0]}</span></>}
             </div>
-            <h1 className="font-heading text-3xl font-bold leading-none tracking-tight text-white sm:text-5xl">{game.title ?? 'Unknown game'}</h1>
+            <h1 className="break-words font-heading text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-[56px] xl:text-[64px]">{game.title ?? 'Unknown game'}</h1>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#fbf8f1] px-3 py-1.5 shadow">
+              <span className="rounded-full bg-[#fbf8f1] px-3.5 py-2 shadow">
                 <StatusBadge status={entry.status} />
               </span>
               {entry.status === 'completed' && entry.completedAt && (
@@ -136,7 +136,7 @@ export default function LibraryEntry() {
               )}
             </div>
 
-            <div className="mt-1 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {totalPlaytimeMin > 0 && <Stat icon={Clock} value={formatPlaytime(totalPlaytimeMin)} label="played" />}
               {game.ratingAvg > 0 && <Stat icon={Star} value={game.ratingAvg.toFixed(1)} label="rating" />}
               {game.timeToBeat?.main > 0 && <Stat icon={Trophy} value={`~${game.timeToBeat.main}h`} label="to beat" />}
@@ -144,13 +144,13 @@ export default function LibraryEntry() {
             </div>
 
             {(nextStatuses.length > 0 || game.slug) && (
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2.5">
                 {nextStatuses.map((to, i) => (
                   <button
                     key={to}
                     onClick={() => handleStatusChange(to)}
                     disabled={busy}
-                    className={`min-h-11 rounded-full px-5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-60 ${
+                    className={`min-h-12 rounded-full px-6 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-60 ${
                       i === 0 ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-105' : 'border border-white/30 text-white hover:bg-white/10'
                     }`}
                   >
@@ -160,7 +160,7 @@ export default function LibraryEntry() {
                 {game.slug && (
                   <Link
                     to={`/games/${game.slug}`}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-white/85 underline-offset-4 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                    className="inline-flex min-h-12 items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold text-white/85 underline-offset-4 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                   >
                     Game details <ChevronRight size={16} aria-hidden="true" />
                   </Link>
@@ -266,10 +266,10 @@ function Card({ title, children }) {
 
 function Stat({ icon: Icon, value, label }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-white/75 backdrop-blur-sm">
-      <Icon size={14} aria-hidden="true" />
-      <span className="font-semibold tabular-nums text-white">{value}</span>
-      <span className="text-xs">{label}</span>
+    <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-4 py-2 text-white/75 backdrop-blur-sm">
+      <Icon size={16} aria-hidden="true" />
+      <span className="text-lg font-semibold tabular-nums text-white">{value}</span>
+      <span className="text-[13px]">{label}</span>
     </div>
   );
 }

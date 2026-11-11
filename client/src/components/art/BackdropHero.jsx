@@ -21,7 +21,8 @@ export const PROFILE_HERO_CLASS = 'flex min-h-[260px] flex-col justify-center px
 // `art` is { backdrop, cover } (or a URL). Candidates, in order: the backdrop, then the cover (blurred, so it reads as
 // colour); one that fails to load, or is too wide to be a backdrop, is skipped. With none left there is a gradient from
 // `seed`, never a flat box. The image is the likely largest paint of the page, so it loads eagerly with high priority.
-export function BackdropHero({ art, seed = '', as: Tag = 'section', className, children, ...rest }) {
+// `scrim={false}` shows the picture as it is (no darkening), for art with no text over it.
+export function BackdropHero({ art, seed = '', as: Tag = 'section', className, children, scrim = true, ...rest }) {
   const own = typeof art === 'string' ? { backdrop: art } : art;
   // Wide candidates in order of reliability (Steam banner art, screenshots, then IGDB art; see heroCandidates);
   // the blurred cover is only the last resort.
@@ -99,8 +100,8 @@ export function BackdropHero({ art, seed = '', as: Tag = 'section', className, c
         ) : (
           <div className="h-full w-full" style={{ backgroundImage: fallbackGradient(seed) }} />
         )}
-        <div className={cn('absolute inset-0', HERO_SCRIM_SIDE)} />
-        <div className={cn('absolute inset-0', HERO_SCRIM_BOTTOM)} />
+        {scrim && <div className={cn('absolute inset-0', HERO_SCRIM_SIDE)} />}
+        {scrim && <div className={cn('absolute inset-0', HERO_SCRIM_BOTTOM)} />}
       </div>
       {children}
     </Tag>

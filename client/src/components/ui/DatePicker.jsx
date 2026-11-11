@@ -36,7 +36,7 @@ function monthGrid(month) {
   return Array.from({ length: 42 }, (_, i) => addDays(first, i - offset));
 }
 
-export function DatePicker({ id, value, onChange, withTime = false, min, max, invalid = false, name, placeholder = 'Pick a date', className }) {
+export function DatePicker({ id, value, onChange, withTime = false, min, max, invalid = false, name, placeholder = 'Pick a date', className, triggerClassName, align = 'start' }) {
   const selected = parse(value, withTime);
   const minDay = min ? startOfDay(new Date(min)) : null;
   const maxDay = max ? startOfDay(typeof max === 'string' ? parse(max, false) : new Date(max)) : null;
@@ -61,7 +61,7 @@ export function DatePicker({ id, value, onChange, withTime = false, min, max, in
   // keep the focused day's button focused, and the chosen time in view
   useEffect(() => {
     if (!open) return;
-    grid.current?.querySelector(`[data-day="${dayKey(focusDay)}"]`)?.focus();
+    grid.current?.querySelector(`[data-day="${dayKey(focusDay)}"]`)?.focus({ preventScroll: true });
   }, [open, focusDay]);
   useEffect(() => {
     if (open && withTime) timeList.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: 'center' });
@@ -145,6 +145,7 @@ export function DatePicker({ id, value, onChange, withTime = false, min, max, in
         className={cn(
           'flex min-h-11 w-full items-center gap-2.5 rounded-control border bg-surface px-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text',
           invalid ? 'border-danger' : open ? 'border-text' : 'border-border hover:border-text',
+          triggerClassName,
         )}
       >
         <CalendarDays className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
@@ -156,7 +157,7 @@ export function DatePicker({ id, value, onChange, withTime = false, min, max, in
         <div
           role="dialog"
           aria-label={withTime ? 'Choose date and time' : 'Choose a date'}
-          className="absolute left-0 top-full z-50 mt-2 flex w-[min(92vw,560px)] flex-col overflow-hidden rounded-card border border-border bg-surface text-text shadow-xl sm:flex-row"
+          className={cn('absolute top-full z-50 mt-2 flex w-[min(92vw,560px)] flex-col overflow-hidden rounded-card border border-border bg-surface text-text shadow-xl sm:flex-row', align === 'end' ? 'right-0' : 'left-0')}
           style={withTime ? undefined : { width: 'min(92vw, 300px)' }}
         >
           {/* Calendar */}

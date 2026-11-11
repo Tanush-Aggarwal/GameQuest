@@ -161,46 +161,38 @@ export default function Session() {
             <p role="status" className="rounded-card border border-border bg-surface p-3 text-sm">This session has ended.</p>
           )}
 
-          <BackdropHero as="header" art={session.game} seed={session.id} className="px-5 py-8 sm:px-10 sm:py-10">
-            <div className="flex min-h-[220px] flex-col justify-between gap-6 md:flex-row md:items-end">
-              <div className="flex min-w-0 items-end gap-5">
-                {session.game?.cover && (
-                  <Link to={`/games/${session.game.slug}`} className="hidden w-28 shrink-0 overflow-hidden rounded-[12px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:block lg:w-32" aria-hidden="true" tabIndex={-1}>
-                    <CoverImage cover={session.game.cover} title={session.game.title} className="aspect-[3/4] h-full w-full object-cover" />
-                  </Link>
-                )}
-              <div className="flex min-w-0 flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ring-1 ring-white/20 backdrop-blur-sm">
-                    <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {startsLabel(session)}
-                  </span>
-                  <span className="rounded-full bg-[#fbf8f1] px-3 py-1 shadow">
+          <BackdropHero as="header" art={session.game} seed={session.id} className="px-5 py-8 sm:px-10 sm:pb-12 sm:pt-32 lg:pb-14 lg:pt-40">
+            <div className="flex items-end gap-6 sm:gap-10">
+              {session.game?.cover && (
+                <Link to={`/games/${session.game.slug}`} className="hidden w-36 shrink-0 overflow-hidden rounded-[8px] ring-1 ring-white/20 sm:block sm:w-44 lg:w-56 xl:w-60" aria-hidden="true" tabIndex={-1}>
+                  <CoverImage cover={session.game.cover} title={session.game.title} className="aspect-[3/4] h-full w-full object-cover" />
+                </Link>
+              )}
+              <div className="flex min-w-0 flex-1 flex-col gap-4">
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/80">
+                  <span className="font-bold uppercase tracking-[0.12em] text-white">{startsLabel(session)}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="rounded-full bg-[#fbf8f1] px-2.5 py-0.5">
                     <ResponseBadge response={session.myResponse} />
                   </span>
-                </div>
-                <h1 className="font-heading text-3xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl">{session.title}</h1>
-                <ul className="flex flex-wrap gap-2 text-sm">
                   {session.game && (
-                    <li>
-                      <Link to={`/games/${session.game.slug}`} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 font-medium text-white ring-1 ring-white/15 backdrop-blur-sm hover:bg-white/20">
-                        <Gamepad2 className="h-4 w-4" aria-hidden="true" /> {session.game.title}
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <Link to={`/games/${session.game.slug}`} className="font-semibold text-white underline-offset-4 hover:underline">
+                        {session.game.title}
                       </Link>
-                    </li>
+                    </>
                   )}
-                  {session.platform && <li className="rounded-full bg-white/10 px-3 py-1.5 font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">{session.platform}</li>}
-                  <li className="rounded-full bg-white/10 px-3 py-1.5 text-white ring-1 ring-white/15 backdrop-blur-sm">
-                    Hosted by {session.isHost ? <strong>you</strong> : <Link to={`/u/${session.host?.username}`} className="font-semibold hover:underline">{session.host?.username}</Link>}
-                  </li>
-                  <li className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-white ring-1 ring-white/15 backdrop-blur-sm">
-                    {session.visibility === 'friends' ? <Globe className="h-4 w-4" aria-hidden="true" /> : <Lock className="h-4 w-4" aria-hidden="true" />}
-                    {session.visibility === 'friends' ? 'Open to friends' : 'Invite only'}
-                  </li>
-                </ul>
+                  {session.platform && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-semibold text-white">{session.platform}</span>
+                    </>
+                  )}
+                </p>
+                <h1 className="break-words font-heading text-3xl font-extrabold leading-[1.1] tracking-[-0.035em] text-white sm:text-[44px] xl:text-[56px]">{session.title}</h1>
+                <HeroStats session={session} />
               </div>
-              </div>
-
-              {/* Date tile: the day at a glance, the time range under it (fixed colours, so page styles can't hide them) */}
-              <DateTile session={session} />
             </div>
           </BackdropHero>
 
@@ -306,28 +298,25 @@ export default function Session() {
   );
 }
 
-function DateTile({ session }) {
+// The facts under the title, in the same row style as the "Schedule session" header.
+function HeroStats({ session }) {
   const start = new Date(session.startsAt);
   const end = new Date(start.getTime() + (session.durationMin ?? 0) * 60000);
   const time = (d) => d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-  const zone = start.toLocaleTimeString(undefined, { timeZoneName: 'short' }).split(' ').pop();
+  const stats = [
+    ['Date', <time key="d" dateTime={session.startsAt}>{start.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</time>],
+    ['Time', session.durationMin ? `${time(start)} to ${time(end)}` : time(start)],
+    ['Host', session.isHost ? 'You' : <Link key="h" to={`/u/${session.host?.username}`} className="hover:underline">{session.host?.username}</Link>],
+    ['Open to', session.visibility === 'friends' ? 'All friends' : 'Invited only'],
+  ];
   return (
-    <div className="flex shrink-0 items-stretch self-start overflow-hidden rounded-[16px] shadow-2xl ring-1 ring-white/15 md:self-end" style={{ background: '#fbf8f1', color: '#151713' }}>
-      <div className="flex w-[84px] flex-col items-center justify-center gap-1 px-3 py-3" style={{ background: '#151713', color: '#ffffff' }}>
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: 'rgba(255,255,255,0.7)' }}>
-          {start.toLocaleDateString(undefined, { month: 'short' })}
-        </span>
-        <span className="font-heading text-[40px] font-bold leading-none tabular-nums" style={{ color: '#ffffff' }}>{start.getDate()}</span>
-      </div>
-      <div className="flex min-w-[11rem] flex-col justify-center gap-1 px-5 py-3">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#625b4f' }}>
-          {start.toLocaleDateString(undefined, { weekday: 'long' })}
-        </span>
-        <time dateTime={session.startsAt} className="font-heading text-lg font-bold leading-tight tabular-nums">
-          {session.durationMin ? `${time(start)} – ${time(end)}` : time(start)}
-        </time>
-        <span className="text-[11px]" style={{ color: '#7a7264' }}>{zone}</span>
-      </div>
-    </div>
+    <dl className="mt-2 grid grid-cols-2 gap-y-4 border-t border-white/20 pt-4 xl:grid-cols-[1fr_1.7fr_1fr_1fr]">
+      {stats.map(([k, v], i) => (
+        <div key={k} className={'min-w-0 pr-4' + (i % 2 === 1 ? ' border-l border-white/20 pl-4' : '') + (i === 2 ? ' xl:border-l xl:border-white/20 xl:pl-4' : '')}>
+          <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">{k}</dt>
+          <dd className="mt-1 break-words font-heading text-lg font-bold leading-tight tabular-nums tracking-[-0.02em] text-white sm:text-xl">{v}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

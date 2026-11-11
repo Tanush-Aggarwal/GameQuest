@@ -20,7 +20,8 @@
     "steam:debug": "node --env-file-if-exists=.env scripts/debug-steam.js",
     "mail:test": "node --env-file-if-exists=.env scripts/mail-test.js",
     "catalog:steam-heroes": "node --env-file-if-exists=.env scripts/steam-heroes.js",
-    "admin:grant": "node --env-file-if-exists=.env scripts/make-admin.js"
+    "admin:grant": "node --env-file-if-exists=.env scripts/make-admin.js",
+    "catalog:media": "node --env-file-if-exists=.env scripts/media.js"
   },
   "jest": {
     "testEnvironment": "node",

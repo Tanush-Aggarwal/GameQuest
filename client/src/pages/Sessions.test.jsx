@@ -16,6 +16,7 @@ vi.mock('@/services/sessionsApi.js', () => ({
   downloadIcs: vi.fn(),
 }));
 vi.mock('@/services/socialApi.js', () => ({ listFriends: vi.fn() }));
+vi.mock('@/services/libraryApi.js', () => ({ listLibrary: vi.fn().mockResolvedValue({ items: [] }) }));
 vi.mock('@/services/gamesApi.js', () => ({ getGame: vi.fn(), searchGames: vi.fn() }));
 
 const api = await import('@/services/sessionsApi.js');
@@ -164,7 +165,7 @@ describe('Schedule a session', () => {
     api.createSession.mockResolvedValue(summary({ id: 'new1' }));
     api.getSession.mockResolvedValue(detail({ id: 'new1' }));
     await openFormFor();
-    expect(screen.getByText('Hades')).toBeInTheDocument();
+    expect(screen.getAllByText('Hades').length).toBeGreaterThan(0); // the form and the invite preview
     await userEvent.type(screen.getByLabelText('Title'), 'Boss night');
     setStart('2099-01-01T18:30');
     await userEvent.type(screen.getByLabelText('Platform'), 'PC');
@@ -191,7 +192,7 @@ describe('Schedule a session', () => {
     await openFormFor();
     setStart('2020-01-01T10:00');
     await userEvent.type(screen.getByLabelText('Discord invite'), 'https://evil.example/discord.gg/abc');
-    await userEvent.selectOptions(screen.getByLabelText('Who can join'), 'invite');
+    await userEvent.click(screen.getByRole('switch', { name: /Only people I invite/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Schedule session' }));
     expect(await screen.findByText('Pick a start time in the future')).toBeInTheDocument();
     expect(screen.getByText(/Use a discord\.gg/)).toBeInTheDocument();
@@ -211,7 +212,7 @@ describe('Schedule a session', () => {
   it('lets you search for a game when none is preselected', async () => {
     games.searchGames.mockResolvedValue({ items: [game], nextCursor: null, warnings: [] });
     renderAt('/sessions/new');
-    expect(screen.getByText('Type at least 2 letters of the game’s name.')).toBeInTheDocument();
+    expect(screen.getByText(/type 2 letters to search/i)).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Search for a game'), 'had');
     await userEvent.click(await screen.findByRole('button', { name: /Hades/ }, { timeout: 3000 }));
     expect(await screen.findByRole('form', { name: 'New session' })).toBeInTheDocument();

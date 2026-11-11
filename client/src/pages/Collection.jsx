@@ -167,14 +167,14 @@ function CoverFan({ items }) {
   if (!covers.length) return null;
   const angles = [-10, -3.5, 3.5, 10].slice(0, covers.length);
   return (
-    <div aria-hidden="true" className="relative hidden h-40 w-56 shrink-0 md:block">
+    <div aria-hidden="true" className="relative hidden h-48 w-72 shrink-0 md:block lg:h-56 lg:w-80">
       {covers.map((g, i) => (
         <div
           key={g.id ?? i}
-          className="absolute bottom-0 left-1/2 w-[92px] overflow-hidden rounded-[8px] ring-2 ring-black/30"
-          style={{ transform: `translateX(calc(-50% + ${(i - (covers.length - 1) / 2) * 38}px)) rotate(${angles[i]}deg)`, zIndex: i }}
+          className="absolute bottom-0 left-1/2 w-[112px] overflow-hidden lg:w-[128px] rounded-[8px] ring-2 ring-black/30"
+          style={{ transform: `translateX(calc(-50% + ${(i - (covers.length - 1) / 2) * 48}px)) rotate(${angles[i]}deg)`, zIndex: i }}
         >
-          <CoverImage cover={g.cover} title={g.title} compact alt="" sizes="92px" className="aspect-[3/4] w-full object-cover" />
+          <CoverImage cover={g.cover} title={g.title} compact alt="" sizes="128px" className="aspect-[3/4] w-full object-cover" />
         </div>
       ))}
     </div>
@@ -370,14 +370,14 @@ export default function Collection() {
       {status === 'success' && collection && (
         <>
           {/* the art of the first game in it that has some, with a fan of its covers on the right */}
-          <BackdropHero as="header" art={heroArt} seed={collection.name} className="flex flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-end md:justify-between">
+          <BackdropHero as="header" art={heroArt} seed={collection.name} className="flex flex-col gap-6 px-5 py-8 sm:px-10 sm:pb-10 sm:pt-20 md:flex-row md:items-end md:justify-between lg:pt-24">
             <div className="flex min-w-0 flex-col gap-3">
               <div className="flex flex-wrap items-center gap-3 [&_span]:text-white/80">
                 <TypeBadge type={collection.type} />
                 <VisibilityBadge visibility={collection.visibility} />
                 {!canEdit && collection.owner && <span className="text-xs">by {collection.owner.username}</span>}
               </div>
-              <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{collection.name}</h1>
+              <h1 className="break-words font-heading text-3xl font-bold leading-tight sm:text-[44px] lg:text-5xl">{collection.name}</h1>
               {collection.description && <p className="max-w-prose text-sm text-white/85">{collection.description}</p>}
               {isSmart && <p className="max-w-prose text-sm text-white/75">Filled automatically: {collection.rules.map(ruleText).join(' · ')}</p>}
               <dl className="flex flex-wrap gap-x-6 gap-y-2 pt-1">

@@ -280,6 +280,24 @@ export function createSteamAdapter({ config, fetchImpl = fetch, retryDelayMs = 7
       return out;
     },
 
+    // Store search by name: [{ appid, name }], best matches first (Steam's own ranking). No key needed.
+    async searchStore(term) {
+      const q = String(term ?? '').trim();
+      if (!q) return [];
+      let res;
+      try {
+        res = await fetchImpl(`https://store.steampowered.com/api/storesearch/?${new URLSearchParams({ term: q, l: 'english', cc: 'US' })}`, {
+          signal: AbortSignal.timeout(PROBE_TIMEOUT_MS * 2),
+        });
+      } catch {
+        throw new UpstreamError('Could not reach the Steam store.');
+      }
+      if (res.status === 429) throw new UpstreamError('The Steam store is rate limiting requests. Try again later.');
+      if (!res.ok) throw new UpstreamError(`The Steam store is unavailable right now (HTTP ${res.status}).`);
+      const items = (await res.json().catch(() => null))?.items ?? [];
+      return items.filter((i) => i?.id && i.name && (i.type ?? 'app') === 'app').map((i) => ({ appid: String(i.id), name: String(i.name) }));
+    },
+
     async getStoreMedia(appid) {
       let res;
       try {
@@ -308,7 +326,11 @@ export function createSteamAdapter({ config, fetchImpl = fetch, retryDelayMs = 7
         .filter((m) => m.mp4 || m.webm || m.hls)
         .sort((a, b) => Number(b.highlight) - Number(a.highlight))
         .slice(0, 6);
+      const year = Number(/\b(19|20)\d{2}\b/.exec(d.release_date?.date ?? '')?.[0]) || null;
       return {
+        name: d.name ?? null,
+        type: d.type ?? null,
+        releaseYear: year,
         header: https(d.header_image),
         background: https(d.background_raw ?? d.background),
         screenshots: (d.screenshots ?? []).map((sc) => https(sc.path_full)).filter(Boolean).slice(0, 20),

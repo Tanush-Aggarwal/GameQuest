@@ -3,18 +3,18 @@ import { useEffect, useState } from 'react';
 // Candidate order for a wide game header, most reliable first:
 //   1. Steam's library hero: key art Steam requires to be logo-free and drawn for wide banners;
 //   2. a Steam-hosted backdrop (the store page background), never Steam's small header.jpg;
-//   3. screenshots: real in-game scenes, which are never a title logo;
-//   4. the stored IGDB backdrop and artworks last: these are often the title logo or a poster, which looks
-//      awful stretched across a banner (GTA VI's, The Quarry's and Phasmophobia's are all logos).
+//   3. IGDB artworks and the stored backdrop: official key art and wallpapers, which make a header look like a
+//      header. Some are only the title logo or a portrait poster; measuring (below) throws those out;
+//   4. screenshots last: real in-game scenes, used only when a game has no usable key art.
 export function heroCandidates(art) {
   if (!art) return [];
   const steamBackdrop = typeof art.backdrop === 'string' && /steamstatic\.com/.test(art.backdrop) && !/\/header\.jpg/.test(art.backdrop) ? art.backdrop : null;
   return [
     art.steamHero,
     steamBackdrop,
-    ...(art.screenshots ?? []).slice(0, 4),
+    ...(art.artworks ?? []).slice(0, 4),
     steamBackdrop ? null : art.backdrop,
-    ...(art.artworks ?? []).slice(0, 3),
+    ...(art.screenshots ?? []).slice(0, 4),
   ].filter(Boolean);
 }
 

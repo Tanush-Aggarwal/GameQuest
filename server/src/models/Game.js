@@ -20,6 +20,8 @@ const gameSchema = new mongoose.Schema(
     steamHero: { type: String, default: undefined },
     steamHero2x: { type: String, default: undefined },
     steamHeroCheckedAt: { type: Date, default: undefined },
+    // When `catalog:media` last searched the Steam store for a game that had no Steam app id (found or not).
+    steamMatchCheckedAt: { type: Date, default: undefined },
     // Set by an administrator in the header editor: which picture the game's headers use and how it is framed
     // (focus point in % and zoom). Missing means "pick automatically".
     heroOverride: {

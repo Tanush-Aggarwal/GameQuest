@@ -98,7 +98,7 @@ describe('Library entry page actions', () => {
     changeStatus.mockImplementation(() => new Promise(() => {})); // never settles: still busy
     renderEntry();
     const button = await screen.findByRole('button', { name: 'Move to Playing' });
-    expect(button.className).toMatch(/min-h-11/);
+    expect(button.className).toMatch(/min-h-1[12]/);
     await userEvent.dblClick(button);
     expect(changeStatus).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Move to Playing' })).toBeDisabled();

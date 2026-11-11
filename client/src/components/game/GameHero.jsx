@@ -68,7 +68,7 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
       <BackdropHero key={art.heroOverride?.url ?? 'auto'} art={art} seed={game.title} className="gq-game-hero relative overflow-hidden !border-0 !bg-[#0B0C0F] text-white">
         {/* fades the art into the light page below, so the header and content read as one page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-b from-transparent to-[var(--bg)]" />
-        <div className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pt-4 pb-14 sm:px-8 sm:pt-6 sm:pb-16">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pt-4 pb-14 sm:px-8 sm:pt-6 sm:pb-16 lg:pb-20">
           <div className="flex items-center gap-2 text-sm text-white/65">
             <Link to="/explore" className="inline-flex items-center gap-2 hover:text-white">
               <span aria-hidden="true">←</span> Explore
@@ -77,8 +77,8 @@ export function GameHero({ game, entryState, onRecommend, onSchedule }) {
             <span className="truncate text-white/90">{game.title}</span>
           </div>
 
-          <div className="flex flex-col gap-7 md:flex-row md:items-end md:gap-9">
-            <SharedCover slug={game.slug} className="w-40 shrink-0 self-center overflow-hidden rounded-[14px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:w-48 lg:w-56 md:self-end">
+          <div className="flex flex-col gap-7 md:mt-6 md:flex-row md:items-end md:gap-10 lg:mt-10">
+            <SharedCover slug={game.slug} className="w-40 shrink-0 self-center overflow-hidden rounded-[14px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/20 sm:w-48 lg:w-56 xl:w-60 md:self-end">
               <GameCover game={game} className="h-full w-full object-cover" />
             </SharedCover>
 
